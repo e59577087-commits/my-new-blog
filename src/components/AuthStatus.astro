@@ -1,0 +1,57 @@
+<div class="auth-status flex shrink-0 items-center" data-auth-status>
+  <a href="/login/" data-auth-login class="rounded-md border hairline bg-[#111318] px-3 py-1.5 text-sm text-slate-300 transition-colors hover:border-sky-300/35 hover:text-white">
+    登录
+  </a>
+
+  <div data-auth-user hidden class="items-center gap-2 rounded-md border hairline bg-[#111318] px-2 py-1.5">
+    <img data-auth-avatar alt="用户头像" class="size-6 rounded-full border hairline bg-[#16181d] object-cover" />
+    <span data-auth-name class="hidden max-w-24 truncate text-sm text-slate-200 sm:inline"></span>
+    <button type="button" data-auth-signout class="rounded px-2 py-1 text-sm text-slate-400 transition-colors hover:bg-[#16181d] hover:text-white">
+      退出
+    </button>
+  </div>
+</div>
+
+<script>
+  import { createBrowserSupabaseClient, getFallbackAvatar, getUserAvatar, getUserDisplayName } from "../lib/supabaseClient";
+
+  const root = document.querySelector("[data-auth-status]");
+  const loginLink = root?.querySelector("[data-auth-login]");
+  const userBox = root?.querySelector("[data-auth-user]");
+  const avatar = root?.querySelector("[data-auth-avatar]");
+  const name = root?.querySelector("[data-auth-name]");
+  const signOutButton = root?.querySelector("[data-auth-signout]");
+  const supabase = createBrowserSupabaseClient();
+
+  const renderAuthStatus = (user) => {
+    if (!loginLink || !userBox || !avatar || !name) return;
+
+    if (!user) {
+      loginLink.hidden = false;
+      userBox.hidden = true;
+      userBox.classList.remove("flex");
+      return;
+    }
+
+    const avatarUrl = getUserAvatar(user);
+    loginLink.hidden = true;
+    userBox.hidden = false;
+    userBox.classList.add("flex");
+    name.textContent = getUserDisplayName(user);
+    avatar.src = avatarUrl || getFallbackAvatar(getUserDisplayName(user));
+  };
+
+  if (supabase) {
+    const { data } = await supabase.auth.getSession();
+    renderAuthStatus(data.session?.user ?? null);
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      renderAuthStatus(session?.user ?? null);
+    });
+
+    signOutButton?.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      renderAuthStatus(null);
+    });
+  }
+</script>

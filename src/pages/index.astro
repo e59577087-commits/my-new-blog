@@ -1,0 +1,123 @@
+---
+import { getCollection } from "astro:content";
+import PostCard from "../components/PostCard.astro";
+import SectionTitle from "../components/SectionTitle.astro";
+import ToolCard from "../components/ToolCard.astro";
+import { tools } from "../data/tools";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getPostUrl, getReadingTime, isPublished, sortPostsByDate } from "../utils/blog";
+
+const allPosts = sortPostsByDate((await getCollection("blog")).filter(isPublished));
+const posts = allPosts.slice(0, 3);
+
+const featuredPosts = allPosts.filter((post) => post.data.featured);
+
+const recommendedTools = tools.slice(0, 4);
+---
+
+<BaseLayout title="首页">
+  <section class="mx-auto max-w-6xl px-4 pb-12 pt-14 sm:px-6 sm:pb-16 sm:pt-20 lg:px-8">
+    <div class="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
+      <div class="reveal">
+        <p class="mb-5 inline-flex rounded border hairline bg-[#111318] px-3 py-1 text-sm text-sky-200">
+          技术笔记 · 工具链 · 静态部署
+        </p>
+        <h1 class="text-balance text-4xl font-semibold leading-tight text-white sm:text-5xl">
+          写给长期主义工程师的中文技术手记。
+        </h1>
+        <p class="mt-6 max-w-2xl text-[17px] leading-9 text-slate-400 sm:text-lg">
+          记录前端工程、静态站点、云端部署和个人知识系统。页面保持克制，内容保持清晰，方便在长期写作中持续维护。
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/blog/" class="rounded-md bg-slate-100 px-4 py-2.5 text-sm font-medium text-[#0f1115] transition-colors hover:bg-white">
+            阅读博客
+          </a>
+          <a href="/tools/" class="rounded-md border hairline bg-[#111318] px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:border-sky-300/35 hover:text-white">
+            查看工具
+          </a>
+        </div>
+        <dl class="mt-10 grid max-w-2xl gap-3 text-sm text-slate-400 sm:grid-cols-3">
+          <div class="border-l hairline pl-4">
+            <dt class="text-slate-500">内容格式</dt>
+            <dd class="mt-1 text-slate-200">Markdown</dd>
+          </div>
+          <div class="border-l hairline pl-4">
+            <dt class="text-slate-500">构建方式</dt>
+            <dd class="mt-1 text-slate-200">静态优先</dd>
+          </div>
+          <div class="border-l hairline pl-4">
+            <dt class="text-slate-500">发布目标</dt>
+            <dd class="mt-1 text-slate-200">Cloudflare Pages</dd>
+          </div>
+        </dl>
+      </div>
+
+      <aside class="surface reveal reveal-delay-1 rounded-lg p-5 sm:p-6">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <p class="text-sm text-sky-200">阅读队列</p>
+            <h2 class="mt-1 text-xl font-semibold text-white">重点文章</h2>
+          </div>
+          <span class="rounded border hairline px-2.5 py-1 text-xs text-slate-400">已同步</span>
+        </div>
+
+        <div class="mt-6 divide-y divide-white/[0.06]">
+          {
+            featuredPosts.map((post) => (
+              <a href={getPostUrl(post)} class="group block py-4 first:pt-0 last:pb-0">
+                <p class="text-base font-medium leading-7 text-slate-100 transition-colors group-hover:text-white">{post.data.title}</p>
+                <p class="mt-1 line-clamp-2 text-sm leading-7 text-slate-500">{post.data.description}</p>
+              </a>
+            ))
+          }
+        </div>
+
+        <div class="mt-6 border-t hairline pt-5">
+          <p class="text-sm text-slate-500">技术栈</p>
+          <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            {
+              ["Astro", "TailwindCSS", "TypeScript", "Markdown"].map((item) => (
+                <div class="flex items-center gap-2 text-slate-300">
+                  <span class="size-1.5 rounded-full bg-sky-300"></span>
+                  {item}
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="border-y hairline bg-[#111318]">
+    <div class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+      <div class="reveal reveal-delay-2">
+        <SectionTitle eyebrow="最新文章" title="最近更新的工程笔记" description="围绕静态站点、部署流程和界面细节沉淀可复用经验，先用 mock 内容验证整体阅读节奏。" />
+      </div>
+      <div class="mt-8 grid gap-4 lg:grid-cols-3">
+        {
+          posts.map((post) => (
+            <PostCard
+              title={post.data.title}
+              description={post.data.description}
+              date={post.data.date}
+              tags={post.data.tags}
+              cover={post.data.cover}
+              readingTime={getReadingTime(post)}
+              href={getPostUrl(post)}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+    <div class="reveal reveal-delay-3">
+      <SectionTitle eyebrow="软件推荐" title="当前使用的写作与发布工具" description="优先选择轻量、稳定、可长期维护的工具，避免过早引入复杂后端或内容管理系统。" />
+    </div>
+    <div class="mt-8 grid gap-4 md:grid-cols-2">
+      {recommendedTools.map((tool) => <ToolCard tool={tool} />)}
+    </div>
+  </section>
+</BaseLayout>

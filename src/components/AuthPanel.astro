@@ -1,0 +1,139 @@
+<section class="surface rounded-lg p-5 sm:p-6" data-auth-panel>
+  <div data-auth-config-missing hidden class="rounded-md border hairline bg-[#0f1115] p-4 text-sm leading-7 text-slate-300">
+    登录功能尚未配置。请先在 `.env` 中填写 Supabase 项目的 `PUBLIC_SUPABASE_URL` 和 `PUBLIC_SUPABASE_ANON_KEY`。
+  </div>
+
+  <div data-auth-signed-out>
+    <div>
+      <p class="text-sm text-sky-300/90">账户登录</p>
+      <h2 class="mt-2 text-2xl font-semibold text-white">登录后同步你的身份状态</h2>
+      <p class="mt-3 text-base leading-8 text-slate-400">当前已接入 Supabase Auth 和文章评论。你可以使用 GitHub、Google 或邮箱登录链接进入。</p>
+    </div>
+
+    <div class="mt-6 grid gap-3 sm:grid-cols-2">
+      <button type="button" data-oauth-provider="github" class="rounded-md border hairline bg-[#111318] px-4 py-3 text-left text-sm text-slate-200 transition-colors hover:border-sky-300/35 hover:bg-[#16181d] hover:text-white">
+        使用 GitHub 登录
+      </button>
+      <button type="button" data-oauth-provider="google" class="rounded-md border hairline bg-[#111318] px-4 py-3 text-left text-sm text-slate-200 transition-colors hover:border-sky-300/35 hover:bg-[#16181d] hover:text-white">
+        使用 Google 登录
+      </button>
+    </div>
+
+    <form data-email-form class="mt-6 border-t hairline pt-6">
+      <label for="auth-email" class="text-sm text-slate-300">邮箱登录</label>
+      <div class="mt-3 flex flex-col gap-3 sm:flex-row">
+        <input
+          id="auth-email"
+          data-email-input
+          type="email"
+          required
+          placeholder="name@example.com"
+          class="min-w-0 flex-1 rounded-md border hairline bg-[#0f1115] px-3 py-2.5 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-600 focus:border-sky-300/40"
+        />
+        <button type="submit" class="rounded-md border hairline bg-slate-100 px-4 py-2.5 text-sm font-medium text-[#0f1115] transition-colors hover:bg-white">
+          发送登录链接
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div data-auth-signed-in hidden>
+    <div class="flex items-start gap-4">
+      <img data-panel-avatar alt="用户头像" class="size-14 rounded-lg border hairline bg-[#16181d] object-cover" />
+      <div class="min-w-0">
+        <p class="text-sm text-sky-300/90">已登录</p>
+        <h2 data-panel-name class="mt-1 truncate text-2xl font-semibold text-white"></h2>
+        <p data-panel-email class="mt-1 truncate text-sm text-slate-500"></p>
+      </div>
+    </div>
+
+    <button type="button" data-panel-signout class="mt-6 rounded-md border hairline bg-[#111318] px-4 py-2.5 text-sm text-slate-300 transition-colors hover:border-sky-300/35 hover:text-white">
+      退出登录
+    </button>
+  </div>
+
+  <p data-auth-message class="mt-5 text-sm leading-7 text-slate-400" aria-live="polite"></p>
+</section>
+
+<script>
+  import { createBrowserSupabaseClient, getFallbackAvatar, getUserAvatar, getUserDisplayName, isSupabaseConfigured } from "../lib/supabaseClient";
+
+  const panel = document.querySelector("[data-auth-panel]");
+  const configMissing = panel?.querySelector("[data-auth-config-missing]");
+  const signedOut = panel?.querySelector("[data-auth-signed-out]");
+  const signedIn = panel?.querySelector("[data-auth-signed-in]");
+  const message = panel?.querySelector("[data-auth-message]");
+  const avatar = panel?.querySelector("[data-panel-avatar]");
+  const name = panel?.querySelector("[data-panel-name]");
+  const email = panel?.querySelector("[data-panel-email]");
+  const signOutButton = panel?.querySelector("[data-panel-signout]");
+  const emailForm = panel?.querySelector("[data-email-form]");
+  const emailInput = panel?.querySelector("[data-email-input]");
+  const supabase = createBrowserSupabaseClient();
+
+  const setMessage = (text) => {
+    if (message) message.textContent = text;
+  };
+
+  const setPanelState = (user) => {
+    if (!signedOut || !signedIn || !avatar || !name || !email) return;
+
+    if (!user) {
+      signedOut.hidden = false;
+      signedIn.hidden = true;
+      return;
+    }
+
+    const displayName = getUserDisplayName(user);
+    const avatarUrl = getUserAvatar(user);
+    signedOut.hidden = true;
+    signedIn.hidden = false;
+    name.textContent = displayName;
+    email.textContent = user.email ?? "";
+    avatar.src = avatarUrl || getFallbackAvatar(displayName);
+  };
+
+  if (!isSupabaseConfigured || !supabase) {
+    if (configMissing) configMissing.hidden = false;
+    setMessage("配置完成后，这里会显示 GitHub、Google 和邮箱登录状态。");
+  } else {
+    const redirectTo = `${window.location.origin}/login/`;
+    const { data } = await supabase.auth.getSession();
+    setPanelState(data.session?.user ?? null);
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setPanelState(session?.user ?? null);
+    });
+
+    panel?.querySelectorAll("[data-oauth-provider]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const provider = button.getAttribute("data-oauth-provider");
+        setMessage("正在跳转到登录服务...");
+        await supabase.auth.signInWithOAuth({
+          provider,
+          options: { redirectTo },
+        });
+      });
+    });
+
+    emailForm?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const targetEmail = emailInput?.value?.trim();
+      if (!targetEmail) return;
+
+      setMessage("正在发送邮箱登录链接...");
+      const { error } = await supabase.auth.signInWithOtp({
+        email: targetEmail,
+        options: { emailRedirectTo: redirectTo },
+      });
+
+      setMessage(error ? `发送失败：${error.message}` : "登录链接已发送，请检查邮箱。");
+    });
+
+    signOutButton?.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      setPanelState(null);
+      setMessage("已退出登录。");
+    });
+  }
+</script>

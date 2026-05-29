@@ -1,0 +1,40 @@
+---
+import { getCollection } from "astro:content";
+import PostCard from "../../components/PostCard.astro";
+import SectionTitle from "../../components/SectionTitle.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getAllTags, getPostUrl, getReadingTime, getTagUrl, isPublished, sortPostsByDate } from "../../utils/blog";
+
+const posts = sortPostsByDate((await getCollection("blog")).filter(isPublished));
+const tags = getAllTags(posts);
+---
+
+<BaseLayout title="博客" description="中文技术博客文章列表。">
+  <section class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+    <SectionTitle
+      eyebrow="博客"
+      title="博客文章"
+      description="所有文章来自 Astro Content Collections，草稿不会出现在公开列表、RSS 或 sitemap 中。"
+    />
+
+    <div class="mt-8 flex flex-wrap gap-2">
+      {tags.map((tag) => <a href={getTagUrl(tag)} class="rounded border hairline bg-[#111318] px-3 py-1.5 text-sm text-slate-300 transition-colors hover:border-sky-300/35 hover:text-white">{tag}</a>)}
+    </div>
+
+    <div class="mt-10 grid gap-4 md:grid-cols-2">
+      {
+        posts.map((post) => (
+          <PostCard
+            title={post.data.title}
+            description={post.data.description}
+            date={post.data.date}
+            tags={post.data.tags}
+            cover={post.data.cover}
+            readingTime={getReadingTime(post)}
+            href={getPostUrl(post)}
+          />
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>

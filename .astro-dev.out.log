@@ -1,0 +1,23 @@
+
+> my-new-blog@0.0.1 dev
+> astro dev --host 127.0.0.1
+
+[vite] connected.
+[2m22:16:55[22m [34m[types][39m Generated [2m1ms[22m
+[vite] connected.
+[2m22:16:55[22m [34m[content][39m Syncing content
+[2m22:16:55[22m [34m[content][39m Astro config changed
+[2m22:16:55[22m [34m[content][39m Clearing content store
+[2m22:16:55[22m [34m[content][39m Synced content
+[2m22:16:55[22m [34m[vite][39m Re-optimizing dependencies because vite config has changed
+[42m[1m astro [22m[49m [32mv6.4.2[39m [2mready in[22m 1303 [2mms[22m
+[2m┃[22m Local    [36mhttp://127.0.0.1:4321/[39m
+[2m22:16:55[22m [32mwatching for file changes...[39m
+[2m22:17:38[22m [34m[200][39m /login/ [2m20ms[22m
+[2m22:17:38[22m [34m[200][39m /blog/astro-blog-architecture/ [2m29ms[22m
+[2m22:21:56[22m [34m[200][39m / [2m11ms[22m
+[2m22:21:57[22m [34m[vite][39m [32m✨ new dependencies optimized: [33m@supabase/supabase-js[32m[39m
+[2m22:21:57[22m [34m[vite][39m [32m✨ optimized dependencies changed. reloading[39m
+[2m22:21:57[22m [34m[200][39m / [2m3ms[22m
+[2m22:21:59[22m [34m[200][39m /login/ [2m3ms[22m
+[2m23:10:13[22m [34m[200][39m /blog/astro-blog-architecture/ [2m16ms[22m

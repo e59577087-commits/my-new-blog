@@ -1,0 +1,135 @@
+---
+import { getCollection, render } from "astro:content";
+import Comments from "../../components/Comments.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import {
+  formatChineseDate,
+  getAdjacentPosts,
+  getPostUrl,
+  getReadingTime,
+  getTagUrl,
+  isPublished,
+  sortPostsByDate,
+} from "../../utils/blog";
+
+export async function getStaticPaths() {
+  const posts = sortPostsByDate((await getCollection("blog")).filter(isPublished));
+
+  return posts.map((post) => ({
+    params: { slug: post.id.replace(/\.md$/, "") },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+const allPosts = sortPostsByDate((await getCollection("blog")).filter(isPublished));
+const { previousPost, nextPost } = getAdjacentPosts(allPosts, post.id);
+const toc = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 3);
+
+const formattedDate = formatChineseDate(post.data.date);
+const readingTime = getReadingTime(post);
+const postSlug = post.id.replace(/\.md$/, "");
+---
+
+<BaseLayout title={post.data.title} description={post.data.description} image={post.data.cover} type="article" publishedTime={post.data.date}>
+  <article class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+    <a href="/blog/" class="fine-link text-sm">返回博客</a>
+
+    <header class="mt-8 border-b hairline pb-8">
+      <div class="mb-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+        <time datetime={post.data.date.toISOString()}>{formattedDate}</time>
+        <span>{readingTime}</span>
+      </div>
+      <h1 class="text-balance max-w-3xl text-3xl font-semibold leading-tight text-white sm:text-5xl">{post.data.title}</h1>
+      <p class="mt-5 max-w-3xl text-[17px] leading-9 text-slate-400">{post.data.description}</p>
+      <div class="mt-6 flex flex-wrap gap-2">
+        {post.data.tags.map((tag) => <a href={getTagUrl(tag)} class="rounded border hairline bg-[#111318] px-2 py-1 text-xs text-slate-400 transition-colors hover:border-sky-300/35 hover:text-slate-100">{tag}</a>)}
+      </div>
+      <img src={post.data.cover} alt={`${post.data.title} 封面`} class="mt-8 aspect-[16/7] w-full rounded-lg border hairline object-cover" />
+    </header>
+
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
+      <div class="prose-tech mt-10 max-w-3xl space-y-6">
+        <Content />
+      </div>
+
+      {
+        toc.length > 0 && (
+          <aside class="mt-10 hidden lg:block">
+            <div class="sticky top-24 border-l hairline pl-5">
+              <p class="text-sm font-medium text-slate-300">目录</p>
+              <nav class="mt-4 space-y-2" aria-label="文章目录">
+                {toc.map((heading) => (
+                  <a
+                    href={`#${heading.slug}`}
+                    class:list={[
+                      "block text-sm leading-6 text-slate-500 transition-colors hover:text-slate-200",
+                      heading.depth === 3 ? "pl-4" : "",
+                    ]}
+                  >
+                    {heading.text}
+                  </a>
+                ))}
+              </nav>
+            </div>
+          </aside>
+        )
+      }
+    </div>
+
+    <nav class="mt-14 grid gap-4 border-t hairline pt-8 md:grid-cols-2" aria-label="文章导航">
+      {
+        previousPost ? (
+          <a href={getPostUrl(previousPost)} class="surface motion-card rounded-lg p-5">
+            <span class="text-sm text-slate-500">上一篇</span>
+            <p class="mt-2 text-lg font-medium leading-8 text-slate-100">{previousPost.data.title}</p>
+          </a>
+        ) : (
+          <div></div>
+        )
+      }
+      {
+        nextPost && (
+          <a href={getPostUrl(nextPost)} class="surface motion-card rounded-lg p-5 md:text-right">
+            <span class="text-sm text-slate-500">下一篇</span>
+            <p class="mt-2 text-lg font-medium leading-8 text-slate-100">{nextPost.data.title}</p>
+          </a>
+        )
+      }
+    </nav>
+
+    <Comments postSlug={postSlug} />
+  </article>
+
+  <script>
+    const setupCodeCopy = () => {
+      document.querySelectorAll(".prose-tech pre").forEach((pre) => {
+        if (pre.querySelector(".code-copy")) return;
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "code-copy";
+        button.textContent = "复制";
+        button.setAttribute("aria-label", "复制代码");
+
+        button.addEventListener("click", async () => {
+          const code = pre.querySelector("code")?.textContent ?? "";
+          await navigator.clipboard.writeText(code);
+          button.textContent = "已复制";
+          window.setTimeout(() => {
+            button.textContent = "复制";
+          }, 1400);
+        });
+
+        pre.appendChild(button);
+      });
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setupCodeCopy);
+    } else {
+      setupCodeCopy();
+    }
+  </script>
+</BaseLayout>

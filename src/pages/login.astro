@@ -1,0 +1,24 @@
+---
+import AuthPanel from "../components/AuthPanel.astro";
+import SectionTitle from "../components/SectionTitle.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="登录" description="使用 Supabase Auth 登录中文技术博客。">
+  <section class="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:px-8">
+    <div>
+      <SectionTitle
+        eyebrow="登录"
+        title="使用你的账户继续访问"
+        description="支持 GitHub、Google 和邮箱登录。登录后可以在文章详情页发表评论。"
+      />
+
+      <div class="mt-8 space-y-3 text-sm leading-7 text-slate-500">
+        <p>登录成功后，导航栏会显示用户头像和昵称。</p>
+        <p>邮箱登录使用 Magic Link，不需要在本站保存密码。</p>
+      </div>
+    </div>
+
+    <AuthPanel />
+  </section>
+</BaseLayout>
