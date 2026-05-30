@@ -3,7 +3,7 @@ const siteUrl = (import.meta.env.PUBLIC_SITE_URL ?? "https://example.com").repla
 export const site = {
   name: "happy,for you",
   brandName: "happy,for you",
-  avatar: "/avatar.svg",
+  avatar: "/头像1.jpeg",
   description: "记录日常片段、喜欢的东西和慢慢整理好的生活小事。",
   url: siteUrl,
   author: "happy,for you",
