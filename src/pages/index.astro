@@ -23,8 +23,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {
         tools.map((tool) => (
-          <article class="surface-soft motion-card overflow-hidden rounded-lg p-3 sm:p-4">
-            <div class="flex items-start justify-between gap-3">
+          <article class="surface-soft motion-card relative overflow-hidden rounded-lg p-3 sm:p-4">
+            <a href={tool.links[0].href} class="absolute inset-0 rounded-lg" aria-label={`打开${tool.name}`}></a>
+            <div class="relative flex items-start justify-between gap-3">
               <div class="min-w-0">
                 <p class="text-xs text-sky-300/80">{tool.category}</p>
                 <h2 class="mt-1 truncate text-lg font-semibold leading-7 text-white">{tool.name}</h2>
@@ -34,11 +35,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
               </span>
             </div>
 
-            <div class="mt-3 flex flex-wrap gap-1.5">
+            <div class="relative mt-3 flex flex-wrap gap-1.5">
               {tool.tags.map((tag) => <span class="rounded bg-[#0f1115] px-2 py-0.5 text-xs text-slate-400">{tag}</span>)}
             </div>
 
-            <div class="mt-4 grid grid-cols-3 gap-1.5 border-t hairline pt-3">
+            <div class="relative z-10 mt-4 grid grid-cols-3 gap-1.5 border-t hairline pt-3">
               {
                 tool.links.map((link) => (
                   <a href={link.href} class="rounded border hairline px-2 py-1.5 text-center text-xs text-slate-300 transition-colors hover:border-sky-300/40 hover:bg-[#0f1115] hover:text-white">
