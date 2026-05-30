@@ -18,9 +18,9 @@ export const tools: Tool[] = [
     screenshot: "/tools/astro.svg",
     tags: ["清晨", "放松", "通勤"],
     links: [
-      { label: "记录", href: "/tags/音乐/" },
-      { label: "日记", href: "/blog/" },
+      { label: "查看", href: "/tools/" },
       { label: "关于", href: "/about/" },
+      { label: "首页", href: "/" },
     ],
   },
   {
@@ -30,9 +30,9 @@ export const tools: Tool[] = [
     screenshot: "/tools/tailwindcss.svg",
     tags: ["傍晚", "楼下", "慢走"],
     links: [
-      { label: "记录", href: "/tags/散步/" },
-      { label: "日记", href: "/blog/" },
+      { label: "查看", href: "/tools/" },
       { label: "关于", href: "/about/" },
+      { label: "首页", href: "/" },
     ],
   },
   {
@@ -42,9 +42,9 @@ export const tools: Tool[] = [
     screenshot: "/tools/cloudflare-pages.svg",
     tags: ["晚饭", "清单", "家常"],
     links: [
-      { label: "记录", href: "/blog/" },
-      { label: "标签", href: "/tags/" },
+      { label: "查看", href: "/tools/" },
       { label: "关于", href: "/about/" },
+      { label: "首页", href: "/" },
     ],
   },
   {
@@ -54,9 +54,9 @@ export const tools: Tool[] = [
     screenshot: "/tools/obsidian.svg",
     tags: ["夜晚", "房间", "小习惯"],
     links: [
-      { label: "记录", href: "/tags/整理/" },
-      { label: "日记", href: "/blog/" },
+      { label: "查看", href: "/tools/" },
       { label: "关于", href: "/about/" },
+      { label: "首页", href: "/" },
     ],
   },
 ];

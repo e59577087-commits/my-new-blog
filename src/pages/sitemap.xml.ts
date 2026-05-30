@@ -1,15 +1,9 @@
-import { getCollection } from "astro:content";
 import { site } from "../data/site";
-import { getAllTags, getPostUrl, getTagUrl, isPublished, sortPostsByDate } from "../utils/blog";
 
-const staticRoutes = ["/", "/blog/", "/tags/", "/about/", "/tools/", "/login/", "/rss.xml"];
+const staticRoutes = ["/", "/about/", "/tools/", "/login/"];
 
 export async function GET() {
-  const posts = sortPostsByDate((await getCollection("blog")).filter(isPublished));
-  const postRoutes = posts.map(getPostUrl);
-  const tagRoutes = getAllTags(posts).map(getTagUrl);
-
-  const urls = [...staticRoutes, ...postRoutes, ...tagRoutes]
+  const urls = staticRoutes
     .map((route) => {
       const loc = new URL(route, site.url).toString();
 
