@@ -1,4 +1,5 @@
 export type Tool = {
+  slug: string;
   name: string;
   category: string;
   description: string;
@@ -12,6 +13,7 @@ export type Tool = {
 
 export const tools: Tool[] = [
   {
+    slug: "morning-playlist",
     name: "晨间歌单",
     category: "音乐",
     description: "早上洗漱、煮咖啡或者收拾桌面时会放的歌，声音不大，刚好让一天慢慢醒过来。",
@@ -24,6 +26,7 @@ export const tools: Tool[] = [
     ],
   },
   {
+    slug: "walking-route",
     name: "散步路线",
     category: "散步",
     description: "饭后常走的一小圈，不远也不费劲。走完以后，心情会比出门前清亮一点。",
@@ -36,6 +39,7 @@ export const tools: Tool[] = [
     ],
   },
   {
+    slug: "kitchen-list",
     name: "厨房清单",
     category: "做饭",
     description: "把最近想做的饭、需要补的调料和偶尔成功的小菜记在一起，省得临时想不起来。",
@@ -48,6 +52,7 @@ export const tools: Tool[] = [
     ],
   },
   {
+    slug: "bedtime-routine",
     name: "睡前整理",
     category: "整理",
     description: "睡前把桌面、杯子和明天要带的东西放好。不是为了完美，只是让第二天轻松一点。",
