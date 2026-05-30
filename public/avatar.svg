@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">happy,for you avatar</title>
+  <desc id="desc">Custom avatar placeholder for the site header.</desc>
+  <rect width="160" height="160" rx="40" fill="#eef4fb"/>
+  <path d="M30 96c14 20 30 30 50 30s36-10 50-30" fill="none" stroke="#2563eb" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="58" cy="64" r="10" fill="#111827"/>
+  <circle cx="102" cy="64" r="10" fill="#111827"/>
+  <path d="M32 36c13-12 29-18 48-18s35 6 48 18" fill="none" stroke="#7db7ff" stroke-width="12" stroke-linecap="round"/>
+</svg>

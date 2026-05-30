@@ -2,6 +2,8 @@ const siteUrl = (import.meta.env.PUBLIC_SITE_URL ?? "https://example.com").repla
 
 export const site = {
   name: "李明的技术手记",
+  brandName: "happy,for you",
+  avatar: "/avatar.svg",
   description: "记录前端工程、云端部署、开发工具与长期主义技术实践。",
   url: siteUrl,
   author: "李明",
