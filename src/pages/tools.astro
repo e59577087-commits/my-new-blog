@@ -1,5 +1,4 @@
 ---
-import SectionTitle from "../components/SectionTitle.astro";
 import ToolCard from "../components/ToolCard.astro";
 import { tools } from "../data/tools";
 import BaseLayout from "../layouts/BaseLayout.astro";
@@ -8,23 +7,19 @@ const categories = Array.from(new Set(tools.map((tool) => tool.category)));
 ---
 
 <BaseLayout title="日常" description="一些最近常出现在生活里的小东西。">
-  <section class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-    <div class="grid gap-8 lg:grid-cols-[1fr_280px] lg:items-end">
-      <SectionTitle
-        eyebrow="日常"
-        title="最近生活里常出现的东西"
-        description="这里不做正式推荐，只放一些最近顺手、喜欢，或者想继续保留下来的小习惯。"
-      />
+  <section class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p class="text-sm text-sky-200">日常</p>
+        <h1 class="mt-1 text-3xl font-semibold leading-tight text-white sm:text-4xl">日常</h1>
+      </div>
 
-      <aside class="surface rounded-lg p-5">
-        <p class="text-sm text-slate-500">当前分类</p>
-        <div class="mt-4 flex flex-wrap gap-2">
-          {categories.map((category) => <span class="rounded border hairline bg-[#0f1115] px-2.5 py-1 text-xs text-slate-300">{category}</span>)}
-        </div>
-      </aside>
-    </div>
+      <div class="flex flex-wrap gap-2">
+        {categories.map((category) => <span class="rounded border hairline bg-[#0f1115] px-2.5 py-1 text-xs text-slate-300">{category}</span>)}
+      </div>
+    </header>
 
-    <div class="mt-10 grid gap-4 md:grid-cols-2">
+    <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {tools.map((tool) => <ToolCard tool={tool} />)}
     </div>
   </section>
