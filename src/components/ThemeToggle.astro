@@ -1,0 +1,67 @@
+<button type="button" class="theme-toggle size-9 rounded-md border transition-colors" data-theme-toggle aria-label="切换主题" title="切换主题">
+  <svg data-theme-icon="moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a7 7 0 1 0 11 11Z"></path>
+  </svg>
+  <svg data-theme-icon="sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M12 2v2"></path>
+    <path d="M12 20v2"></path>
+    <path d="m4.93 4.93 1.41 1.41"></path>
+    <path d="m17.66 17.66 1.41 1.41"></path>
+    <path d="M2 12h2"></path>
+    <path d="M20 12h2"></path>
+    <path d="m6.34 17.66-1.41 1.41"></path>
+    <path d="m19.07 4.93-1.41 1.41"></path>
+  </svg>
+</button>
+
+<script>
+  const storageKey = "blog-theme";
+  const root = document.documentElement;
+  const toggles = document.querySelectorAll("[data-theme-toggle]");
+  const systemQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+  const isTheme = (value) => value === "dark" || value === "light";
+  const getStoredTheme = () => {
+    try {
+      const value = window.localStorage.getItem(storageKey);
+      return isTheme(value) ? value : null;
+    } catch {
+      return null;
+    }
+  };
+  const getSystemTheme = () => (systemQuery.matches ? "dark" : "light");
+
+  const applyTheme = (theme, persist = false) => {
+    root.dataset.theme = theme;
+    root.classList.toggle("dark", theme === "dark");
+    root.classList.toggle("light", theme === "light");
+    root.style.colorScheme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#12161d" : "#f5f7fb");
+
+    toggles.forEach((toggle) => {
+      toggle.setAttribute("aria-label", theme === "dark" ? "切换到浅色模式" : "切换到深色模式");
+      toggle.setAttribute("title", theme === "dark" ? "切换到浅色模式" : "切换到深色模式");
+    });
+
+    if (persist) {
+      try {
+        window.localStorage.setItem(storageKey, theme);
+      } catch {
+        // Ignore storage failures in private or restricted browsing modes.
+      }
+    }
+  };
+
+  applyTheme(getStoredTheme() ?? getSystemTheme());
+
+  toggles.forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      applyTheme(root.dataset.theme === "dark" ? "light" : "dark", true);
+    });
+  });
+
+  systemQuery.addEventListener("change", () => {
+    if (!getStoredTheme()) applyTheme(getSystemTheme());
+  });
+</script>

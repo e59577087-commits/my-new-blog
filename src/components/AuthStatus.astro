@@ -1,12 +1,12 @@
 <div class="auth-status flex shrink-0 items-center" data-auth-status>
-  <a href="/login/" data-auth-login class="rounded-md border hairline bg-[#111318] px-3 py-1.5 text-sm text-slate-300 transition-colors hover:border-sky-300/35 hover:text-white">
+  <a href="/login/" data-auth-login class="auth-control rounded-md border px-3 py-1.5 text-sm transition-colors">
     登录
   </a>
 
-  <div data-auth-user hidden class="items-center gap-2 rounded-md border hairline bg-[#111318] px-2 py-1.5">
-    <img data-auth-avatar alt="用户头像" class="size-6 rounded-full border hairline bg-[#16181d] object-cover" />
-    <span data-auth-name class="hidden max-w-24 truncate text-sm text-slate-200 sm:inline"></span>
-    <button type="button" data-auth-signout class="rounded px-2 py-1 text-sm text-slate-400 transition-colors hover:bg-[#16181d] hover:text-white">
+  <div data-auth-user hidden class="auth-control items-center gap-2 rounded-md border px-2 py-1.5">
+    <img data-auth-avatar alt="用户头像" class="size-6 rounded-full border hairline object-cover" />
+    <span data-auth-name class="hidden max-w-24 truncate text-sm sm:inline"></span>
+    <button type="button" data-auth-signout class="rounded px-2 py-1 text-sm transition-colors hover:bg-[var(--color-surface-hover)]">
       退出
     </button>
   </div>

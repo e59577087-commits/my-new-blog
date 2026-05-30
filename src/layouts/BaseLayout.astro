@@ -19,13 +19,38 @@ const socialImageUrl = new URL(image, site.url);
 ---
 
 <!doctype html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
+    <meta name="theme-color" content="#f5f7fb" />
+    <script is:inline>
+      (() => {
+        const storageKey = "blog-theme";
+        const root = document.documentElement;
+        const themeMeta = () => document.querySelector('meta[name="theme-color"]');
+        const getSystemTheme = () => (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        const getStoredTheme = () => {
+          try {
+            const value = window.localStorage.getItem(storageKey);
+            return value === "dark" || value === "light" ? value : null;
+          } catch {
+            return null;
+          }
+        };
+        const applyTheme = (theme) => {
+          root.dataset.theme = theme;
+          root.classList.toggle("dark", theme === "dark");
+          root.classList.toggle("light", theme === "light");
+          root.style.colorScheme = theme;
+          themeMeta()?.setAttribute("content", theme === "dark" ? "#12161d" : "#f5f7fb");
+        };
+
+        applyTheme(getStoredTheme() ?? getSystemTheme());
+      })();
+    </script>
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#0f1115" />
     <link rel="canonical" href={canonicalUrl} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
