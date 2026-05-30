@@ -14,8 +14,8 @@ const latest = articles[0];
     </div>
 
     <section class="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)]">
-      <a href={getArticleUrl(latest)} class="surface reveal group block overflow-hidden rounded-lg">
-          <img src={latest.data.cover} alt="" loading="eager" class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]" />
+      <a href={getArticleUrl(latest)} class="surface motion-card reveal group block overflow-hidden rounded-lg">
+        <img src={latest.data.cover} alt="" loading="eager" class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]" />
 
         <div class="p-5 sm:p-6">
           <time datetime={latest.data.date.toISOString()} class="text-sm text-slate-500">{formatArticleDate(latest.data.date)}</time>
