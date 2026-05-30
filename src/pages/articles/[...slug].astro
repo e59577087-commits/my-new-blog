@@ -1,0 +1,36 @@
+---
+import { getCollection, render } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { formatArticleDate, getArticleSlug, isPublishedArticle, sortArticlesByDate } from "../../utils/articles";
+
+export async function getStaticPaths() {
+  const articles = sortArticlesByDate((await getCollection("articles")).filter(isPublishedArticle));
+
+  return articles.map((article) => ({
+    params: { slug: getArticleSlug(article) },
+    props: { article },
+  }));
+}
+
+const { article } = Astro.props;
+const { Content } = await render(article);
+---
+
+<BaseLayout title={article.data.title} description={article.data.description}>
+  <article class="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+    <a href="/" class="fine-link text-sm">返回首页</a>
+
+    <header class="mt-8 border-b hairline pb-8">
+      <time datetime={article.data.date.toISOString()} class="text-sm text-slate-500">{formatArticleDate(article.data.date)}</time>
+      <h1 class="mt-4 text-balance text-3xl font-semibold leading-tight text-white sm:text-5xl">{article.data.title}</h1>
+      <div class="mt-5 flex flex-wrap gap-2">
+        {article.data.tags.map((tag) => <span class="rounded border hairline bg-[#111318] px-2.5 py-1 text-xs text-slate-400">{tag}</span>)}
+      </div>
+      <img src={article.data.cover} alt="" class="mt-8 aspect-[16/8] w-full rounded-lg border hairline object-cover" />
+    </header>
+
+    <div class="prose-tech mt-10 max-w-3xl space-y-6">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>

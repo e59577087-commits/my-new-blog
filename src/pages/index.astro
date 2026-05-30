@@ -1,34 +1,45 @@
 ---
-import { tools } from "../data/tools";
+import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { formatArticleDate, getArticleUrl, isPublishedArticle, sortArticlesByDate } from "../utils/articles";
 
-const latest = tools[0];
+const articles = sortArticlesByDate((await getCollection("articles")).filter(isPublishedArticle));
+const latest = articles[0];
 ---
 
 <BaseLayout title="首页">
   <section class="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-    <article class="surface reveal overflow-hidden rounded-lg">
-      <div class="grid lg:grid-cols-[1.08fr_0.92fr] lg:items-stretch">
-        <a href={latest.links[0].href} class="block">
-          <img src={latest.screenshot} alt="" loading="eager" class="aspect-[16/9] h-full w-full object-cover lg:aspect-auto" />
-        </a>
+    <div class="mb-6">
+      <h1 class="text-4xl font-semibold leading-tight text-white sm:text-5xl">最新</h1>
+    </div>
 
-        <div class="flex flex-col justify-center p-6 sm:p-8 lg:p-10">
-          <h1 class="text-4xl font-semibold leading-tight text-white sm:text-5xl">最新</h1>
-          <h2 class="mt-5 text-2xl font-semibold leading-8 text-slate-100 sm:text-3xl">{latest.name}</h2>
+    <section class="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)]">
+      <a href={getArticleUrl(latest)} class="surface reveal group block overflow-hidden rounded-lg">
+          <img src={latest.data.cover} alt="" loading="eager" class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]" />
 
-          <div class="mt-5 flex flex-wrap gap-2">
-            <span class="rounded border hairline bg-[#0f1115] px-2.5 py-1 text-xs text-slate-300">{latest.category}</span>
-            {latest.tags.map((tag) => <span class="rounded bg-[#0f1115] px-2.5 py-1 text-xs text-slate-400">{tag}</span>)}
-          </div>
+        <div class="p-5 sm:p-6">
+          <time datetime={latest.data.date.toISOString()} class="text-sm text-slate-500">{formatArticleDate(latest.data.date)}</time>
+          <h2 class="mt-3 text-2xl font-semibold leading-8 text-slate-100 transition-colors group-hover:text-white sm:text-3xl">{latest.data.title}</h2>
 
-          <div class="mt-8">
-            <a href={latest.links[0].href} class="inline-flex rounded-md bg-slate-100 px-4 py-2.5 text-sm font-medium text-[#0f1115] transition-colors hover:bg-white">
-              查看
-            </a>
+          <div class="mt-4 flex flex-wrap gap-2">
+            {latest.data.tags.map((tag) => <span class="rounded bg-[#0f1115] px-2.5 py-1 text-xs text-slate-400">{tag}</span>)}
           </div>
         </div>
+      </a>
+
+      <div class="space-y-3">
+        {
+          articles.map((article) => (
+            <a href={getArticleUrl(article)} class="surface-soft motion-card block rounded-lg p-4">
+              <time datetime={article.data.date.toISOString()} class="text-xs text-slate-500">{formatArticleDate(article.data.date)}</time>
+              <h2 class="mt-2 text-lg font-semibold leading-7 text-white">{article.data.title}</h2>
+              <div class="mt-3 flex flex-wrap gap-1.5">
+                {article.data.tags.map((tag) => <span class="rounded bg-[#0f1115] px-2 py-0.5 text-xs text-slate-400">{tag}</span>)}
+              </div>
+            </a>
+          ))
+        }
       </div>
-    </article>
+    </section>
   </section>
 </BaseLayout>
