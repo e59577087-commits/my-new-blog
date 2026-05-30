@@ -2,20 +2,14 @@
 import ToolCard from "../components/ToolCard.astro";
 import { tools } from "../data/tools";
 import BaseLayout from "../layouts/BaseLayout.astro";
-
-const categories = Array.from(new Set(tools.map((tool) => tool.category)));
 ---
 
 <BaseLayout title="日常" description="一些最近常出现在生活里的小东西。">
   <section class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-    <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <header>
       <div>
         <p class="text-sm text-sky-200">日常</p>
         <h1 class="mt-1 text-3xl font-semibold leading-tight text-white sm:text-4xl">日常</h1>
-      </div>
-
-      <div class="flex flex-wrap gap-2">
-        {categories.map((category) => <span class="rounded border hairline bg-[#0f1115] px-2.5 py-1 text-xs text-slate-300">{category}</span>)}
       </div>
     </header>
 
