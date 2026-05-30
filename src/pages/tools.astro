@@ -7,13 +7,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 const categories = Array.from(new Set(tools.map((tool) => tool.category)));
 ---
 
-<BaseLayout title="软件分享" description="面向独立开发者和技术写作者的软件工具导航。">
+<BaseLayout title="日常" description="一些最近常出现在生活里的小东西。">
   <section class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
     <div class="grid gap-8 lg:grid-cols-[1fr_280px] lg:items-end">
       <SectionTitle
-        eyebrow="软件分享"
-        title="独立开发者工具导航"
-        description="收集适合写作、构建、设计和部署的高质量软件。只保留必要信息：用途、分类、官网、GitHub 与下载入口。"
+        eyebrow="日常"
+        title="最近生活里常出现的东西"
+        description="这里不做正式推荐，只放一些最近顺手、喜欢，或者想继续保留下来的小习惯。"
       />
 
       <aside class="surface rounded-lg p-5">

@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">李明的技术手记</title>
-  <desc id="desc">中文技术博客社交预览图</desc>
+  <title id="title">happy,for you</title>
+  <desc id="desc">个人日常小站社交预览图</desc>
   <rect width="1200" height="630" fill="#0f1115"/>
   <path d="M0 120h1200M0 240h1200M0 360h1200M0 480h1200M200 0v630M400 0v630M600 0v630M800 0v630M1000 0v630" stroke="#16181d" stroke-width="1"/>
   <rect x="96" y="96" width="1008" height="438" rx="12" fill="#111318" stroke="#242832"/>
-  <text x="148" y="190" fill="#7dd3fc" font-family="JetBrains Mono, Microsoft YaHei, Consolas, monospace" font-size="28" letter-spacing="2">技术 / 笔记 / 构建</text>
-  <text x="148" y="310" fill="#f8fafc" font-family="Inter, Microsoft YaHei, sans-serif" font-size="72" font-weight="700">李明的技术手记</text>
-  <text x="148" y="394" fill="#94a3b8" font-family="Inter, Microsoft YaHei, sans-serif" font-size="34">记录前端工程、云端部署与长期主义技术实践</text>
-  <text x="148" y="470" fill="#cbd5e1" font-family="JetBrains Mono, Consolas, monospace" font-size="26">Astro · TailwindCSS · Cloudflare Pages</text>
+  <text x="148" y="190" fill="#7dd3fc" font-family="Inter, Microsoft YaHei, sans-serif" font-size="28" letter-spacing="2">日常 / 心情 / 喜欢的事</text>
+  <text x="148" y="310" fill="#f8fafc" font-family="Inter, Microsoft YaHei, sans-serif" font-size="72" font-weight="700">happy,for you</text>
+  <text x="148" y="394" fill="#94a3b8" font-family="Inter, Microsoft YaHei, sans-serif" font-size="34">把普通日子认真收起来</text>
+  <text x="148" y="470" fill="#cbd5e1" font-family="Inter, Microsoft YaHei, sans-serif" font-size="26">清晨 · 散步 · 音乐 · 小习惯</text>
 </svg>

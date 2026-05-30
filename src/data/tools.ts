@@ -2,52 +2,61 @@ export type Tool = {
   name: string;
   category: string;
   description: string;
-  url: string;
-  github: string;
-  download: string;
   screenshot: string;
   tags: string[];
+  links: {
+    label: string;
+    href: string;
+  }[];
 };
 
 export const tools: Tool[] = [
   {
-    name: "Astro",
-    category: "静态站点",
-    description: "用于构建内容优先的网站，默认输出轻量、快速、适合部署到 Cloudflare Pages。",
-    url: "https://astro.build",
-    github: "https://github.com/withastro/astro",
-    download: "https://docs.astro.build/zh-cn/install-and-setup/",
+    name: "晨间歌单",
+    category: "音乐",
+    description: "早上洗漱、煮咖啡或者收拾桌面时会放的歌，声音不大，刚好让一天慢慢醒过来。",
     screenshot: "/tools/astro.svg",
-    tags: ["SSG", "Markdown", "组件"],
+    tags: ["清晨", "放松", "通勤"],
+    links: [
+      { label: "记录", href: "/tags/音乐/" },
+      { label: "日记", href: "/blog/" },
+      { label: "关于", href: "/about/" },
+    ],
   },
   {
-    name: "TailwindCSS",
-    category: "界面系统",
-    description: "用原子类快速组织一致的间距、排版、颜色和响应式布局。",
-    url: "https://tailwindcss.com",
-    github: "https://github.com/tailwindlabs/tailwindcss",
-    download: "https://tailwindcss.com/docs/installation",
+    name: "散步路线",
+    category: "散步",
+    description: "饭后常走的一小圈，不远也不费劲。走完以后，心情会比出门前清亮一点。",
     screenshot: "/tools/tailwindcss.svg",
-    tags: ["CSS", "设计系统", "暗色模式"],
+    tags: ["傍晚", "楼下", "慢走"],
+    links: [
+      { label: "记录", href: "/tags/散步/" },
+      { label: "日记", href: "/blog/" },
+      { label: "关于", href: "/about/" },
+    ],
   },
   {
-    name: "Cloudflare Pages",
-    category: "部署",
-    description: "面向前端项目的全球静态托管平台，适合个人博客和文档站。",
-    url: "https://pages.cloudflare.com",
-    github: "https://github.com/cloudflare",
-    download: "https://developers.cloudflare.com/pages/get-started/",
+    name: "厨房清单",
+    category: "做饭",
+    description: "把最近想做的饭、需要补的调料和偶尔成功的小菜记在一起，省得临时想不起来。",
     screenshot: "/tools/cloudflare-pages.svg",
-    tags: ["CDN", "CI", "边缘网络"],
+    tags: ["晚饭", "清单", "家常"],
+    links: [
+      { label: "记录", href: "/blog/" },
+      { label: "标签", href: "/tags/" },
+      { label: "关于", href: "/about/" },
+    ],
   },
   {
-    name: "Obsidian",
-    category: "写作",
-    description: "本地优先的 Markdown 知识库，用于沉淀选题、草稿和阅读笔记。",
-    url: "https://obsidian.md",
-    github: "https://github.com/obsidianmd",
-    download: "https://obsidian.md/download",
+    name: "睡前整理",
+    category: "整理",
+    description: "睡前把桌面、杯子和明天要带的东西放好。不是为了完美，只是让第二天轻松一点。",
     screenshot: "/tools/obsidian.svg",
-    tags: ["Markdown", "知识库", "写作流"],
+    tags: ["夜晚", "房间", "小习惯"],
+    links: [
+      { label: "记录", href: "/tags/整理/" },
+      { label: "日记", href: "/blog/" },
+      { label: "关于", href: "/about/" },
+    ],
   },
 ];

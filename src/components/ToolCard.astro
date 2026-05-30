@@ -29,15 +29,13 @@ const { tool } = Astro.props;
     </div>
 
     <div class="mt-6 grid grid-cols-3 gap-2 border-t hairline pt-5">
-      <a href={tool.url} target="_blank" rel="noreferrer" class="rounded border hairline px-3 py-2 text-center text-sm text-slate-300 transition-colors hover:border-sky-300/40 hover:bg-[#0f1115] hover:text-white">
-        官网
-      </a>
-      <a href={tool.github} target="_blank" rel="noreferrer" class="rounded border hairline px-3 py-2 text-center text-sm text-slate-300 transition-colors hover:border-sky-300/40 hover:bg-[#0f1115] hover:text-white">
-        GitHub
-      </a>
-      <a href={tool.download} target="_blank" rel="noreferrer" class="rounded border hairline px-3 py-2 text-center text-sm text-slate-300 transition-colors hover:border-sky-300/40 hover:bg-[#0f1115] hover:text-white">
-        下载
-      </a>
+      {
+        tool.links.map((link) => (
+          <a href={link.href} class="rounded border hairline px-3 py-2 text-center text-sm text-slate-300 transition-colors hover:border-sky-300/40 hover:bg-[#0f1115] hover:text-white">
+            {link.label}
+          </a>
+        ))
+      }
     </div>
   </div>
 </article>

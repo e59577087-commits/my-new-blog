@@ -9,12 +9,12 @@ const posts = sortPostsByDate((await getCollection("blog")).filter(isPublished))
 const tags = getAllTags(posts);
 ---
 
-<BaseLayout title="博客" description="中文技术博客文章列表。">
+<BaseLayout title="日记" description="日常记录和零散想法。">
   <section class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
     <SectionTitle
       eyebrow="博客"
-      title="博客文章"
-      description="所有文章来自 Astro Content Collections，草稿不会出现在公开列表、RSS 或 sitemap 中。"
+      title="日记文章"
+      description="一些生活里的小记录，按时间放在这里。"
     />
 
     <div class="mt-8 flex flex-wrap gap-2">

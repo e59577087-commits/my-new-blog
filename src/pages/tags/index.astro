@@ -11,9 +11,9 @@ const tags = getAllTags(posts).map((tag) => ({
 }));
 ---
 
-<BaseLayout title="标签" description="中文技术博客标签归档。">
+<BaseLayout title="标签" description="按主题整理日常记录。">
   <section class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
-    <SectionTitle eyebrow="标签" title="按主题浏览文章" description="标签来自 Markdown frontmatter，用于把工程实践、部署流程和界面设计等主题归档到一起。" />
+    <SectionTitle eyebrow="标签" title="按主题浏览文章" description="把相似的日常片段放在一起，之后回头看会更容易找到当时的心情。" />
 
     <div class="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {

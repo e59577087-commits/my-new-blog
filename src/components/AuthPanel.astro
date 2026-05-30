@@ -7,7 +7,7 @@
     <div>
       <p class="kicker text-sm font-medium">账户登录</p>
       <h2 class="heading-text mt-2 text-2xl font-semibold">登录后同步你的身份状态</h2>
-      <p class="body-text mt-3 text-base leading-8">当前已接入 Supabase Auth 和文章评论。你可以使用 GitHub、Google 或邮箱登录链接进入。</p>
+      <p class="body-text mt-3 text-base leading-8">登录后可以在文章下面留言，也可以在下一次回来时继续使用同一个身份。</p>
     </div>
 
     <div class="mt-7 grid gap-3 sm:grid-cols-2">
@@ -95,7 +95,7 @@
 
   if (!isSupabaseConfigured || !supabase) {
     if (configMissing) configMissing.hidden = false;
-    setMessage("配置完成后，这里会显示 GitHub、Google 和邮箱登录状态。");
+    setMessage("配置完成后，这里会显示第三方和邮箱登录状态。");
   } else {
     const redirectTo = `${window.location.origin}/login/`;
     const { data } = await supabase.auth.getSession();
