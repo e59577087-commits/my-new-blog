@@ -1,6 +1,6 @@
 import { site } from "../data/site";
 
-const staticRoutes = ["/", "/about/", "/tools/", "/login/"];
+const staticRoutes = ["/", "/about/", "/tools/", "/share/", "/login/"];
 
 export async function GET() {
   const urls = staticRoutes

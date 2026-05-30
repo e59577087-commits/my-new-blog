@@ -12,5 +12,6 @@ export const site = {
     { label: "首页", href: "/" },
     { label: "关于", href: "/about/" },
     { label: "日常", href: "/tools/" },
+    { label: "分享", href: "/share/" },
   ],
 };
