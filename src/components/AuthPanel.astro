@@ -70,9 +70,22 @@
   const emailForm = panel?.querySelector("[data-email-form]");
   const emailInput = panel?.querySelector("[data-email-input]");
   const supabase = createBrowserSupabaseClient();
+  const configuredSiteUrl = import.meta.env.PUBLIC_SITE_URL?.replace(/\/+$/, "");
+
+  const getRedirectTo = () => `${configuredSiteUrl || window.location.origin}/login`;
 
   const setMessage = (text) => {
     if (message) message.textContent = text;
+  };
+
+  const getCurrentUser = async () => {
+    if (!supabase) return null;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session?.user) return sessionData.session.user;
+
+    const { data: userData } = await supabase.auth.getUser();
+    return userData.user ?? null;
   };
 
   const setPanelState = (user) => {
@@ -97,9 +110,8 @@
     if (configMissing) configMissing.hidden = false;
     setMessage("配置完成后，这里会显示第三方和邮箱登录状态。");
   } else {
-    const redirectTo = `${window.location.origin}/login/`;
-    const { data } = await supabase.auth.getSession();
-    setPanelState(data.session?.user ?? null);
+    const redirectTo = getRedirectTo();
+    setPanelState(await getCurrentUser());
 
     supabase.auth.onAuthStateChange((_event, session) => {
       setPanelState(session?.user ?? null);
@@ -109,10 +121,12 @@
       button.addEventListener("click", async () => {
         const provider = button.getAttribute("data-oauth-provider");
         setMessage("正在跳转到登录服务...");
-        await supabase.auth.signInWithOAuth({
+        const { error } = await supabase.auth.signInWithOAuth({
           provider,
           options: { redirectTo },
         });
+
+        if (error) setMessage(`登录失败：${error.message}`);
       });
     });
 

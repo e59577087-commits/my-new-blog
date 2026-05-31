@@ -23,6 +23,16 @@
   const signOutButton = root?.querySelector("[data-auth-signout]");
   const supabase = createBrowserSupabaseClient();
 
+  const getCurrentUser = async () => {
+    if (!supabase) return null;
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session?.user) return sessionData.session.user;
+
+    const { data: userData } = await supabase.auth.getUser();
+    return userData.user ?? null;
+  };
+
   const renderAuthStatus = (user) => {
     if (!loginLink || !userBox || !avatar || !name) return;
 
@@ -42,8 +52,7 @@
   };
 
   if (supabase) {
-    const { data } = await supabase.auth.getSession();
-    renderAuthStatus(data.session?.user ?? null);
+    renderAuthStatus(await getCurrentUser());
 
     supabase.auth.onAuthStateChange((_event, session) => {
       renderAuthStatus(session?.user ?? null);
