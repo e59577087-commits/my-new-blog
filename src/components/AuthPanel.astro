@@ -113,6 +113,8 @@
     if (message) message.textContent = text;
   };
 
+  const normalizeEmail = (value) => value?.trim().toLowerCase() ?? "";
+
   const notifyAuthUpdated = () => {
     window.dispatchEvent(new CustomEvent("auth-state-updated"));
   };
@@ -158,12 +160,13 @@
   };
 
   const sendEmailOtp = async (targetEmail) => {
-    if (!supabase || !targetEmail) return false;
+    const normalizedEmail = normalizeEmail(targetEmail);
+    if (!supabase || !normalizedEmail) return false;
 
     setSending(true);
     setMessage("正在发送邮箱验证码...");
     const { error } = await supabase.auth.signInWithOtp({
-      email: targetEmail,
+      email: normalizedEmail,
     });
     setSending(false);
 
@@ -172,10 +175,12 @@
       return false;
     }
 
-    currentEmail = targetEmail;
+    currentEmail = normalizedEmail;
+    if (emailInput) emailInput.value = normalizedEmail;
+    if (otpInput) otpInput.value = "";
     showOtpForm();
     startResendCountdown();
-    setMessage("验证码已发送，请检查邮箱。");
+    setMessage(`验证码已发送至 ${normalizedEmail}，请检查邮箱。`);
     return true;
   };
 
@@ -233,7 +238,7 @@
 
     emailForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const targetEmail = emailInput?.value?.trim();
+      const targetEmail = normalizeEmail(emailInput?.value);
       if (!targetEmail) return;
 
       await sendEmailOtp(targetEmail);
@@ -241,10 +246,14 @@
 
     otpForm?.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const targetEmail = currentEmail || emailInput?.value?.trim();
+      const targetEmail = normalizeEmail(currentEmail || emailInput?.value);
       const otp = otpInput?.value?.trim();
 
-      if (!targetEmail || !otp) return;
+      if (!targetEmail) {
+        setMessage("请先发送验证码。");
+        return;
+      }
+      if (!otp) return;
       if (!/^\d{6}$/.test(otp)) {
         setMessage("请输入 6 位数字验证码。");
         return;
@@ -271,7 +280,7 @@
 
     resendOtpButton?.addEventListener("click", async () => {
       if (resendSeconds > 0) return;
-      const targetEmail = currentEmail || emailInput?.value?.trim();
+      const targetEmail = normalizeEmail(currentEmail || emailInput?.value);
       if (!targetEmail) {
         setMessage("请先填写邮箱。");
         return;
