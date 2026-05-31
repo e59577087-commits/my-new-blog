@@ -58,6 +58,10 @@
       renderAuthStatus(session?.user ?? null);
     });
 
+    window.addEventListener("auth-state-updated", async () => {
+      renderAuthStatus(await getCurrentUser());
+    });
+
     signOutButton?.addEventListener("click", async () => {
       await supabase.auth.signOut();
       renderAuthStatus(null);

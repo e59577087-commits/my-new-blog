@@ -20,7 +20,7 @@
     </div>
 
     <form data-email-form class="auth-divider mt-7 border-t pt-6">
-      <label for="auth-email" class="heading-text text-sm font-medium">邮箱登录</label>
+      <label for="auth-email" class="heading-text text-sm font-medium">邮箱验证码登录</label>
       <div class="mt-3 flex flex-col gap-3 sm:flex-row">
         <input
           id="auth-email"
@@ -30,10 +30,38 @@
           placeholder="name@example.com"
           class="input-control min-w-0 flex-1 rounded-md border px-3 py-2.5 text-sm outline-none transition"
         />
-        <button type="submit" class="primary-button rounded-md border px-4 py-2.5 text-sm font-medium transition-colors">
-          发送登录链接
+        <button data-send-otp type="submit" class="primary-button rounded-md border px-4 py-2.5 text-sm font-medium transition-colors">
+          发送验证码
         </button>
       </div>
+    </form>
+
+    <form data-otp-form hidden class="mt-5">
+      <label for="auth-otp" class="heading-text text-sm font-medium">6 位验证码</label>
+      <div class="mt-3 flex flex-col gap-3 sm:flex-row">
+        <input
+          id="auth-otp"
+          data-otp-input
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          pattern="[0-9]{6}"
+          maxlength="6"
+          required
+          placeholder="000000"
+          class="input-control min-w-0 flex-1 rounded-md border px-3 py-2.5 text-sm outline-none transition"
+        />
+        <button type="submit" class="primary-button rounded-md border px-4 py-2.5 text-sm font-medium transition-colors">
+          验证登录
+        </button>
+      </div>
+      <button
+        data-resend-otp
+        type="button"
+        class="secondary-button mt-3 rounded-md border px-4 py-2.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        重新发送验证码
+      </button>
     </form>
   </div>
 
@@ -69,13 +97,86 @@
   const signOutButton = panel?.querySelector("[data-panel-signout]");
   const emailForm = panel?.querySelector("[data-email-form]");
   const emailInput = panel?.querySelector("[data-email-input]");
+  const sendOtpButton = panel?.querySelector("[data-send-otp]");
+  const otpForm = panel?.querySelector("[data-otp-form]");
+  const otpInput = panel?.querySelector("[data-otp-input]");
+  const resendOtpButton = panel?.querySelector("[data-resend-otp]");
   const supabase = createBrowserSupabaseClient();
   const configuredSiteUrl = import.meta.env.PUBLIC_SITE_URL?.replace(/\/+$/, "");
 
   const getRedirectTo = () => `${configuredSiteUrl || window.location.origin}/login`;
+  let currentEmail = "";
+  let resendSeconds = 0;
+  let resendTimer;
 
   const setMessage = (text) => {
     if (message) message.textContent = text;
+  };
+
+  const notifyAuthUpdated = () => {
+    window.dispatchEvent(new CustomEvent("auth-state-updated"));
+  };
+
+  const setSending = (isSending) => {
+    if (!sendOtpButton) return;
+    sendOtpButton.disabled = isSending;
+    sendOtpButton.textContent = isSending ? "正在发送..." : "发送验证码";
+  };
+
+  const setVerifying = (isVerifying) => {
+    const verifyButton = otpForm?.querySelector("button[type='submit']");
+    if (!verifyButton) return;
+    verifyButton.disabled = isVerifying;
+    verifyButton.textContent = isVerifying ? "正在验证..." : "验证登录";
+  };
+
+  const updateResendButton = () => {
+    if (!resendOtpButton) return;
+    resendOtpButton.disabled = resendSeconds > 0;
+    resendOtpButton.textContent = resendSeconds > 0 ? `${resendSeconds} 秒后重新发送` : "重新发送验证码";
+  };
+
+  const startResendCountdown = () => {
+    window.clearInterval(resendTimer);
+    resendSeconds = 60;
+    updateResendButton();
+
+    resendTimer = window.setInterval(() => {
+      resendSeconds -= 1;
+      updateResendButton();
+
+      if (resendSeconds <= 0) {
+        window.clearInterval(resendTimer);
+      }
+    }, 1000);
+  };
+
+  const showOtpForm = () => {
+    if (!otpForm) return;
+    otpForm.hidden = false;
+    otpInput?.focus();
+  };
+
+  const sendEmailOtp = async (targetEmail) => {
+    if (!supabase || !targetEmail) return false;
+
+    setSending(true);
+    setMessage("正在发送邮箱验证码...");
+    const { error } = await supabase.auth.signInWithOtp({
+      email: targetEmail,
+    });
+    setSending(false);
+
+    if (error) {
+      setMessage(`发送失败：${error.message}`);
+      return false;
+    }
+
+    currentEmail = targetEmail;
+    showOtpForm();
+    startResendCountdown();
+    setMessage("验证码已发送，请检查邮箱。");
+    return true;
   };
 
   const getCurrentUser = async () => {
@@ -135,18 +236,54 @@
       const targetEmail = emailInput?.value?.trim();
       if (!targetEmail) return;
 
-      setMessage("正在发送邮箱登录链接...");
-      const { error } = await supabase.auth.signInWithOtp({
-        email: targetEmail,
-        options: { emailRedirectTo: redirectTo },
-      });
+      await sendEmailOtp(targetEmail);
+    });
 
-      setMessage(error ? `发送失败：${error.message}` : "登录链接已发送，请检查邮箱。");
+    otpForm?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const targetEmail = currentEmail || emailInput?.value?.trim();
+      const otp = otpInput?.value?.trim();
+
+      if (!targetEmail || !otp) return;
+      if (!/^\d{6}$/.test(otp)) {
+        setMessage("请输入 6 位数字验证码。");
+        return;
+      }
+
+      setVerifying(true);
+      setMessage("正在验证验证码...");
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: targetEmail,
+        token: otp,
+        type: "email",
+      });
+      setVerifying(false);
+
+      if (error) {
+        setMessage(`验证失败：${error.message}`);
+        return;
+      }
+
+      setPanelState(data.user ?? data.session?.user ?? (await getCurrentUser()));
+      notifyAuthUpdated();
+      setMessage("登录成功。");
+    });
+
+    resendOtpButton?.addEventListener("click", async () => {
+      if (resendSeconds > 0) return;
+      const targetEmail = currentEmail || emailInput?.value?.trim();
+      if (!targetEmail) {
+        setMessage("请先填写邮箱。");
+        return;
+      }
+
+      await sendEmailOtp(targetEmail);
     });
 
     signOutButton?.addEventListener("click", async () => {
       await supabase.auth.signOut();
       setPanelState(null);
+      notifyAuthUpdated();
       setMessage("已退出登录。");
     });
   }
