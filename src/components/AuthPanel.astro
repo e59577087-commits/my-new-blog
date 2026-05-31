@@ -133,9 +133,16 @@
   };
 
   const updateResendButton = () => {
+    const isCoolingDown = resendSeconds > 0;
+
+    if (sendOtpButton) {
+      sendOtpButton.disabled = isCoolingDown;
+      sendOtpButton.textContent = isCoolingDown ? `${resendSeconds} 秒后重新发送` : "发送验证码";
+    }
+
     if (!resendOtpButton) return;
-    resendOtpButton.disabled = resendSeconds > 0;
-    resendOtpButton.textContent = resendSeconds > 0 ? `${resendSeconds} 秒后重新发送` : "重新发送验证码";
+    resendOtpButton.disabled = isCoolingDown;
+    resendOtpButton.textContent = isCoolingDown ? `${resendSeconds} 秒后重新发送` : "重新发送验证码";
   };
 
   const startResendCountdown = () => {
