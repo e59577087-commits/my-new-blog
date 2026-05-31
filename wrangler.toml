@@ -1,3 +1,13 @@
 name = "my-new-blog"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-05-29"
+
+[vars]
+PUBLIC_SITE_URL = "https://my-new-blog-cjz.pages.dev"
+PUBLIC_SUPABASE_URL = "https://govdfuzkcnbsnvozzqwb.supabase.co"
+PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_OmoC6JlLIwPfcj0SsEXxNQ_fP3M_VO7"
+
+[env.production.vars]
+PUBLIC_SITE_URL = "https://my-new-blog-cjz.pages.dev"
+PUBLIC_SUPABASE_URL = "https://govdfuzkcnbsnvozzqwb.supabase.co"
+PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_OmoC6JlLIwPfcj0SsEXxNQ_fP3M_VO7"

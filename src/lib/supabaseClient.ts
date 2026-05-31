@@ -1,8 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+const productionSupabaseUrl = "https://govdfuzkcnbsnvozzqwb.supabase.co";
+const productionSupabaseAnonKey = "sb_publishable_OmoC6JlLIwPfcj0SsEXxNQ_fP3M_VO7";
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || productionSupabaseUrl;
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || productionSupabaseAnonKey;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
