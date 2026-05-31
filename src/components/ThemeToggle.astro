@@ -20,6 +20,7 @@
   const root = document.documentElement;
   const toggles = document.querySelectorAll("[data-theme-toggle]");
   const systemQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   const isTheme = (value) => value === "dark" || value === "light";
   const getStoredTheme = () => {
@@ -53,11 +54,46 @@
     }
   };
 
+  const clearThemeTransition = () => {
+    root.classList.remove("theme-transitioning");
+    root.style.removeProperty("--theme-reveal-x");
+    root.style.removeProperty("--theme-reveal-y");
+    root.style.removeProperty("--theme-reveal-radius");
+  };
+
+  const setRevealOrigin = (toggle) => {
+    const rect = toggle.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+
+    root.style.setProperty("--theme-reveal-x", `${x}px`);
+    root.style.setProperty("--theme-reveal-y", `${y}px`);
+    root.style.setProperty("--theme-reveal-radius", `${radius}px`);
+  };
+
+  const transitionTheme = (theme, toggle) => {
+    setRevealOrigin(toggle);
+    root.classList.add("theme-transitioning");
+
+    if (!document.startViewTransition || motionQuery.matches) {
+      applyTheme(theme, true);
+      window.setTimeout(clearThemeTransition, 540);
+      return;
+    }
+
+    const transition = document.startViewTransition(() => {
+      applyTheme(theme, true);
+    });
+
+    transition.finished.finally(clearThemeTransition);
+  };
+
   applyTheme(getStoredTheme() ?? getSystemTheme());
 
   toggles.forEach((toggle) => {
     toggle.addEventListener("click", () => {
-      applyTheme(root.dataset.theme === "dark" ? "light" : "dark", true);
+      transitionTheme(root.dataset.theme === "dark" ? "light" : "dark", toggle);
     });
   });
 

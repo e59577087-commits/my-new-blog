@@ -9,6 +9,11 @@
 
 :root {
   color-scheme: light;
+  --theme-transition-duration: 540ms;
+  --theme-transition-easing: cubic-bezier(0.65, 0, 0.35, 1);
+  --theme-reveal-x: 50vw;
+  --theme-reveal-y: 50vh;
+  --theme-reveal-radius: 120vmax;
   --color-page: #f5f7fb;
   --color-page-soft: #eef3f8;
   --color-surface: rgba(255, 255, 255, 0.88);
@@ -275,6 +280,40 @@ a {
   display: none;
 }
 
+:root.theme-transitioning *,
+:root.theme-transitioning *::before,
+:root.theme-transitioning *::after {
+  transition-duration: var(--theme-transition-duration);
+  transition-property: background-color, border-color, box-shadow, color, fill, opacity, stroke;
+  transition-timing-function: var(--theme-transition-easing);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--theme-transition-duration);
+  animation-timing-function: var(--theme-transition-easing);
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  animation: none;
+}
+
+::view-transition-new(root) {
+  animation-name: theme-reveal;
+  clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+
+  to {
+    clip-path: circle(var(--theme-reveal-radius) at var(--theme-reveal-x) var(--theme-reveal-y));
+  }
+}
+
 .provider-button {
   display: flex;
   align-items: center;
@@ -516,5 +555,10 @@ a {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms !important;
   }
 }
