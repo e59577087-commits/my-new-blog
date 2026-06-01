@@ -104,15 +104,13 @@ const previewShares = shareItems.slice(0, 3);
           </div>
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {previewShares.map((item) => (
-              <a href={`/share/${item.slug}/`} class="surface-soft motion-card block rounded-lg p-4 sm:p-5" aria-label={`打开${item.title}`}>
-                <div class="flex items-center gap-4">
-                  <img src={item.screenshot} alt="" loading="lazy" class="size-16 shrink-0 rounded-md border hairline object-cover sm:size-20" />
-                  <div class="min-w-0">
-                    <p class="kicker text-xs">{item.category}</p>
-                    <h2 class="heading-text mt-1 truncate text-xl font-semibold leading-7">{item.title}</h2>
-                    <div class="mt-2 flex flex-wrap gap-1.5">
-                      {item.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2 py-0.5 text-xs muted">{tag}</span>)}
-                    </div>
+              <a href={`/share/${item.slug}/`} class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${item.title}`}>
+                <img src={item.screenshot} alt="" loading="lazy" class="w-24 shrink-0 object-cover sm:w-32" />
+                <div class="min-w-0 flex flex-col justify-center p-4">
+                  <p class="kicker text-xs">{item.category}</p>
+                  <h2 class="heading-text mt-1 truncate text-xl font-semibold leading-7">{item.title}</h2>
+                  <div class="mt-2 flex flex-wrap gap-1.5">
+                    {item.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2 py-0.5 text-xs muted">{tag}</span>)}
                   </div>
                 </div>
               </a>

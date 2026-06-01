@@ -8,15 +8,13 @@ type Props = {
 const { tool } = Astro.props;
 ---
 
-<a href={`/tools/${tool.slug}/`} class="surface-soft motion-card block rounded-lg p-4 sm:p-5" aria-label={`打开${tool.name}`}>
-  <div class="flex items-center gap-4">
-    <img src={tool.screenshot} alt="" loading="lazy" class="size-16 shrink-0 rounded-md border hairline object-cover sm:size-20" />
-    <div class="min-w-0">
+<a href={`/tools/${tool.slug}/`} class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${tool.name}`}>
+    <img src={tool.screenshot} alt="" loading="lazy" class="w-24 shrink-0 object-cover sm:w-32" />
+    <div class="min-w-0 flex flex-col justify-center p-4">
       <p class="kicker text-xs">{tool.category}</p>
       <h2 class="heading-text mt-1 truncate text-xl font-semibold leading-7">{tool.name}</h2>
       <div class="mt-2 flex flex-wrap gap-1.5">
         {tool.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2 py-0.5 text-xs muted">{tag}</span>)}
       </div>
     </div>
-  </div>
 </a>
