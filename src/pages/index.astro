@@ -1,45 +1,125 @@
 ---
 import { getCollection } from "astro:content";
+import ToolCard from "../components/ToolCard.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { shareItems } from "../data/share";
+import { tools } from "../data/tools";
 import { formatArticleDate, getArticleUrl, isPublishedArticle, sortArticlesByDate } from "../utils/articles";
 
 const articles = sortArticlesByDate((await getCollection("articles")).filter(isPublishedArticle));
 const latest = articles[0];
+const previewTools = tools.slice(0, 3);
+const previewShares = shareItems.slice(0, 3);
 ---
 
 <BaseLayout title="首页">
   <section class="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-    <div class="mb-6">
-      <h1 class="text-4xl font-semibold leading-tight text-white sm:text-5xl">最新</h1>
+    <!-- Hero -->
+    <div class="mb-8">
+      <h1 class="heading-text text-pretty text-3xl font-semibold leading-tight sm:text-4xl">
+        记录日常片段、喜欢的东西<br class="hidden sm:inline" />和慢慢整理好的生活小事。
+      </h1>
+      <p class="muted mt-4 text-base leading-8 sm:text-[17px]">
+        这里更像一张放在桌边的便签，写一点日常、心情、喜欢的东西。
+      </p>
     </div>
 
-    <section class="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)]">
-      <a href={getArticleUrl(latest)} class="surface motion-card reveal group block overflow-hidden rounded-lg">
-        <img src={latest.data.cover} alt="" loading="eager" class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]" />
+    <!-- 最新文章 -->
+    <section>
+      <div class="mb-5 flex items-end justify-between">
+        <h2 class="heading-text text-xl font-semibold">最新文章</h2>
+      </div>
 
-        <div class="p-5 sm:p-6">
-          <time datetime={latest.data.date.toISOString()} class="text-sm text-slate-500">{formatArticleDate(latest.data.date)}</time>
-          <h2 class="mt-3 text-2xl font-semibold leading-8 text-slate-100 transition-colors group-hover:text-white sm:text-3xl">{latest.data.title}</h2>
-
-          <div class="mt-4 flex flex-wrap gap-2">
-            {latest.data.tags.map((tag) => <span class="rounded bg-[#0f1115] px-2.5 py-1 text-xs text-slate-400">{tag}</span>)}
+      <div class="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)]">
+        <!-- Featured article -->
+        <a href={getArticleUrl(latest)} class="surface motion-card reveal group block overflow-hidden rounded-lg">
+          <img src={latest.data.cover} alt="" loading="eager" class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]" />
+          <div class="p-5 sm:p-6">
+            <time datetime={latest.data.date.toISOString()} class="faint-text text-sm">{formatArticleDate(latest.data.date)}</time>
+            <h2 class="heading-text mt-3 text-2xl font-semibold leading-8 transition-colors group-hover:text-[var(--color-accent-text)] sm:text-3xl">{latest.data.title}</h2>
+            <div class="mt-4 flex flex-wrap gap-2">
+              {latest.data.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2.5 py-1 text-xs muted">{tag}</span>)}
+            </div>
           </div>
-        </div>
-      </a>
+        </a>
 
-      <div class="space-y-3">
-        {
-          articles.map((article) => (
-            <a href={getArticleUrl(article)} class="surface-soft motion-card block rounded-lg p-4">
-              <time datetime={article.data.date.toISOString()} class="text-xs text-slate-500">{formatArticleDate(article.data.date)}</time>
-              <h2 class="mt-2 text-lg font-semibold leading-7 text-white">{article.data.title}</h2>
-              <div class="mt-3 flex flex-wrap gap-1.5">
-                {article.data.tags.map((tag) => <span class="rounded bg-[#0f1115] px-2 py-0.5 text-xs text-slate-400">{tag}</span>)}
-              </div>
-            </a>
-          ))
-        }
+        <!-- Article list -->
+        <div class="space-y-3">
+          {
+            articles.map((article) => (
+              <a href={getArticleUrl(article)} class="surface-soft motion-card flex gap-4 rounded-lg p-4">
+                <img src={article.data.cover} alt="" loading="lazy" class="size-20 shrink-0 rounded-md border hairline object-cover sm:size-24" />
+                <div class="min-w-0">
+                  <time datetime={article.data.date.toISOString()} class="faint-text text-xs">{formatArticleDate(article.data.date)}</time>
+                  <h2 class="heading-text mt-1.5 text-lg font-semibold leading-7">{article.data.title}</h2>
+                  <div class="mt-2.5 flex flex-wrap gap-1.5">
+                    {article.data.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2 py-0.5 text-xs muted">{tag}</span>)}
+                  </div>
+                </div>
+              </a>
+            ))
+          }
+        </div>
       </div>
     </section>
+
+    <!-- 日常 -->
+    {
+      previewTools.length > 0 && (
+        <section class="mt-14">
+          <div class="mb-5 flex items-end justify-between">
+            <div>
+              <h2 class="heading-text text-xl font-semibold">日常</h2>
+              <p class="muted mt-1 text-sm">最近常出现在生活里的小东西。</p>
+            </div>
+            <a href="/tools/" class="fine-link flex items-center gap-1 text-sm">
+              查看全部
+              <svg class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6" />
+              </svg>
+            </a>
+          </div>
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {previewTools.map((tool) => <ToolCard tool={tool} />)}
+          </div>
+        </section>
+      )
+    }
+
+    <!-- 分享 -->
+    {
+      previewShares.length > 0 && (
+        <section class="mt-14">
+          <div class="mb-5 flex items-end justify-between">
+            <div>
+              <h2 class="heading-text text-xl font-semibold">分享</h2>
+              <p class="muted mt-1 text-sm">一些想记录和分享的东西。</p>
+            </div>
+            <a href="/share/" class="fine-link flex items-center gap-1 text-sm">
+              查看全部
+              <svg class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6" />
+              </svg>
+            </a>
+          </div>
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {previewShares.map((item) => (
+              <a href={`/share/${item.slug}/`} class="surface-soft motion-card block rounded-lg p-4 sm:p-5" aria-label={`打开${item.title}`}>
+                <div class="flex items-center gap-4">
+                  <img src={item.screenshot} alt="" loading="lazy" class="size-16 shrink-0 rounded-md border hairline object-cover sm:size-20" />
+                  <div class="min-w-0">
+                    <p class="kicker text-xs">{item.category}</p>
+                    <h2 class="heading-text mt-1 truncate text-xl font-semibold leading-7">{item.title}</h2>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                      {item.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2 py-0.5 text-xs muted">{tag}</span>)}
+                    </div>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )
+    }
   </section>
 </BaseLayout>

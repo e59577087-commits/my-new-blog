@@ -1,18 +1,23 @@
 ---
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import PrevNextNav from "../../components/PrevNextNav.astro";
 import { formatArticleDate, getArticleSlug, isPublishedArticle, sortArticlesByDate } from "../../utils/articles";
 
 export async function getStaticPaths() {
   const articles = sortArticlesByDate((await getCollection("articles")).filter(isPublishedArticle));
 
-  return articles.map((article) => ({
-    params: { slug: getArticleSlug(article) },
-    props: { article },
-  }));
+  return articles.map((article, index) => {
+    const prev = index < articles.length - 1 ? articles[index + 1] : null;
+    const next = index > 0 ? articles[index - 1] : null;
+    return {
+      params: { slug: getArticleSlug(article) },
+      props: { article, prev, next },
+    };
+  });
 }
 
-const { article } = Astro.props;
+const { article, prev, next } = Astro.props;
 const { Content } = await render(article);
 ---
 
@@ -21,10 +26,10 @@ const { Content } = await render(article);
     <a href="/" class="fine-link text-sm">返回首页</a>
 
     <header class="mt-8 border-b hairline pb-8">
-      <time datetime={article.data.date.toISOString()} class="text-sm text-slate-500">{formatArticleDate(article.data.date)}</time>
-      <h1 class="mt-4 text-balance text-3xl font-semibold leading-tight text-white sm:text-5xl">{article.data.title}</h1>
+      <time datetime={article.data.date.toISOString()} class="faint-text text-sm">{formatArticleDate(article.data.date)}</time>
+      <h1 class="heading-text mt-4 text-balance text-3xl font-semibold leading-tight sm:text-5xl">{article.data.title}</h1>
       <div class="mt-5 flex flex-wrap gap-2">
-        {article.data.tags.map((tag) => <span class="rounded border hairline bg-[#111318] px-2.5 py-1 text-xs text-slate-400">{tag}</span>)}
+        {article.data.tags.map((tag) => <span class="rounded border hairline bg-[var(--color-surface-solid)] px-2.5 py-1 text-xs muted">{tag}</span>)}
       </div>
       <img src={article.data.cover} alt="" class="mt-8 aspect-[16/8] w-full rounded-lg border hairline object-cover" />
     </header>
@@ -32,5 +37,7 @@ const { Content } = await render(article);
     <div class="prose-tech mt-10 max-w-3xl space-y-6">
       <Content />
     </div>
+
+    <PrevNextNav {prev} {next} />
   </article>
 </BaseLayout>

@@ -7,8 +7,8 @@ import { shareItems } from "../data/share";
   <section class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
     <header>
       <div>
-        <h1 class="text-3xl font-semibold leading-tight text-white sm:text-4xl">分享</h1>
-        <p class="mt-2 text-slate-400">一些想记录和分享的东西。</p>
+        <h1 class="heading-text text-3xl font-semibold leading-tight sm:text-4xl">分享</h1>
+        <p class="muted mt-2">一些想记录和分享的东西。</p>
       </div>
     </header>
 
@@ -18,10 +18,10 @@ import { shareItems } from "../data/share";
           <div class="flex items-center gap-4">
             <img src={item.screenshot} alt="" loading="lazy" class="size-16 shrink-0 rounded-md border hairline object-cover sm:size-20" />
             <div class="min-w-0">
-              <p class="text-xs text-sky-300/80">{item.category}</p>
-              <h2 class="mt-1 truncate text-xl font-semibold leading-7 text-white">{item.title}</h2>
+              <p class="kicker text-xs">{item.category}</p>
+              <h2 class="heading-text mt-1 truncate text-xl font-semibold leading-7">{item.title}</h2>
               <div class="mt-2 flex flex-wrap gap-1.5">
-                {item.tags.map((tag) => <span class="rounded bg-[#0f1115] px-2 py-0.5 text-xs text-slate-400">{tag}</span>)}
+                {item.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2 py-0.5 text-xs muted">{tag}</span>)}
               </div>
             </div>
           </div>
