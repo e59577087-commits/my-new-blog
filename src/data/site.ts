@@ -10,8 +10,8 @@ export const site = {
   socialPreview: "/og.svg",
   nav: [
     { label: "首页", href: "/" },
-    { label: "关于", href: "/about/" },
     { label: "日常", href: "/tools/" },
     { label: "分享", href: "/share/" },
+    { label: "关于", href: "/about/" },
   ],
 };
