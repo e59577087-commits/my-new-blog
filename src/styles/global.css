@@ -4,6 +4,7 @@
 
 @theme {
   --font-sans: "MiSans", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-wenkai: "LXGW WenKai", "Klee", "Noto Serif SC", "STSong", "SimSun", ui-serif, serif;
   --font-mono: "JetBrains Mono", "SFMono-Regular", "Cascadia Code", Consolas, "Liberation Mono", monospace;
 }
 
