@@ -17,14 +17,14 @@
   --theme-reveal-radius: 120vmax;
   --color-page: #eef4fb;
   --color-page-soft: #f8fbff;
-  --color-surface: rgba(255, 255, 255, 0.58);
-  --color-surface-solid: rgba(255, 255, 255, 0.76);
-  --color-surface-soft: rgba(255, 255, 255, 0.44);
-  --color-surface-hover: rgba(255, 255, 255, 0.72);
+  --color-surface: rgba(255, 255, 255, 0.32);
+  --color-surface-solid: rgba(255, 255, 255, 0.44);
+  --color-surface-soft: rgba(255, 255, 255, 0.22);
+  --color-surface-hover: rgba(255, 255, 255, 0.48);
   --color-surface-fallback: #ffffff;
-  --color-field: rgba(255, 255, 255, 0.64);
-  --color-border: rgba(62, 80, 107, 0.18);
-  --color-border-strong: rgba(62, 80, 107, 0.28);
+  --color-field: rgba(255, 255, 255, 0.34);
+  --color-border: rgba(255, 255, 255, 0.46);
+  --color-border-strong: rgba(255, 255, 255, 0.64);
   --color-heading: #0f172a;
   --color-text: #263348;
   --color-muted: #64748b;
@@ -36,15 +36,19 @@
   --color-primary: #111827;
   --color-primary-hover: #020617;
   --color-primary-text: #f8fafc;
-  --color-header: rgba(248, 251, 255, 0.64);
+  --color-header: rgba(248, 251, 255, 0.34);
   --color-selection-bg: rgba(37, 99, 235, 0.18);
   --color-selection-text: #0f172a;
-  --shadow-surface: 0 24px 60px rgba(31, 45, 72, 0.12), 0 1px 0 rgba(255, 255, 255, 0.86) inset;
-  --shadow-control: 0 1px 2px rgba(31, 45, 72, 0.08), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+  --shadow-surface: 0 28px 70px rgba(31, 45, 72, 0.16), 0 12px 32px rgba(255, 255, 255, 0.24) inset, 0 1px 0 rgba(255, 255, 255, 0.78) inset, 0 -1px 0 rgba(255, 255, 255, 0.28) inset;
+  --shadow-control: 0 10px 26px rgba(31, 45, 72, 0.1), 0 1px 0 rgba(255, 255, 255, 0.72) inset;
   --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.16);
-  --glass-blur: 22px;
-  --glass-saturate: 160%;
-  --glass-sheen: rgba(255, 255, 255, 0.48);
+  --glass-blur: 28px;
+  --glass-saturate: 185%;
+  --glass-radius-card: 24px;
+  --glass-radius-control: 18px;
+  --glass-radius-chip: 999px;
+  --glass-sheen: rgba(255, 255, 255, 0.72);
+  --glass-edge: rgba(255, 255, 255, 0.58);
   --page-background:
     linear-gradient(135deg, rgba(96, 165, 250, 0.18) 0%, rgba(96, 165, 250, 0) 38%),
     linear-gradient(225deg, rgba(45, 212, 191, 0.13) 0%, rgba(45, 212, 191, 0) 42%),
@@ -64,14 +68,14 @@
   color-scheme: dark;
   --color-page: #0f141b;
   --color-page-soft: #171f2b;
-  --color-surface: rgba(24, 31, 42, 0.58);
-  --color-surface-solid: rgba(27, 35, 48, 0.76);
-  --color-surface-soft: rgba(27, 35, 48, 0.46);
-  --color-surface-hover: rgba(42, 54, 72, 0.68);
+  --color-surface: rgba(255, 255, 255, 0.1);
+  --color-surface-solid: rgba(255, 255, 255, 0.15);
+  --color-surface-soft: rgba(255, 255, 255, 0.08);
+  --color-surface-hover: rgba(255, 255, 255, 0.19);
   --color-surface-fallback: #1b2330;
-  --color-field: rgba(20, 27, 37, 0.64);
-  --color-border: rgba(226, 232, 240, 0.1);
-  --color-border-strong: rgba(226, 232, 240, 0.18);
+  --color-field: rgba(255, 255, 255, 0.1);
+  --color-border: rgba(255, 255, 255, 0.16);
+  --color-border-strong: rgba(255, 255, 255, 0.28);
   --color-heading: #f3f6fb;
   --color-text: #d5dce7;
   --color-muted: #98a3b3;
@@ -83,13 +87,14 @@
   --color-primary: #eef4fb;
   --color-primary-hover: #ffffff;
   --color-primary-text: #111827;
-  --color-header: rgba(13, 18, 25, 0.66);
+  --color-header: rgba(13, 18, 25, 0.42);
   --color-selection-bg: rgba(125, 183, 255, 0.26);
   --color-selection-text: #ffffff;
-  --shadow-surface: 0 24px 62px rgba(0, 0, 0, 0.34), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
-  --shadow-control: 0 1px 2px rgba(0, 0, 0, 0.22), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  --shadow-surface: 0 28px 76px rgba(0, 0, 0, 0.42), 0 12px 32px rgba(255, 255, 255, 0.06) inset, 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 -1px 0 rgba(255, 255, 255, 0.06) inset;
+  --shadow-control: 0 10px 26px rgba(0, 0, 0, 0.24), 0 1px 0 rgba(255, 255, 255, 0.14) inset;
   --focus-ring: 0 0 0 3px rgba(125, 183, 255, 0.18);
-  --glass-sheen: rgba(255, 255, 255, 0.08);
+  --glass-sheen: rgba(255, 255, 255, 0.16);
+  --glass-edge: rgba(255, 255, 255, 0.16);
   --page-background:
     linear-gradient(135deg, rgba(56, 189, 248, 0.16) 0%, rgba(56, 189, 248, 0) 38%),
     linear-gradient(225deg, rgba(45, 212, 191, 0.1) 0%, rgba(45, 212, 191, 0) 42%),
@@ -102,14 +107,14 @@
     color-scheme: dark;
     --color-page: #0f141b;
     --color-page-soft: #171f2b;
-    --color-surface: rgba(24, 31, 42, 0.58);
-    --color-surface-solid: rgba(27, 35, 48, 0.76);
-    --color-surface-soft: rgba(27, 35, 48, 0.46);
-    --color-surface-hover: rgba(42, 54, 72, 0.68);
+    --color-surface: rgba(255, 255, 255, 0.1);
+    --color-surface-solid: rgba(255, 255, 255, 0.15);
+    --color-surface-soft: rgba(255, 255, 255, 0.08);
+    --color-surface-hover: rgba(255, 255, 255, 0.19);
     --color-surface-fallback: #1b2330;
-    --color-field: rgba(20, 27, 37, 0.64);
-    --color-border: rgba(226, 232, 240, 0.1);
-    --color-border-strong: rgba(226, 232, 240, 0.18);
+    --color-field: rgba(255, 255, 255, 0.1);
+    --color-border: rgba(255, 255, 255, 0.16);
+    --color-border-strong: rgba(255, 255, 255, 0.28);
     --color-heading: #f3f6fb;
     --color-text: #d5dce7;
     --color-muted: #98a3b3;
@@ -121,13 +126,14 @@
     --color-primary: #eef4fb;
     --color-primary-hover: #ffffff;
     --color-primary-text: #111827;
-    --color-header: rgba(13, 18, 25, 0.66);
+    --color-header: rgba(13, 18, 25, 0.42);
     --color-selection-bg: rgba(125, 183, 255, 0.26);
     --color-selection-text: #ffffff;
-    --shadow-surface: 0 24px 62px rgba(0, 0, 0, 0.34), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
-    --shadow-control: 0 1px 2px rgba(0, 0, 0, 0.22), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    --shadow-surface: 0 28px 76px rgba(0, 0, 0, 0.42), 0 12px 32px rgba(255, 255, 255, 0.06) inset, 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 -1px 0 rgba(255, 255, 255, 0.06) inset;
+    --shadow-control: 0 10px 26px rgba(0, 0, 0, 0.24), 0 1px 0 rgba(255, 255, 255, 0.14) inset;
     --focus-ring: 0 0 0 3px rgba(125, 183, 255, 0.18);
-    --glass-sheen: rgba(255, 255, 255, 0.08);
+    --glass-sheen: rgba(255, 255, 255, 0.16);
+    --glass-edge: rgba(255, 255, 255, 0.16);
     --page-background:
       linear-gradient(135deg, rgba(56, 189, 248, 0.16) 0%, rgba(56, 189, 248, 0) 38%),
       linear-gradient(225deg, rgba(45, 212, 191, 0.1) 0%, rgba(45, 212, 191, 0) 42%),
@@ -172,8 +178,12 @@ a {
 .surface {
   position: relative;
   isolation: isolate;
+  overflow: hidden;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  border-radius: var(--glass-radius-card);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.08) 38%, rgba(255, 255, 255, 0.24)),
+    var(--color-surface);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   box-shadow: var(--shadow-surface);
@@ -182,8 +192,12 @@ a {
 .surface-soft {
   position: relative;
   isolation: isolate;
+  overflow: hidden;
   border: 1px solid var(--color-border);
-  background: var(--color-surface-soft);
+  border-radius: var(--glass-radius-card);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06) 42%, rgba(255, 255, 255, 0.16)),
+    var(--color-surface-soft);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   box-shadow: var(--shadow-control);
@@ -196,14 +210,30 @@ a {
   inset: 0;
   z-index: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, var(--glass-sheen), transparent 46%);
+  background:
+    linear-gradient(135deg, var(--glass-sheen), transparent 32%),
+    linear-gradient(315deg, transparent 62%, var(--glass-edge));
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.surface::after,
+.surface-soft::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 2;
+  border-radius: calc(var(--glass-radius-card) - 1px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+    0 18px 42px rgba(255, 255, 255, 0.12) inset;
   pointer-events: none;
 }
 
 .surface > *,
 .surface-soft > * {
   position: relative;
-  z-index: 1;
+  z-index: 3;
 }
 
 .hairline {
@@ -236,19 +266,23 @@ a {
 
 .motion-card:hover {
   transform: translateY(-2px);
-  border-color: var(--color-accent-border);
-  background: var(--color-surface-hover);
-  box-shadow: 0 18px 44px rgba(31, 45, 72, 0.16), 0 1px 0 rgba(255, 255, 255, 0.76) inset;
+  border-color: var(--color-border-strong);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0.12) 40%, rgba(255, 255, 255, 0.28)),
+    var(--color-surface-hover);
+  box-shadow: 0 24px 56px rgba(31, 45, 72, 0.18), 0 16px 34px rgba(255, 255, 255, 0.2) inset, 0 1px 0 rgba(255, 255, 255, 0.82) inset;
 }
 
 :root[data-theme="dark"] .motion-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.44), 0 14px 34px rgba(255, 255, 255, 0.07) inset, 0 1px 0 rgba(255, 255, 255, 0.2) inset;
 }
 
 .site-header {
+  border-color: var(--color-border);
   background: var(--color-header);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 18px 46px rgba(31, 45, 72, 0.08);
 }
 
 .brand-mark,
@@ -266,6 +300,7 @@ a {
 .brand-mark {
   background: var(--color-surface-soft);
   color: var(--color-accent-text);
+  border-radius: 14px;
 }
 
 .brand-name,
@@ -290,7 +325,10 @@ a {
 }
 
 .nav-shell {
-  background: var(--color-surface);
+  border-radius: var(--glass-radius-control);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.08)),
+    var(--color-surface);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
@@ -301,6 +339,7 @@ a {
 
 .nav-link:hover,
 .nav-link-active {
+  border-radius: calc(var(--glass-radius-control) - 5px);
   background: var(--color-surface-hover);
   color: var(--color-heading);
 }
@@ -310,6 +349,7 @@ a {
 .provider-button,
 .secondary-button,
 .notice-box {
+  border-radius: var(--glass-radius-control);
   background: var(--color-surface-solid);
   color: var(--color-text);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
@@ -390,7 +430,7 @@ a {
 
 .provider-button::after {
   content: "OAuth";
-  border-radius: 999px;
+  border-radius: var(--glass-radius-chip);
   background: var(--color-accent-soft);
   padding: 0.15rem 0.5rem;
   color: var(--color-accent-text);
@@ -399,6 +439,7 @@ a {
 }
 
 .input-control {
+  border-radius: var(--glass-radius-control);
   background: var(--color-field);
   color: var(--color-heading);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
@@ -415,6 +456,7 @@ a {
 }
 
 .primary-button {
+  border-radius: var(--glass-radius-control);
   border-color: transparent;
   background: var(--color-primary);
   color: var(--color-primary-text);
@@ -433,6 +475,7 @@ a {
 [class~="bg-[var(--color-field)]"],
 [class~="bg-[var(--color-surface-solid)]"] {
   border: 1px solid var(--color-border);
+  border-radius: var(--glass-radius-chip);
   background: var(--color-field) !important;
   box-shadow: var(--shadow-control);
   -webkit-backdrop-filter: blur(16px) saturate(150%);
@@ -590,7 +633,7 @@ a {
 
 .prose-tech code {
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: var(--glass-radius-chip);
   background: var(--color-surface-soft);
   padding: 0.12rem 0.35rem;
   color: var(--color-heading);
@@ -600,8 +643,10 @@ a {
   position: relative;
   overflow-x: auto;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--glass-radius-card);
   background: var(--color-surface-solid) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   padding: 1.1rem;
   font-size: 0.92rem;
   line-height: 1.75;
@@ -619,7 +664,7 @@ a {
   top: 0.75rem;
   right: 0.75rem;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: var(--glass-radius-chip);
   background: var(--color-surface-soft);
   padding: 0.25rem 0.55rem;
   color: var(--color-text);
