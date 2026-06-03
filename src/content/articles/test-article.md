@@ -4,7 +4,7 @@ description: "此篇用于测试。"
 date: 2026-06-03
 tags:
   - 测试
-cover: "/2.jpg"
+cover: "/1.png"
 draft: false
 ---
 
