@@ -12,4 +12,20 @@ export type Tool = {
   }[];
 };
 
-export const tools: Tool[] = [];
+export const tools: Tool[] = [
+  {
+    slug: "test-article",
+    name: "测试文章",
+    category: "测试",
+    description: "此篇用于测试。",
+    screenshot: "/2.jpg",
+    tags: ["测试"],
+    date: "2026-06-03",
+    links: [
+      {
+        label: "查看文章",
+        href: "/articles/test-article/",
+      },
+    ],
+  },
+];
