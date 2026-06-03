@@ -9,7 +9,7 @@ const { articleCount } = Astro.props;
 const startDate = site.startDate;
 ---
 
-<div class="stats-card surface-soft mt-10 p-6 sm:p-8" id="stats-card">
+<div class="stats-card surface-soft mt-10 p-6 sm:p-8" id="stats-card" data-start-date={startDate}>
   <div class="grid grid-cols-3 gap-4 sm:gap-6">
     <!-- 文章数 -->
     <div class="stat-item text-center">
@@ -74,7 +74,8 @@ const startDate = site.startDate;
 
 <script>
   // 计算运行天数
-  const startDate = new Date("{startDate}");
+  const card = document.getElementById("stats-card");
+  const startDate = new Date(card?.dataset.startDate || Date.now());
   const today = new Date();
   const diffMs = today.getTime() - startDate.getTime();
   const days = Math.max(1, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
