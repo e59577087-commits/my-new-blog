@@ -1,11 +1,11 @@
 ---
-import { getCollection, render } from "astro:content";
+import { render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PrevNextNav from "../../components/PrevNextNav.astro";
-import { formatArticleDate, getArticleSlug, isPublishedArticle, sortArticlesByDate } from "../../utils/articles";
+import { formatArticleDate, getArticleSlug, getPublishedArticles } from "../../utils/articles";
 
 export async function getStaticPaths() {
-  const articles = sortArticlesByDate((await getCollection("articles")).filter(isPublishedArticle));
+  const articles = await getPublishedArticles();
 
   return articles.map((article, index) => {
     const prev = index < articles.length - 1 ? articles[index + 1] : null;

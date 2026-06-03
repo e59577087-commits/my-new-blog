@@ -1,12 +1,11 @@
 ---
-import { getCollection } from "astro:content";
 import ToolCard from "../components/ToolCard.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { shareItems } from "../data/share";
 import { tools } from "../data/tools";
-import { formatArticleDate, getArticleUrl, isPublishedArticle, sortArticlesByDate } from "../utils/articles";
+import { formatArticleDate, getArticleUrl, getPublishedArticles } from "../utils/articles";
 
-const articles = sortArticlesByDate((await getCollection("articles")).filter(isPublishedArticle));
+const articles = await getPublishedArticles();
 const toDate = (date: string) => new Date(`${date}T00:00:00`);
 const latestItems = [
   ...articles.map((article) => ({

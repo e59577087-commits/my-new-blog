@@ -1,11 +1,10 @@
-import { getCollection } from "astro:content";
 import { site } from "../data/site";
-import { getArticleUrl, isPublishedArticle, sortArticlesByDate } from "../utils/articles";
+import { getArticleUrl, getPublishedArticles } from "../utils/articles";
 
 const staticRoutes = ["/", "/about/", "/tools/", "/share/", "/login/"];
 
 export async function GET() {
-  const articles = sortArticlesByDate((await getCollection("articles")).filter(isPublishedArticle));
+  const articles = await getPublishedArticles();
   const articleRoutes = articles.map(getArticleUrl);
 
   const urls = [...staticRoutes, ...articleRoutes]
