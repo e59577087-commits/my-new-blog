@@ -1,17 +1,22 @@
 ---
 import SectionTitle from "../components/SectionTitle.astro";
+import StatsCard from "../components/StatsCard.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { getPublishedArticles } from "../utils/articles";
+
+const articles = await getPublishedArticles();
+const articleCount = articles.length;
 ---
 
 <BaseLayout title="关于" description="关于 happy,for you 这个个人小站。">
   <section class="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
     <SectionTitle
       title="关于这个小站"
-      description="这里更像一张放在桌边的便签，写一点日常、心情、喜欢的东西，也给自己留一个安静的角落。"
     />
 
+    <StatsCard articleCount={articleCount} />
+
     <div class="mt-10">
-      <p class="muted text-[17px] leading-9">写点关于你自己的东西吧。</p>
     </div>
   </section>
 </BaseLayout>

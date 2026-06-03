@@ -40,12 +40,7 @@ const previewShares = shareItems.slice(0, 3);
 ---
 
 <BaseLayout title="首页">
-  <section class="mx-auto max-w-6xl px-4 pt-6 pb-10 sm:px-6 sm:pt-8 sm:pb-14 lg:px-8">
-    <!-- Hero -->
-    <div class="mb-8">
-      <p class="heading-text text-base sm:text-lg" style="font-family: var(--font-wenkai);">"感谢聆听"</p>
-    </div>
-
+  <section class="mx-auto max-w-6xl px-4 pt-1 pb-10 sm:px-6 sm:pt-3 sm:pb-14 lg:px-8">
     <!-- 最新 -->
     {
       latest && (
@@ -98,7 +93,7 @@ const previewShares = shareItems.slice(0, 3);
     <!-- 日常 -->
     {
       previewTools.length > 0 && (
-        <section class="mt-14">
+        <section class="mt-8">
           <div class="mb-5 flex items-end justify-between">
             <div>
               <h2 class="heading-text text-xl font-semibold">日常</h2>
@@ -121,7 +116,7 @@ const previewShares = shareItems.slice(0, 3);
     <!-- 分享 -->
     {
       previewShares.length > 0 && (
-        <section class="mt-14">
+        <section class="mt-8">
           <div class="mb-5 flex items-end justify-between">
             <div>
               <h2 class="heading-text text-xl font-semibold">分享</h2>

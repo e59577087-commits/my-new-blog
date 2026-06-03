@@ -7,6 +7,7 @@ export const site = {
   description: "记录日常片段、喜欢的东西和慢慢整理好的生活小事。",
   url: siteUrl,
   author: "happy,for you",
+  startDate: "2026-05-20",
   socialPreview: "/og.svg",
   nav: [
     { label: "首页", href: "/" },
