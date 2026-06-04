@@ -20,7 +20,7 @@ export const shareItems: ShareItem[] = [
     category: "测试",
     description: "此篇用于测试。",
     content: "此篇用于测试。",
-    screenshot: "/1.png",
+    screenshot: "/1-960.webp",
     tags: ["测试"],
     date: "2026-06-03",
     links: [

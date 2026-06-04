@@ -52,7 +52,7 @@ const previewShares = shareItems.slice(0, 3);
       <div class="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)]">
         <!-- Featured article -->
         <a href={latest.href} class="surface motion-card reveal group block overflow-hidden rounded-lg">
-          <img src={latest.image} alt="" loading="eager" class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]" />
+          <img src={latest.image} alt="" loading="eager" decoding="async" fetchpriority="high" width="960" height="621" class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]" />
           <div class="p-5 sm:p-6">
             <div class="flex flex-wrap items-center gap-2">
               <time datetime={latest.date.toISOString()} class="faint-text text-sm">{formatArticleDate(latest.date)}</time>
@@ -70,7 +70,7 @@ const previewShares = shareItems.slice(0, 3);
           {
             latestList.map((item) => (
               <a href={item.href} class="surface-soft motion-card flex rounded-lg overflow-hidden">
-                <img src={item.image} alt="" loading="lazy" class="w-28 shrink-0 object-cover sm:w-40" />
+                <img src={item.image} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-28 shrink-0 object-cover sm:w-40" />
                 <div class="min-w-0 flex flex-col justify-center p-4">
                   <div class="flex flex-wrap items-center gap-2">
                     <time datetime={item.date.toISOString()} class="faint-text text-xs">{formatArticleDate(item.date)}</time>
@@ -132,7 +132,7 @@ const previewShares = shareItems.slice(0, 3);
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {previewShares.map((item) => (
               <a href={`/share/${item.slug}/`} class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${item.title}`}>
-                <img src={item.screenshot} alt="" loading="lazy" class="w-24 shrink-0 object-cover sm:w-32" />
+                <img src={item.screenshot} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-24 shrink-0 object-cover sm:w-32" />
                 <div class="min-w-0 flex flex-col justify-center p-4">
                   <p class="kicker text-xs">{item.category}</p>
                   <h2 class="heading-text mt-1 truncate text-xl font-semibold leading-7">{item.title}</h2>

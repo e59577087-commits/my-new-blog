@@ -25,7 +25,7 @@ const { item } = Astro.props as { item: ShareItem };
         {item.tags.map((tag) => <span class="rounded border hairline bg-[var(--color-surface-solid)] px-2.5 py-1 text-xs muted">{tag}</span>)}
       </div>
 
-      <img src={item.screenshot} alt="" class="mt-8 aspect-[16/8] w-full rounded-lg border hairline object-cover" />
+      <img src={item.screenshot} alt="" loading="eager" decoding="async" width="960" height="621" class="mt-8 aspect-[16/8] w-full rounded-lg border hairline object-cover" />
     </header>
 
     <div class="prose-tech mt-10 max-w-3xl space-y-6">

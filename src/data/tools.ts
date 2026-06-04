@@ -18,7 +18,7 @@ export const tools: Tool[] = [
     name: "测试文章",
     category: "测试",
     description: "此篇用于测试。",
-    screenshot: "/1.png",
+    screenshot: "/1-960.webp",
     tags: ["测试"],
     date: "2026-06-03",
     links: [
