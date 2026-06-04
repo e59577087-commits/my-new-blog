@@ -15,7 +15,7 @@
   --theme-reveal-x: 50vw;
   --theme-reveal-y: 50vh;
   --theme-reveal-radius: 120vmax;
-  --theme-hue: 335;
+  --theme-hue: 150;
   --theme-primary: hsl(var(--theme-hue) 72% 58%);
   --theme-primary-text: hsl(var(--theme-hue) 62% 42%);
   --theme-primary-soft: hsl(var(--theme-hue) 76% 62% / 0.16);
