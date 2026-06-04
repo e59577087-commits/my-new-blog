@@ -58,10 +58,10 @@ const socialImageUrl = new URL(image, site.url);
         const storageKey = "blog-appearance-settings-v1";
         const defaults = {
           hue: 335,
-          wallpaperMode: "solid",
+          wallpaperMode: "banner",
           bannerTitle: true,
           ripple: true,
-          gradient: true,
+          gradient: false,
           articleLayout: "list",
         };
         const isObject = (value) => value && typeof value === "object" && !Array.isArray(value);
