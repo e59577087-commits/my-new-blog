@@ -17,12 +17,12 @@
   --theme-reveal-radius: 120vmax;
   --color-page: #f0f4fa;
   --color-page-soft: #fafcff;
-  --color-surface: rgba(255, 255, 255, 0.16);
-  --color-surface-solid: rgba(255, 255, 255, 0.26);
-  --color-surface-soft: rgba(255, 255, 255, 0.10);
-  --color-surface-hover: rgba(255, 255, 255, 0.30);
+  --color-surface: rgba(255, 255, 255, 0.50);
+  --color-surface-solid: rgba(255, 255, 255, 0.60);
+  --color-surface-soft: rgba(255, 255, 255, 0.36);
+  --color-surface-hover: rgba(255, 255, 255, 0.68);
   --color-surface-fallback: #ffffff;
-  --color-field: rgba(255, 255, 255, 0.16);
+  --color-field: rgba(255, 255, 255, 0.44);
   --color-border: rgba(255, 255, 255, 0.16);
   --color-border-strong: rgba(255, 255, 255, 0.28);
   --color-heading: #0f172a;
@@ -36,7 +36,7 @@
   --color-primary: #0f172a;
   --color-primary-hover: #020617;
   --color-primary-text: #f8fafc;
-  --color-header: rgba(255, 255, 255, 0.10);
+  --color-header: rgba(255, 255, 255, 0.42);
   --color-selection-bg: rgba(59, 130, 246, 0.16);
   --color-selection-text: #0f172a;
   --shadow-surface: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -47,8 +47,9 @@
   --glass-radius-card: 20px;
   --glass-radius-control: 14px;
   --glass-radius-chip: 999px;
-  --glass-sheen: rgba(255, 255, 255, 0.55);
-  --glass-edge: rgba(255, 255, 255, 0.24);
+  --glass-sheen: rgba(255, 255, 255, 0.74);
+  --glass-edge: rgba(0, 0, 0, 0.07);
+  --glass-inner-edge: 0 0 0 1px rgba(0, 0, 0, 0.06) inset;
   --page-background:
     linear-gradient(135deg, rgba(96, 165, 250, 0.14) 0%, rgba(96, 165, 250, 0) 40%),
     linear-gradient(45deg, rgba(129, 200, 220, 0.08) 0%, rgba(129, 200, 220, 0) 38%),
@@ -96,6 +97,7 @@
   --focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.20);
   --glass-sheen: rgba(255, 255, 255, 0.10);
   --glass-edge: rgba(255, 255, 255, 0.08);
+  --glass-inner-edge: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
   --page-background:
     linear-gradient(135deg, rgba(56, 189, 248, 0.10) 0%, rgba(56, 189, 248, 0) 40%),
     linear-gradient(45deg, rgba(94, 180, 200, 0.06) 0%, rgba(94, 180, 200, 0) 38%),
@@ -136,6 +138,7 @@
     --focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.20);
     --glass-sheen: rgba(255, 255, 255, 0.10);
     --glass-edge: rgba(255, 255, 255, 0.08);
+    --glass-inner-edge: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
     --page-background:
       linear-gradient(135deg, rgba(56, 189, 248, 0.10) 0%, rgba(56, 189, 248, 0) 40%),
       linear-gradient(45deg, rgba(94, 180, 200, 0.06) 0%, rgba(94, 180, 200, 0) 38%),
@@ -240,7 +243,7 @@ button {
   inset: 1px;
   z-index: 2;
   border-radius: calc(var(--glass-radius-card) - 1px);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  box-shadow: var(--glass-inner-edge);
   pointer-events: none;
 }
 
