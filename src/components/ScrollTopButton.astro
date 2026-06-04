@@ -1,0 +1,107 @@
+<button type="button" class="scroll-top-button" data-scroll-top aria-label="返回顶部">
+  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m18 15-6-6-6 6"></path>
+  </svg>
+</button>
+
+<style>
+  .scroll-top-button {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    z-index: 40;
+    display: grid;
+    width: 2.75rem;
+    height: 2.75rem;
+    place-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--glass-radius-control);
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06)),
+      var(--color-surface-solid);
+    color: var(--color-heading);
+    box-shadow: var(--shadow-control);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(0, 18px, 0) scale(0.92);
+    transition:
+      opacity 360ms ease,
+      transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 180ms ease,
+      background-color 180ms ease,
+      color 180ms ease;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+
+  .scroll-top-button[data-visible] {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  .scroll-top-button:hover {
+    border-color: var(--color-accent-border);
+    background: var(--color-surface-hover);
+    color: var(--color-heading);
+  }
+
+  .scroll-top-button:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-control), var(--focus-ring);
+  }
+
+  .scroll-top-button svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  @media (min-width: 768px) {
+    .scroll-top-button {
+      right: max(1.5rem, env(safe-area-inset-right));
+      bottom: max(1.5rem, env(safe-area-inset-bottom));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-top-button {
+      transition-duration: 0.01ms;
+    }
+  }
+</style>
+
+<script>
+  const button = document.querySelector("[data-scroll-top]");
+
+  if (button) {
+    let ticking = false;
+
+    const updateVisibility = () => {
+      const root = document.documentElement;
+      const scrollTop = window.scrollY || root.scrollTop;
+      const scrollHeight = root.scrollHeight;
+      const viewportHeight = window.innerHeight;
+      const maxScroll = Math.max(0, scrollHeight - viewportHeight);
+      const distanceFromBottom = scrollHeight - (scrollTop + viewportHeight);
+      const nearBottom = distanceFromBottom <= Math.min(560, Math.max(180, viewportHeight * 0.65));
+      const hasRoomToScroll = scrollTop > Math.min(180, maxScroll * 0.35);
+
+      button.toggleAttribute("data-visible", nearBottom && hasRoomToScroll);
+      ticking = false;
+    };
+
+    const requestUpdate = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(updateVisibility);
+    };
+
+    button.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+    updateVisibility();
+  }
+</script>

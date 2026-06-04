@@ -1,0 +1,408 @@
+<div class="appearance-settings" data-appearance-root>
+  <div class="appearance-toolbar" role="toolbar" aria-label="外观快捷设置">
+    <button type="button" class="appearance-icon-button" data-appearance-toggle aria-label="打开外观设置" aria-expanded="false" aria-controls="appearance-panel">
+      <span aria-hidden="true">🎨</span>
+    </button>
+  </div>
+
+  <section class="appearance-panel" id="appearance-panel" data-appearance-panel hidden tabindex="-1" aria-labelledby="appearance-panel-title">
+    <h2 class="sr-only" id="appearance-panel-title">外观设置</h2>
+    <div class="appearance-section">
+      <div class="appearance-section-title">
+        <span></span>
+        <h2>主题色相</h2>
+        <output data-appearance-hue-output>335</output>
+      </div>
+      <input class="appearance-hue-slider" data-appearance-hue type="range" min="0" max="360" value="335" aria-label="主题色相" />
+    </div>
+
+    <div class="appearance-section">
+      <div class="appearance-section-title">
+        <span></span>
+        <h2>壁纸模式</h2>
+      </div>
+      <div class="appearance-options" data-appearance-wallpaper role="group" aria-label="壁纸模式">
+        <button type="button" data-value="banner">横幅壁纸</button>
+        <button type="button" data-value="fullscreen">全屏壁纸</button>
+        <button type="button" data-value="transparent">全屏透明</button>
+        <button type="button" data-value="solid">纯色背景</button>
+      </div>
+    </div>
+
+    <div class="appearance-section">
+      <div class="appearance-section-title">
+        <span></span>
+        <h2>横幅设置</h2>
+      </div>
+      <div class="appearance-switches">
+        <label>
+          <span>首页横幅标题</span>
+          <input type="checkbox" data-appearance-switch="bannerTitle" />
+        </label>
+        <label>
+          <span>水波纹动画</span>
+          <input type="checkbox" data-appearance-switch="ripple" />
+        </label>
+        <label>
+          <span>渐变过渡</span>
+          <input type="checkbox" data-appearance-switch="gradient" />
+        </label>
+      </div>
+    </div>
+
+    <div class="appearance-section">
+      <div class="appearance-section-title">
+        <span></span>
+        <h2>文章布局</h2>
+      </div>
+      <div class="appearance-segmented" data-appearance-layout role="group" aria-label="文章布局">
+        <button type="button" data-value="list">列表</button>
+        <button type="button" data-value="grid">网格</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+  .appearance-settings {
+    position: fixed;
+    top: max(4.75rem, env(safe-area-inset-top));
+    right: max(1rem, env(safe-area-inset-right));
+    z-index: 60;
+    color: hsl(var(--theme-hue, 335) 42% 38%);
+  }
+
+  .appearance-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+  }
+
+  .appearance-icon-button {
+    display: grid;
+    width: 2.75rem;
+    height: 2.75rem;
+    place-items: center;
+    border: 1px solid hsl(var(--theme-hue, 335) 74% 70% / 0.34);
+    border-radius: 1.1rem;
+    background:
+      linear-gradient(135deg, hsl(var(--theme-hue, 335) 100% 98% / 0.58), hsl(var(--theme-hue, 335) 80% 88% / 0.30)),
+      hsl(var(--theme-hue, 335) 100% 98% / 0.34);
+    box-shadow: 0 12px 30px hsl(var(--theme-hue, 335) 52% 46% / 0.16), 0 1px 0 hsl(0 0% 100% / 0.68) inset;
+    font-size: 1.15rem;
+    line-height: 1;
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    backdrop-filter: blur(18px) saturate(170%);
+    transition:
+      transform 180ms ease,
+      border-color 180ms ease,
+      background-color 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  .appearance-icon-button:hover,
+  .appearance-icon-button[aria-expanded="true"] {
+    transform: translateY(-1px);
+    border-color: hsl(var(--theme-hue, 335) 74% 60% / 0.52);
+    box-shadow: 0 16px 36px hsl(var(--theme-hue, 335) 52% 46% / 0.22), 0 1px 0 hsl(0 0% 100% / 0.75) inset;
+  }
+
+  .appearance-panel {
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    right: 0;
+    width: min(23.5rem, calc(100vw - 2rem));
+    max-height: min(42rem, calc(100vh - 6.75rem));
+    overflow-y: auto;
+    border: 1px solid hsl(var(--theme-hue, 335) 76% 78% / 0.38);
+    border-radius: 1.35rem;
+    background:
+      linear-gradient(145deg, hsl(0 0% 100% / 0.84), hsl(var(--theme-hue, 335) 100% 95% / 0.66)),
+      hsl(var(--theme-hue, 335) 100% 98% / 0.58);
+    box-shadow: 0 24px 70px hsl(var(--theme-hue, 335) 38% 32% / 0.22), 0 1px 0 hsl(0 0% 100% / 0.78) inset;
+    padding: 1.15rem;
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    opacity: 0;
+    transform: translate3d(0, -0.4rem, 0) scale(0.98);
+    transform-origin: top right;
+    transition:
+      opacity 220ms ease,
+      transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .appearance-panel[data-open] {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  .appearance-section + .appearance-section {
+    margin-top: 1.1rem;
+  }
+
+  .appearance-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .appearance-section-title span {
+    width: 0.28rem;
+    height: 1.25rem;
+    border-radius: 999px;
+    background: var(--theme-primary, hsl(335 72% 58%));
+  }
+
+  .appearance-section-title h2 {
+    flex: 1;
+    margin: 0;
+    color: var(--color-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .appearance-section-title output {
+    border-radius: 0.65rem;
+    background: hsl(var(--theme-hue, 335) 82% 74% / 0.20);
+    padding: 0.15rem 0.55rem;
+    color: hsl(var(--theme-hue, 335) 44% 44%);
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  .appearance-hue-slider {
+    width: 100%;
+    accent-color: var(--theme-primary, hsl(335 72% 58%));
+  }
+
+  .appearance-options,
+  .appearance-switches,
+  .appearance-segmented {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .appearance-options button,
+  .appearance-segmented button,
+  .appearance-switches label {
+    min-height: 2.65rem;
+    border: 1px solid transparent;
+    border-radius: 0.7rem;
+    background: hsl(var(--theme-hue, 335) 100% 96% / 0.56);
+    color: hsl(var(--theme-hue, 335) 34% 48%);
+    font-size: 0.92rem;
+    line-height: 1.4;
+    transition:
+      border-color 160ms ease,
+      background-color 160ms ease,
+      color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .appearance-options button,
+  .appearance-segmented button {
+    text-align: left;
+    padding: 0 0.9rem;
+  }
+
+  .appearance-options button:hover,
+  .appearance-segmented button:hover {
+    transform: translateY(-1px);
+    background: hsl(var(--theme-hue, 335) 100% 94% / 0.74);
+  }
+
+  .appearance-options button[aria-pressed="true"],
+  .appearance-segmented button[aria-pressed="true"] {
+    border-color: hsl(var(--theme-hue, 335) 74% 62% / 0.32);
+    background: hsl(var(--theme-hue, 335) 78% 84% / 0.58);
+    color: hsl(var(--theme-hue, 335) 44% 40%);
+    font-weight: 650;
+  }
+
+  .appearance-switches label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 0.75rem 0 0.9rem;
+  }
+
+  .appearance-switches input {
+    width: 2.75rem;
+    height: 1.5rem;
+    accent-color: var(--theme-primary, hsl(335 72% 58%));
+  }
+
+  .appearance-segmented {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  :root[data-theme="dark"] .appearance-panel {
+    border-color: hsl(var(--theme-hue, 335) 72% 64% / 0.24);
+    background:
+      linear-gradient(145deg, hsl(220 24% 14% / 0.92), hsl(var(--theme-hue, 335) 38% 18% / 0.70)),
+      hsl(220 24% 12% / 0.84);
+    box-shadow: 0 24px 70px hsl(0 0% 0% / 0.42), 0 1px 0 hsl(0 0% 100% / 0.08) inset;
+  }
+
+  :root[data-theme="dark"] .appearance-options button,
+  :root[data-theme="dark"] .appearance-segmented button,
+  :root[data-theme="dark"] .appearance-switches label {
+    background: hsl(var(--theme-hue, 335) 42% 18% / 0.52);
+    color: hsl(var(--theme-hue, 335) 72% 84%);
+  }
+
+  :root[data-theme="dark"] .appearance-options button:hover,
+  :root[data-theme="dark"] .appearance-segmented button:hover {
+    background: hsl(var(--theme-hue, 335) 42% 24% / 0.68);
+  }
+
+  :root[data-theme="dark"] .appearance-options button[aria-pressed="true"],
+  :root[data-theme="dark"] .appearance-segmented button[aria-pressed="true"] {
+    border-color: hsl(var(--theme-hue, 335) 72% 64% / 0.38);
+    background: hsl(var(--theme-hue, 335) 58% 32% / 0.62);
+    color: hsl(var(--theme-hue, 335) 88% 90%);
+  }
+
+  :root[data-theme="dark"] .appearance-section-title output {
+    background: hsl(var(--theme-hue, 335) 62% 34% / 0.28);
+    color: hsl(var(--theme-hue, 335) 84% 86%);
+  }
+
+  @media (max-width: 640px) {
+    .appearance-settings {
+      top: max(4.25rem, env(safe-area-inset-top));
+      right: max(0.75rem, env(safe-area-inset-right));
+    }
+
+    .appearance-panel {
+      width: min(22rem, calc(100vw - 1.5rem));
+      max-height: calc(100vh - 6rem);
+      padding: 0.95rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .appearance-icon-button,
+    .appearance-panel,
+    .appearance-options button,
+    .appearance-segmented button {
+      transition-duration: 0.01ms;
+    }
+  }
+</style>
+
+<script>
+  const appearance = window.__blogAppearance;
+  const root = document.querySelector("[data-appearance-root]");
+  const toggle = root?.querySelector("[data-appearance-toggle]");
+  const panel = root?.querySelector("[data-appearance-panel]");
+  const hueInput = root?.querySelector("[data-appearance-hue]");
+  const hueOutput = root?.querySelector("[data-appearance-hue-output]");
+  const wallpaperGroup = root?.querySelector("[data-appearance-wallpaper]");
+  const layoutGroup = root?.querySelector("[data-appearance-layout]");
+  const switches = root?.querySelectorAll("[data-appearance-switch]");
+
+  if (appearance && root && toggle && panel && hueInput && hueOutput && wallpaperGroup && layoutGroup && switches) {
+    let settings = appearance.read();
+
+    const save = () => {
+      try {
+        window.localStorage.setItem(appearance.storageKey, JSON.stringify(settings));
+      } catch {
+        // Ignore storage failures in private or restricted browsing modes.
+      }
+    };
+
+    const syncControls = () => {
+      hueInput.value = String(settings.hue);
+      hueOutput.textContent = String(settings.hue);
+
+      wallpaperGroup.querySelectorAll("button").forEach((button) => {
+        button.setAttribute("aria-pressed", button.dataset.value === settings.wallpaperMode ? "true" : "false");
+      });
+
+      layoutGroup.querySelectorAll("button").forEach((button) => {
+        button.setAttribute("aria-pressed", button.dataset.value === settings.articleLayout ? "true" : "false");
+      });
+
+      switches.forEach((input) => {
+        input.checked = Boolean(settings[input.dataset.appearanceSwitch]);
+      });
+    };
+
+    const update = (next) => {
+      settings = appearance.apply({ ...settings, ...next });
+      save();
+      syncControls();
+    };
+
+    const openPanel = () => {
+      panel.hidden = false;
+      requestAnimationFrame(() => {
+        panel.setAttribute("data-open", "");
+        toggle.setAttribute("aria-expanded", "true");
+        panel.focus({ preventScroll: true });
+      });
+    };
+
+    const closePanel = ({ restoreFocus = false } = {}) => {
+      panel.removeAttribute("data-open");
+      toggle.setAttribute("aria-expanded", "false");
+      window.setTimeout(() => {
+        if (!panel.hasAttribute("data-open")) panel.hidden = true;
+      }, 260);
+      if (restoreFocus) toggle.focus();
+    };
+
+    toggle.addEventListener("click", () => {
+      panel.hidden ? openPanel() : closePanel();
+    });
+
+    document.addEventListener("pointerdown", (event) => {
+      if (panel.hidden || root.contains(event.target)) return;
+      closePanel();
+    });
+
+    root.addEventListener("focusout", (event) => {
+      if (panel.hidden) return;
+      const nextTarget = event.relatedTarget;
+      if (nextTarget instanceof Node && root.contains(nextTarget)) return;
+      closePanel();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !panel.hidden) {
+        closePanel({ restoreFocus: true });
+      }
+    });
+
+    hueInput.addEventListener("input", () => {
+      update({ hue: Number(hueInput.value) });
+    });
+
+    wallpaperGroup.addEventListener("click", (event) => {
+      const button = event.target instanceof HTMLElement ? event.target.closest("button[data-value]") : null;
+      if (!button) return;
+      update({ wallpaperMode: button.dataset.value });
+    });
+
+    layoutGroup.addEventListener("click", (event) => {
+      const button = event.target instanceof HTMLElement ? event.target.closest("button[data-value]") : null;
+      if (!button) return;
+      update({ articleLayout: button.dataset.value });
+    });
+
+    switches.forEach((input) => {
+      input.addEventListener("change", () => {
+        update({ [input.dataset.appearanceSwitch]: input.checked });
+      });
+    });
+
+    settings = appearance.apply(settings);
+    syncControls();
+  }
+</script>
