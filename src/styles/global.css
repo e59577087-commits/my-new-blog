@@ -10,7 +10,7 @@
 
 :root {
   color-scheme: light;
-  --theme-transition-duration: 540ms;
+  --theme-transition-duration: 300ms;
   --theme-transition-easing: cubic-bezier(0.65, 0, 0.35, 1);
   --theme-reveal-x: 50vw;
   --theme-reveal-y: 50vh;
@@ -42,8 +42,8 @@
   --shadow-surface: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-control: 0 2px 12px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.03);
   --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.18);
-  --glass-blur: 14px;
-  --glass-saturate: 200%;
+  --glass-blur: 20px;
+  --glass-saturate: 180%;
   --glass-radius-card: 20px;
   --glass-radius-control: 14px;
   --glass-radius-chip: 999px;
@@ -158,8 +158,8 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    linear-gradient(180deg, rgba(240, 244, 250, 0.10) 0%, rgba(250, 252, 255, 0.22) 100%),
-    url('/bj.png') center / cover no-repeat fixed;
+    linear-gradient(180deg, rgba(240, 244, 250, 0.04) 0%, rgba(250, 252, 255, 0.10) 100%),
+    image-set(url('/bj-1280.webp') type('image/webp'), url('/bj.png') type('image/png')) center top / cover no-repeat fixed;
   background-color: var(--color-page);
   color: var(--color-text);
   letter-spacing: 0;
@@ -167,29 +167,18 @@ body {
 
 :root[data-theme="dark"] body {
   background:
-    linear-gradient(180deg, rgba(10, 14, 20, 0.88) 0%, rgba(17, 24, 32, 0.94) 100%),
-    url('/bj.png') center / cover no-repeat fixed;
+    linear-gradient(180deg, rgba(10, 14, 20, 0.48) 0%, rgba(17, 24, 32, 0.58) 100%),
+    image-set(url('/bj-1280.webp') type('image/webp'), url('/bj.png') type('image/png')) center top / cover no-repeat fixed;
   background-color: var(--color-page);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) body {
     background:
-      linear-gradient(180deg, rgba(10, 14, 20, 0.88) 0%, rgba(17, 24, 32, 0.94) 100%),
-      url('/bj.png') center / cover no-repeat fixed;
+      linear-gradient(180deg, rgba(10, 14, 20, 0.48) 0%, rgba(17, 24, 32, 0.58) 100%),
+      image-set(url('/bj-1280.webp') type('image/webp'), url('/bj.png') type('image/png')) center top / cover no-repeat fixed;
     background-color: var(--color-page);
   }
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.025;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  background-size: 256px 256px;
 }
 
 ::selection {
@@ -216,29 +205,31 @@ button {
 
 .surface {
   position: relative;
+  contain: paint;
   isolation: isolate;
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--glass-radius-card);
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.05) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.06) 50%),
     var(--color-surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(1.04);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(1.04);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   box-shadow: var(--shadow-surface);
 }
 
 .surface-soft {
   position: relative;
+  contain: paint;
   isolation: isolate;
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--glass-radius-card);
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.02) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.03) 50%),
     var(--color-surface-soft);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(1.04);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(1.04);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   box-shadow: var(--shadow-control);
 }
 
@@ -271,6 +262,33 @@ button {
   z-index: 3;
 }
 
+/* Dark mode: softer white sheen on cards */
+:root[data-theme="dark"] .surface {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02) 50%),
+    var(--color-surface);
+}
+
+:root[data-theme="dark"] .surface-soft {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01) 50%),
+    var(--color-surface-soft);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .surface {
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02) 50%),
+      var(--color-surface);
+  }
+
+  :root:not([data-theme]) .surface-soft {
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01) 50%),
+      var(--color-surface-soft);
+  }
+}
+
 .hairline {
   border-color: var(--color-border);
 }
@@ -295,8 +313,7 @@ button {
   transition:
     transform 180ms ease,
     border-color 180ms ease,
-    background-color 180ms ease,
-    box-shadow 180ms ease;
+    background-color 180ms ease;
 }
 
 .motion-card:hover {
@@ -305,11 +322,15 @@ button {
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08) 50%),
     var(--color-surface-hover);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
 
 :root[data-theme="dark"] .motion-card:hover {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  background: var(--color-surface-hover);
+}
+
+.site-shell {
+  position: relative;
+  z-index: 2;
 }
 
 .site-header {
@@ -426,7 +447,7 @@ button {
 :root.theme-transitioning *::before,
 :root.theme-transitioning *::after {
   transition-duration: var(--theme-transition-duration);
-  transition-property: background-color, border-color, box-shadow, color, fill, opacity, stroke;
+  transition-property: background-color, border-color, color, fill, opacity, stroke;
   transition-timing-function: var(--theme-transition-easing);
 }
 
@@ -515,6 +536,105 @@ button {
   box-shadow: var(--shadow-control);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+/* ── Decorative background blobs ── */
+.bg-blobs {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  will-change: transform;
+}
+
+.bg-blob--a {
+  width: 520px;
+  height: 520px;
+  top: -8%;
+  right: -4%;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.30) 0%, rgba(96, 165, 250, 0) 70%);
+  animation: blob-drift-a 18s ease-in-out infinite alternate;
+}
+
+.bg-blob--b {
+  width: 460px;
+  height: 460px;
+  bottom: 8%;
+  left: -6%;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.24) 0%, rgba(45, 212, 191, 0) 70%);
+  animation: blob-drift-b 22s ease-in-out infinite alternate;
+}
+
+.bg-blob--c {
+  width: 380px;
+  height: 380px;
+  top: 50%;
+  right: 12%;
+  background: radial-gradient(circle, rgba(168, 140, 216, 0.20) 0%, rgba(168, 140, 216, 0) 70%);
+  animation: blob-drift-c 20s ease-in-out infinite alternate;
+}
+
+@keyframes blob-drift-a {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-30px, 20px) scale(1.08); }
+}
+
+@keyframes blob-drift-b {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(25px, -15px) scale(1.06); }
+}
+
+@keyframes blob-drift-c {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-20px, -25px) scale(1.10); }
+}
+
+/* Dark mode: softer blobs */
+:root[data-theme="dark"] .bg-blob--a {
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.18) 0%, rgba(96, 165, 250, 0) 70%);
+}
+:root[data-theme="dark"] .bg-blob--b {
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.14) 0%, rgba(45, 212, 191, 0) 70%);
+}
+:root[data-theme="dark"] .bg-blob--c {
+  background: radial-gradient(circle, rgba(168, 140, 216, 0.12) 0%, rgba(168, 140, 216, 0) 70%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .bg-blob--a {
+    background: radial-gradient(circle, rgba(96, 165, 250, 0.18) 0%, rgba(96, 165, 250, 0) 70%);
+  }
+  :root:not([data-theme]) .bg-blob--b {
+    background: radial-gradient(circle, rgba(45, 212, 191, 0.14) 0%, rgba(45, 212, 191, 0) 70%);
+  }
+  :root:not([data-theme]) .bg-blob--c {
+    background: radial-gradient(circle, rgba(168, 140, 216, 0.12) 0%, rgba(168, 140, 216, 0) 70%);
+  }
+}
+
+/* Frosted noise overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-blob {
+    animation: none;
+  }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

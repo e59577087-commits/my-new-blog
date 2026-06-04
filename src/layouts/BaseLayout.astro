@@ -55,7 +55,7 @@ const socialImageUrl = new URL(image, site.url);
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20260531" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=20260531" />
     <meta property="og:type" content={type} />
     <meta property="og:locale" content="zh_CN" />
     <meta property="og:site_name" content={site.name} />
@@ -71,7 +71,13 @@ const socialImageUrl = new URL(image, site.url);
     <title>{pageTitle}</title>
   </head>
   <body>
-    <div class="flex min-h-screen flex-col">
+    <!-- Decorative glassmorphism background blobs -->
+    <div class="bg-blobs" aria-hidden="true">
+      <div class="bg-blob bg-blob--a"></div>
+      <div class="bg-blob bg-blob--b"></div>
+      <div class="bg-blob bg-blob--c"></div>
+    </div>
+    <div class="site-shell flex min-h-screen flex-col">
       <SiteHeader />
       <main class="flex-1">
         <slot />
