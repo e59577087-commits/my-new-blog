@@ -1,24 +1,91 @@
 
 > my-new-blog@0.0.1 dev
-> astro dev --host 127.0.0.1
+> astro dev --host 127.0.0.1 --port 4321
 
 [vite] connected.
-[2m22:16:55[22m [34m[types][39m Generated [2m1ms[22m
+[2m12:22:40[22m [34m[types][39m Generated [2m1ms[22m
 [vite] connected.
-[2m22:16:55[22m [34m[content][39m Syncing content
-[2m22:16:55[22m [34m[content][39m Astro config changed
-[2m22:16:55[22m [34m[content][39m Clearing content store
-[2m22:16:55[22m [34m[content][39m Synced content
-[2m22:16:55[22m [34m[vite][39m Re-optimizing dependencies because vite config has changed
-[42m[1m astro [22m[49m [32mv6.4.2[39m [2mready in[22m 1303 [2mms[22m
+[2m12:22:40[22m [34m[content][39m Syncing content
+[2m12:22:40[22m [34m[content][39m Astro config changed
+[2m12:22:40[22m [34m[content][39m Clearing content store
+[2m12:22:41[22m [34m[content][39m Synced content
+[2m12:22:41[22m [34m[vite][39m Re-optimizing dependencies because vite config has changed
+[42m[1m astro [22m[49m [32mv6.4.2[39m [2mready in[22m 1163 [2mms[22m
 [2m┃[22m Local    [36mhttp://127.0.0.1:4321/[39m
-[2m22:16:55[22m [32mwatching for file changes...[39m
-[2m22:17:38[22m [34m[200][39m /login/ [2m20ms[22m
-[2m22:17:38[22m [34m[200][39m /blog/astro-blog-architecture/ [2m29ms[22m
-[2m22:21:56[22m [34m[200][39m / [2m11ms[22m
-[2m22:21:57[22m [34m[vite][39m [32m✨ new dependencies optimized: [33m@supabase/supabase-js[32m[39m
-[2m22:21:57[22m [34m[vite][39m [32m✨ optimized dependencies changed. reloading[39m
-[2m22:21:57[22m [34m[200][39m / [2m3ms[22m
-[2m22:21:59[22m [34m[200][39m /login/ [2m3ms[22m
-[2m23:10:13[22m [34m[200][39m /blog/astro-blog-architecture/ [2m16ms[22m
-[2m23:29:51[22m [34m[200][39m / [2m4ms[22m
+[2m12:22:41[22m [32mwatching for file changes...[39m
+[2m12:23:15[22m [34m[200][39m /articles/test-article/ [2m45ms[22m
+[2m12:23:25[22m [34m[200][39m /articles/test-article/ [2m3ms[22m
+[2m12:25:25[22m [34m[200][39m / [2m11ms[22m
+[2m12:25:25[22m [34m[vite][39m [32m✨ new dependencies optimized: [33m@supabase/supabase-js[32m[39m
+[2m12:25:25[22m [34m[vite][39m [32m✨ optimized dependencies changed. reloading[39m
+[2m12:25:31[22m [34m[200][39m /articles/test-article/ [2m3ms[22m
+[2m12:25:41[22m [34m[200][39m /about/ [2m9ms[22m
+[2m12:25:48[22m [34m[200][39m / [2m2ms[22m
+[2m12:26:58[22m [34m[200][39m /about/ [2m2ms[22m
+[2m12:30:47[22m [34m[watch][39m /src/styles/global.css
+[2m12:30:48[22m [34m[200][39m /about/ [2m19ms[22m
+[2m12:31:43[22m [34m[watch][39m src/components/StatsCard.astro
+[2m12:31:44[22m [34m[200][39m /about/ [2m9ms[22m
+[vite] program reload
+[vite] An error happened during full reload
+Failed to load url astro:server-app.js (resolved id: astro:server-app.js). Does the file exist?
+Error: Failed to load url astro:server-app.js (resolved id: astro:server-app.js). Does the file exist?
+    at loadAndTransform (file:///D:/my%20new%20blog/node_modules/vite/dist/node/chunks/config.js:22679:33)
+[2m12:31:58[22m [34m[200][39m /about/ [2m9ms[22m
+[2m12:32:10[22m [34m[200][39m /about/ [2m3ms[22m
+[2m12:32:13[22m [34m[200][39m /about/ [2m9ms[22m
+[2m12:32:23[22m [34m[200][39m /about/ [2m2ms[22m
+[2m12:35:52[22m [34m[watch][39m /src/styles/global.css
+[2m12:35:53[22m [34m[200][39m /about/ [2m8ms[22m
+[vite] program reload
+[2m12:36:06[22m [34m[watch][39m /src/styles/global.css
+[2m12:36:06[22m [34m[watch][39m /src/styles/global.css
+[2m12:36:06[22m [34m[watch][39m /src/styles/global.css
+[vite] program reload
+[vite] program reload
+[2m12:36:08[22m [34m[200][39m /about/ [2m13ms[22m
+[2m12:36:35[22m [34m[200][39m /tools/ [2m9ms[22m
+[2m12:36:35[22m [34m[200][39m /about/ [2m2ms[22m
+[2m12:36:48[22m [34m[200][39m /about/ [2m2ms[22m
+[2m12:37:13[22m [34m[200][39m / [2m11ms[22m
+[2m12:37:19[22m [34m[200][39m /about/ [2m2ms[22m
+[2m12:37:26[22m [34m[200][39m / [2m2ms[22m
+[2m12:40:54[22m [34m[watch][39m /src/styles/global.css
+[2m12:40:59[22m [34m[watch][39m /src/styles/global.css
+[2m12:41:02[22m [34m[watch][39m /src/styles/global.css
+[2m12:41:06[22m [34m[watch][39m /src/styles/global.css
+[2m12:41:14[22m [34m[watch][39m /src/styles/global.css
+[2m12:41:22[22m [34m[watch][39m /src/styles/global.css
+[2m12:41:26[22m [34m[watch][39m /src/styles/global.css
+[2m12:42:23[22m [34m[200][39m / [2m5ms[22m
+[2m12:42:36[22m [34m[200][39m /tools/ [2m2ms[22m
+[2m12:42:40[22m [34m[200][39m /share/ [2m10ms[22m
+[2m12:42:45[22m [34m[200][39m / [2m3ms[22m
+[2m12:45:53[22m [34m[watch][39m /src/styles/global.css
+[2m12:46:01[22m [34m[watch][39m /src/styles/global.css
+[2m12:46:05[22m [34m[watch][39m /src/styles/global.css
+[2m12:46:09[22m [34m[watch][39m /src/styles/global.css
+[2m12:46:46[22m [34m[200][39m / [2m4ms[22m
+[2m12:47:55[22m [34m[200][39m /share/ [2m2ms[22m
+[2m12:48:00[22m [34m[200][39m / [2m3ms[22m
+[2m12:49:31[22m [34m[200][39m / [2m2ms[22m
+[2m12:51:21[22m [34m[200][39m / [2m2ms[22m
+[2m12:53:31[22m [34m[watch][39m /src/styles/global.css
+[2m12:54:18[22m [34m[watch][39m /src/styles/global.css
+[2m12:55:39[22m [34m[watch][39m /src/styles/global.css
+[2m12:57:56[22m [34m[watch][39m /src/styles/global.css
+[2m12:58:06[22m [34m[watch][39m /src/styles/global.css
+[2m12:58:36[22m [34m[200][39m / [2m4ms[22m
+[2m12:59:09[22m [34m[200][39m /tools/ [2m1ms[22m
+[2m12:59:18[22m [34m[200][39m /share/ [2m1ms[22m
+[2m12:59:20[22m [34m[200][39m /about/ [2m2ms[22m
+[2m12:59:25[22m [34m[200][39m / [2m7ms[22m
+[2m12:59:43[22m [34m[200][39m /tools/ [2m2ms[22m
+[2m13:00:07[22m [34m[200][39m / [2m2ms[22m
+[2m13:00:20[22m [34m[200][39m /tools/ [2m2ms[22m
+[2m13:01:15[22m [34m[watch][39m /src/styles/global.css
+[2m13:01:32[22m [34m[200][39m /tools/ [2m3ms[22m
+[2m13:01:35[22m [34m[200][39m / [2m3ms[22m
+[2m13:01:54[22m [34m[200][39m /tools/ [2m2ms[22m
+[2m13:01:57[22m [34m[200][39m / [2m3ms[22m
+[2m13:03:52[22m [34m[watch][39m /src/styles/global.css

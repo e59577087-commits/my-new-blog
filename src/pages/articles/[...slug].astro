@@ -1,6 +1,7 @@
 ---
 import { render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import Comments from "../../components/Comments.astro";
 import PrevNextNav from "../../components/PrevNextNav.astro";
 import { formatArticleDate, getArticleSlug, getPublishedArticles } from "../../utils/articles";
 
@@ -19,6 +20,7 @@ export async function getStaticPaths() {
 
 const { article, prev, next } = Astro.props;
 const { Content } = await render(article);
+const articleSlug = getArticleSlug(article);
 ---
 
 <BaseLayout title={article.data.title} description={article.data.description}>
@@ -39,5 +41,6 @@ const { Content } = await render(article);
     </div>
 
     <PrevNextNav {prev} {next} />
+    <Comments slug={articleSlug} />
   </article>
 </BaseLayout>

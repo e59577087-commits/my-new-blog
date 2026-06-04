@@ -1,29 +1,45 @@
--- 在 Supabase SQL Editor 中运行以下 SQL 来创建访问计数表
--- https://govdfuzkcnbsnvozzqwb.supabase.co → SQL Editor
+-- Run this in the Supabase SQL Editor for the project:
+-- https://govdfuzkcnbsnvozzqwb.supabase.co
 
--- 创建表
-CREATE TABLE IF NOT EXISTS site_visits (
-  id INTEGER PRIMARY KEY DEFAULT 1,
-  count BIGINT DEFAULT 1,
-  CHECK (id = 1)
+create table if not exists public.site_visits (
+  id integer primary key default 1,
+  count bigint not null default 0,
+  updated_at timestamptz not null default now(),
+  constraint site_visits_single_row check (id = 1)
 );
 
--- 插入初始数据（如果不存在）
-INSERT INTO site_visits (id, count)
-VALUES (1, 1)
-ON CONFLICT (id) DO NOTHING;
+insert into public.site_visits (id, count)
+values (1, 0)
+on conflict (id) do nothing;
 
--- 允许匿名读取
-ALTER TABLE site_visits ENABLE ROW LEVEL SECURITY;
+alter table public.site_visits enable row level security;
 
-DROP POLICY IF EXISTS "Anyone can read visit count" ON site_visits;
-CREATE POLICY "Anyone can read visit count" ON site_visits
-  FOR SELECT USING (true);
+drop policy if exists "site visit count is readable by everyone" on public.site_visits;
+create policy "site visit count is readable by everyone"
+on public.site_visits
+for select
+using (true);
 
-DROP POLICY IF EXISTS "Anyone can update count" ON site_visits;
-CREATE POLICY "Anyone can update count" ON site_visits
-  FOR UPDATE USING (true);
+grant select on public.site_visits to anon, authenticated;
 
-DROP POLICY IF EXISTS "Anyone can insert" ON site_visits;
-CREATE POLICY "Anyone can insert" ON site_visits
-  FOR INSERT WITH CHECK (true);
+create or replace function public.increment_site_visit()
+returns bigint
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  next_count bigint;
+begin
+  insert into public.site_visits (id, count)
+  values (1, 1)
+  on conflict (id) do update
+  set count = site_visits.count + 1,
+      updated_at = now()
+  returning site_visits.count into next_count;
+
+  return next_count;
+end;
+$$;
+
+grant execute on function public.increment_site_visit() to anon, authenticated;
