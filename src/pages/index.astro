@@ -59,8 +59,24 @@ const previewShares = shareItems.slice(0, 3);
         <h2 class="heading-text text-xl font-semibold">最新</h2>
       </div>
 
-      <div class="latest-layout grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(360px,2.5fr)]">
-        <!-- Article list (3 cards, left column) -->
+      <div class="latest-layout grid gap-5 lg:grid-cols-[minmax(0,2.5fr)_minmax(320px,1.6fr)]">
+        <!-- Featured article (large card, left column) -->
+        <a href={latest.href} class="surface motion-card reveal group block overflow-hidden rounded-lg">
+          <img src={latest.image} alt="" loading="eager" decoding="async" fetchpriority="high" width="960" height="621" class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]" />
+          <div class="p-5 sm:p-6">
+            <div class="flex flex-wrap items-center gap-2">
+              <time datetime={latest.date.toISOString()} class="faint-text text-sm">{formatArticleDate(latest.date)}</time>
+              {latest.pinned && <span class="rounded bg-[var(--color-accent-soft)] px-2 py-0.5 text-xs kicker">置顶</span>}
+              <span class="kicker text-xs">{latest.category}</span>
+            </div>
+            <h2 class="heading-text mt-3 text-2xl font-semibold leading-8 transition-colors group-hover:text-[var(--color-accent-text)] sm:text-3xl">{latest.title}</h2>
+            <div class="mt-4 flex flex-wrap gap-2">
+              {latest.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2.5 py-1 text-xs muted">{tag}</span>)}
+            </div>
+          </div>
+        </a>
+
+        <!-- Article list (3 cards, right column) -->
         <div data-appearance-article-list="compact">
           {
             latestList.map((item) => (
@@ -86,22 +102,6 @@ const previewShares = shareItems.slice(0, 3);
             )
           }
         </div>
-
-        <!-- Featured article (large card, right column) -->
-        <a href={latest.href} class="surface motion-card reveal group block overflow-hidden rounded-lg">
-          <img src={latest.image} alt="" loading="eager" decoding="async" fetchpriority="high" width="960" height="621" class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]" />
-          <div class="p-5 sm:p-6">
-            <div class="flex flex-wrap items-center gap-2">
-              <time datetime={latest.date.toISOString()} class="faint-text text-sm">{formatArticleDate(latest.date)}</time>
-              {latest.pinned && <span class="rounded bg-[var(--color-accent-soft)] px-2 py-0.5 text-xs kicker">置顶</span>}
-              <span class="kicker text-xs">{latest.category}</span>
-            </div>
-            <h2 class="heading-text mt-3 text-2xl font-semibold leading-8 transition-colors group-hover:text-[var(--color-accent-text)] sm:text-3xl">{latest.title}</h2>
-            <div class="mt-4 flex flex-wrap gap-2">
-              {latest.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2.5 py-1 text-xs muted">{tag}</span>)}
-            </div>
-          </div>
-        </a>
       </div>
     </section>
       )

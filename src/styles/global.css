@@ -370,7 +370,7 @@ body {
 
 @media (min-width: 1024px) {
   :root[data-article-layout="list"] .latest-layout {
-    grid-template-columns: minmax(0, 1.6fr) minmax(380px, 2.6fr);
+    grid-template-columns: minmax(0, 2.5fr) minmax(320px, 1.6fr);
   }
 
   :root[data-article-layout="list"] [data-appearance-article-list="compact"] {
