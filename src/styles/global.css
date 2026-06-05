@@ -382,11 +382,6 @@ body {
   }
 }
 
-.latest-placeholder {
-  min-height: 5rem;
-  opacity: 0.25;
-}
-
 @media (min-width: 640px) {
   :root[data-article-layout="list"] [data-appearance-article-list] > a > img {
     width: 9rem;
