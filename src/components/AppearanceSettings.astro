@@ -291,10 +291,9 @@
       position: fixed;
       top: calc(max(4.25rem, env(safe-area-inset-top)) + 2.65rem);
       right: max(0.75rem, env(safe-area-inset-right));
-      bottom: max(0.75rem, env(safe-area-inset-bottom));
-      left: max(0.75rem, env(safe-area-inset-left));
-      width: auto;
-      max-height: none;
+      width: calc(100vw - 1.5rem);
+      max-width: 20.5rem;
+      max-height: calc(100dvh - max(4.25rem, env(safe-area-inset-top)) - 4rem);
       border-radius: 0.9rem;
       padding: 0.65rem;
       transform-origin: top right;
@@ -361,12 +360,6 @@
   @supports (height: 100dvh) {
     .appearance-panel {
       max-height: min(42rem, calc(100dvh - 6.75rem));
-    }
-
-    @media (max-width: 640px) {
-      .appearance-panel {
-        max-height: none;
-      }
     }
   }
 
