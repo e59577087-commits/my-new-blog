@@ -40,14 +40,20 @@ const latest = latestItems[0];
 const latestList = latestItems.slice(1, 5);
 const previewTools = tools.slice(0, 3);
 const previewShares = shareItems.slice(0, 3);
+const bannerTitle = "从负数到零，真的绕好大一圈呀";
+const bannerTitleChars = Array.from(bannerTitle);
 ---
 
 <BaseLayout title="首页">
   <section class="mx-auto max-w-6xl px-4 pt-1 pb-10 sm:px-6 sm:pt-3 sm:pb-14 lg:px-8">
     <section class="home-hero-banner mb-8 flex items-end p-5 sm:p-7">
-      <div>
-        <p class="kicker text-sm font-medium">happy,for you</p>
-        <h1 class="home-banner-title heading-text mt-2 text-balance text-3xl font-semibold leading-tight sm:text-5xl">慢慢写，慢慢整理</h1>
+      <div class="home-banner-copy">
+        <h1 class="home-banner-title heading-text mt-2 text-3xl leading-tight sm:text-5xl" aria-label={bannerTitle}>
+          {bannerTitleChars.map((char, index) => (
+            <span class="home-banner-title-char" style={`--char-delay: ${280 + index * 170}ms`} aria-hidden="true">{char}</span>
+          ))}
+          <span class="home-banner-cursor" aria-hidden="true"></span>
+        </h1>
       </div>
     </section>
 
