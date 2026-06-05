@@ -83,6 +83,36 @@ const startDate = site.startDate;
     daysEl.textContent = String(days);
   }
 
+  const visitCountedKey = "site_visit_count_last_counted_date";
+  const getTodayKey = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  };
+  const getStoredVisitDate = () => {
+    try {
+      return window.localStorage.getItem(visitCountedKey);
+    } catch {
+      return null;
+    }
+  };
+  const setStoredVisitDate = (date) => {
+    try {
+      window.localStorage.setItem(visitCountedKey, date);
+    } catch {
+      // Ignore storage failures in private or restricted browsing modes.
+    }
+  };
+  const readVisitCount = async (supabase) => {
+    const { data, error } = await supabase
+      .from("site_visits")
+      .select("count")
+      .eq("id", 1)
+      .single();
+
+    if (error) throw error;
+    return Number(data?.count ?? 0);
+  };
+
   async function loadVisitCount() {
     const countEl = document.getElementById("visit-count");
     if (!countEl) return;
@@ -91,16 +121,22 @@ const startDate = site.startDate;
       const supabase = isSupabaseConfigured ? createBrowserSupabaseClient() : null;
       if (!supabase) throw new Error("Supabase is not configured");
 
-      const { data, error } = await supabase.rpc("increment_site_visit");
-      if (error) throw error;
+      const todayKey = getTodayKey();
+      const shouldIncrement = getStoredVisitDate() !== todayKey;
+      let count;
 
-      countEl.textContent = Number(data ?? 0).toLocaleString();
+      if (shouldIncrement) {
+        const { data, error } = await supabase.rpc("increment_site_visit");
+        if (error) throw error;
+        setStoredVisitDate(todayKey);
+        count = Number(data ?? 0);
+      } else {
+        count = await readVisitCount(supabase);
+      }
+
+      countEl.textContent = count.toLocaleString();
     } catch {
-      const key = "site_visit_count_local";
-      const stored = window.localStorage.getItem(key);
-      const localCount = stored ? Number.parseInt(stored, 10) + 1 : 1;
-      window.localStorage.setItem(key, String(localCount));
-      countEl.textContent = localCount.toLocaleString();
+      countEl.textContent = "-";
     }
   }
 

@@ -6,6 +6,7 @@ export type Tool = {
   screenshot: string;
   tags: string[];
   date: string;
+  pinned?: boolean;
   links: {
     label: string;
     href: string;
@@ -21,11 +22,6 @@ export const tools: Tool[] = [
     screenshot: "/1-960.webp",
     tags: ["测试"],
     date: "2026-06-03",
-    links: [
-      {
-        label: "查看文章",
-        href: "/articles/test-article/",
-      },
-    ],
+    links: [],
   },
 ];

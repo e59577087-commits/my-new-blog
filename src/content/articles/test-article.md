@@ -5,6 +5,7 @@ date: 2026-06-03
 tags:
   - 测试
 cover: "/1-960.webp"
+pinned: true
 draft: false
 ---
 
