@@ -12,7 +12,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </div>
     </header>
 
-    <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div class="mt-6" data-appearance-article-list="catalog">
       {tools.map((tool) => <ToolCard tool={tool} />)}
     </div>
   </section>

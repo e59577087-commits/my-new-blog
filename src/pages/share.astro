@@ -11,7 +11,7 @@ import { shareItems } from "../data/share";
       </div>
     </header>
 
-    <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div class="mt-6" data-appearance-article-list="catalog">
       {shareItems.map((item) => (
         <a href={`/share/${item.slug}/`} class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${item.title}`}>
             <img src={item.screenshot} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-24 shrink-0 object-cover sm:w-32" />
