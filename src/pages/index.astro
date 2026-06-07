@@ -1,5 +1,6 @@
 ---
 import ToolCard from "../components/ToolCard.astro";
+import ProfileCard from "../components/ProfileCard.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { shareItems } from "../data/share";
 import { tools } from "../data/tools";
@@ -60,10 +61,15 @@ const bannerTitleChars = Array.from(bannerTitle);
     <!-- 最新 -->
     {
       latest && (
-    <section>
-      <div class="mb-5 flex items-end justify-between">
-        <h2 class="heading-text text-xl font-semibold">最新</h2>
+    <section class="latest-region">
+      <div class="latest-profile-sidecar">
+        <ProfileCard />
       </div>
+
+      <section>
+        <div class="mb-5 flex items-end justify-between">
+          <h2 class="heading-text text-xl font-semibold">最新</h2>
+        </div>
 
       <div class="latest-layout grid gap-5 lg:grid-cols-[minmax(0,2.5fr)_minmax(320px,1.6fr)]">
         <!-- Featured article (large card, left column) -->
@@ -104,6 +110,7 @@ const bannerTitleChars = Array.from(bannerTitle);
           }
         </div>
       </div>
+      </section>
     </section>
       )
     }
