@@ -1,0 +1,225 @@
+<div class="mini-calendar surface-soft rounded-lg p-4" data-mini-calendar aria-label="迷你日历">
+  <!-- Month header -->
+  <div class="cal-header">
+    <button type="button" class="cal-nav-btn" data-cal-prev aria-label="上个月">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5">
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
+    </button>
+    <span class="cal-month-year heading-text text-sm font-semibold" data-cal-label></span>
+    <button type="button" class="cal-nav-btn" data-cal-next aria-label="下个月">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-3.5">
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Weekday headers -->
+  <div class="cal-weekdays" aria-hidden="true">
+    <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+  </div>
+
+  <!-- Day grid -->
+  <div class="cal-grid" data-cal-grid></div>
+</div>
+
+<style>
+  .mini-calendar {
+    user-select: none;
+  }
+
+  .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.65rem;
+  }
+
+  .cal-nav-btn {
+    display: grid;
+    width: 1.65rem;
+    height: 1.65rem;
+    place-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 0.4rem;
+    background: var(--color-field);
+    color: var(--color-muted);
+    cursor: pointer;
+    transition:
+      border-color 160ms ease,
+      color 160ms ease,
+      background-color 160ms ease;
+  }
+
+  .cal-nav-btn:hover {
+    border-color: var(--color-accent-border);
+    color: var(--color-heading);
+    background: var(--color-surface-hover);
+  }
+
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    margin-bottom: 0.35rem;
+    text-align: center;
+    font-size: 0.68rem;
+    color: var(--color-faint);
+    line-height: 1.6;
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+  }
+
+  .cal-day {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    border-radius: 0.38rem;
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text);
+    cursor: default;
+    transition:
+      background-color 140ms ease,
+      color 140ms ease;
+  }
+
+  .cal-day:hover {
+    background: var(--color-field);
+  }
+
+  .cal-day[data-today] {
+    color: var(--color-primary-text);
+    font-weight: 650;
+  }
+
+  .cal-day[data-today]::before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: inherit;
+    background: var(--color-accent);
+    z-index: -1;
+    opacity: 0.82;
+  }
+
+  .cal-day[data-other-month] {
+    color: var(--color-faint);
+    opacity: 0.45;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cal-nav-btn,
+    .cal-day {
+      transition-duration: 0.01ms;
+    }
+  }
+</style>
+
+<script>
+  (function miniCalendar() {
+    const root = document.querySelector("[data-mini-calendar]");
+    if (!root) return;
+
+    const label = root.querySelector("[data-cal-label]");
+    const grid = root.querySelector("[data-cal-grid]");
+    const prevBtn = root.querySelector("[data-cal-prev]");
+    const nextBtn = root.querySelector("[data-cal-next]");
+
+    if (!label || !grid || !prevBtn || !nextBtn) return;
+
+    const WEEKDAYS = 7;
+
+    const today = new Date();
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    let currentYear = today.getFullYear();
+    let currentMonth = today.getMonth(); // 0-indexed
+
+    const formatLabel = (year, month) => `${year} 年 ${month + 1} 月`;
+
+    function render() {
+      label.textContent = formatLabel(currentYear, currentMonth);
+
+      // First day of month (0 = Sunday)
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      // Days in month
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      // Days in previous month (for filling leading blanks)
+      const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+      grid.innerHTML = "";
+
+      // Leading blanks (previous month tail)
+      for (let i = firstDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        const cell = createDayCell(day, true);
+        grid.appendChild(cell);
+      }
+
+      // Current month days
+      for (let d = 1; d <= daysInMonth; d++) {
+        const cell = createDayCell(d, false);
+        const key = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        if (key === todayKey) {
+          cell.setAttribute("data-today", "");
+          cell.setAttribute("aria-label", `${d} 日，今天`);
+        }
+        grid.appendChild(cell);
+      }
+
+      // Trailing blanks (next month head) — fill to complete the last row
+      const totalCells = Math.ceil((firstDay + daysInMonth) / WEEKDAYS) * WEEKDAYS;
+      const trailing = totalCells - (firstDay + daysInMonth);
+      for (let d = 1; d <= trailing; d++) {
+        const cell = createDayCell(d, true);
+        grid.appendChild(cell);
+      }
+    }
+
+    function createDayCell(day, isOtherMonth) {
+      const cell = document.createElement("span");
+      cell.className = "cal-day";
+      cell.textContent = String(day);
+      if (isOtherMonth) {
+        cell.setAttribute("data-other-month", "");
+        cell.setAttribute("aria-hidden", "true");
+      }
+      return cell;
+    }
+
+    function goPrev() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      render();
+    }
+
+    function goNext() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      render();
+    }
+
+    prevBtn.addEventListener("click", goPrev);
+    nextBtn.addEventListener("click", goNext);
+
+    // Keyboard navigation
+    root.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
+      if (e.key === "ArrowRight") { e.preventDefault(); goNext(); }
+    });
+
+    render();
+  })();
+</script>

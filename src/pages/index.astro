@@ -1,6 +1,7 @@
 ---
 import ToolCard from "../components/ToolCard.astro";
 import ProfileCard from "../components/ProfileCard.astro";
+import MiniCalendar from "../components/MiniCalendar.astro";
 import BannerParticles from "../components/BannerParticles.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { shareItems } from "../data/share";
@@ -66,6 +67,9 @@ const bannerTitleChars = Array.from(bannerTitle);
     <section class="latest-region">
       <div class="latest-profile-sidecar">
         <ProfileCard />
+        <div class="mt-4">
+          <MiniCalendar />
+        </div>
       </div>
 
       <section>
