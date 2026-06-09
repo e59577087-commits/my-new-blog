@@ -94,8 +94,8 @@
   }
 
   .cal-day[data-today] {
-    color: var(--color-primary-text);
-    font-weight: 650;
+    color: #b45309;
+    font-weight: 700;
   }
 
   .cal-day[data-today]::before {
@@ -103,9 +103,16 @@
     position: absolute;
     inset: 2px;
     border-radius: inherit;
-    background: var(--color-accent);
+    background: hsl(38, 92%, 58%);
     z-index: -1;
-    opacity: 0.82;
+  }
+
+  :root[data-theme="dark"] .cal-day[data-today] {
+    color: #fde68a;
+  }
+
+  :root[data-theme="dark"] .cal-day[data-today]::before {
+    background: hsl(38, 82%, 48%);
   }
 
   .cal-day[data-other-month] {
