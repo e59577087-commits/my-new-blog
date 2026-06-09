@@ -115,11 +115,6 @@
     background: hsl(38, 82%, 48%);
   }
 
-  .cal-day[data-other-month] {
-    color: var(--color-faint);
-    opacity: 0.45;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .cal-nav-btn,
     .cal-day {
@@ -140,8 +135,6 @@
 
     if (!label || !grid || !prevBtn || !nextBtn) return;
 
-    const WEEKDAYS = 7;
-
     const today = new Date();
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
@@ -153,25 +146,24 @@
     function render() {
       label.textContent = formatLabel(currentYear, currentMonth);
 
-      // First day of month (0 = Sunday)
       const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-      // Days in month
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      // Days in previous month (for filling leading blanks)
-      const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
 
       grid.innerHTML = "";
 
-      // Leading blanks (previous month tail)
-      for (let i = firstDay - 1; i >= 0; i--) {
-        const day = daysInPrevMonth - i;
-        const cell = createDayCell(day, true);
+      // Leading blanks
+      for (let i = 0; i < firstDay; i++) {
+        const cell = document.createElement("span");
+        cell.className = "cal-day";
+        cell.setAttribute("aria-hidden", "true");
         grid.appendChild(cell);
       }
 
       // Current month days
       for (let d = 1; d <= daysInMonth; d++) {
-        const cell = createDayCell(d, false);
+        const cell = document.createElement("span");
+        cell.className = "cal-day";
+        cell.textContent = String(d);
         const key = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
         if (key === todayKey) {
           cell.setAttribute("data-today", "");
@@ -179,25 +171,6 @@
         }
         grid.appendChild(cell);
       }
-
-      // Trailing blanks (next month head) — fill to complete the last row
-      const totalCells = Math.ceil((firstDay + daysInMonth) / WEEKDAYS) * WEEKDAYS;
-      const trailing = totalCells - (firstDay + daysInMonth);
-      for (let d = 1; d <= trailing; d++) {
-        const cell = createDayCell(d, true);
-        grid.appendChild(cell);
-      }
-    }
-
-    function createDayCell(day, isOtherMonth) {
-      const cell = document.createElement("span");
-      cell.className = "cal-day";
-      cell.textContent = String(day);
-      if (isOtherMonth) {
-        cell.setAttribute("data-other-month", "");
-        cell.setAttribute("aria-hidden", "true");
-      }
-      return cell;
     }
 
     function goPrev() {
