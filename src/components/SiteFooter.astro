@@ -4,14 +4,104 @@ import { site } from "../data/site";
 const year = new Date().getFullYear();
 ---
 
-<footer class="border-t hairline">
-  <div class="mx-auto grid max-w-6xl gap-6 px-4 py-10 text-sm faint-text sm:grid-cols-[1fr_auto] sm:px-6 lg:px-8">
-    <div>
-      <p class="text-body">© {year} {site.author}</p>
-      <p class="mt-2 max-w-xl leading-7">慢慢写，慢慢整理。这里收着一些随笔片段和当下喜欢的东西。</p>
+<footer class="site-footer border-t hairline">
+  <!-- Subtle top gradient line -->
+  <div class="footer-accent" aria-hidden="true"></div>
+
+  <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+    <div class="grid gap-8 sm:grid-cols-[1fr_auto] sm:items-start">
+      <!-- Brand column -->
+      <div class="space-y-2.5">
+        <div class="flex items-center gap-2.5">
+          <span class="footer-brand-dot" aria-hidden="true"></span>
+          <span class="text-sm font-semibold heading-text">{site.brandName}</span>
+        </div>
+        <p class="max-w-lg text-sm leading-7 muted">
+          慢慢写，慢慢整理。这里收着一些随笔片段和当下喜欢的东西。
+        </p>
+        <p class="text-xs faint-text">
+          &copy; {year} {site.author}
+        </p>
+      </div>
+
+      <!-- Nav + back to top -->
+      <div class="flex flex-col gap-4 sm:items-end">
+        <nav class="flex flex-wrap gap-x-5 gap-y-2" aria-label="页脚导航">
+          {site.nav.map((item) => (
+            <a href={item.href} class="fine-link text-sm cursor-pointer">{item.label}</a>
+          ))}
+        </nav>
+
+        <button
+          type="button"
+          class="back-to-top inline-flex items-center gap-1.5 text-xs muted transition-colors duration-200 hover:text-[var(--color-heading)] cursor-pointer"
+          aria-label="返回顶部"
+        >
+          <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="19" x2="12" y2="5" />
+            <polyline points="5 12 12 5 19 12" />
+          </svg>
+          回到顶部
+        </button>
+      </div>
     </div>
-    <div class="flex flex-wrap items-center gap-3 sm:justify-end">
-      {site.nav.map((item) => <a href={item.href} class="fine-link">{item.label}</a>)}
-    </div>
+
+    <!-- Subtle bottom note -->
+    <p class="mt-8 pt-6 border-t hairline text-xs faint-text">
+      由 <a href="https://astro.build" class="fine-link" target="_blank" rel="noopener noreferrer">Astro</a> 构建，用心整理每一份内容。
+    </p>
   </div>
 </footer>
+
+<style>
+  .site-footer {
+    position: relative;
+  }
+
+  /* Decorative gradient accent line */
+  .footer-accent {
+    position: absolute;
+    top: -1px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-accent) 25%,
+      hsl(calc(var(--theme-hue) + 30) 65% 62%) 50%,
+      var(--color-accent) 75%,
+      transparent
+    );
+    opacity: 0.55;
+    border-radius: 1px;
+  }
+
+  /* Brand dot — tiny colored circle */
+  .footer-brand-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    flex-shrink: 0;
+  }
+
+  .back-to-top {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+  }
+
+  :root[data-theme="dark"] .footer-accent {
+    opacity: 0.7;
+  }
+</style>
+
+<script>
+  const backToTop = document.querySelector('.back-to-top');
+  backToTop?.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>

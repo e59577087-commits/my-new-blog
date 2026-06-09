@@ -1,0 +1,234 @@
+<style>
+  .tilt-glare {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 300ms ease;
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 35%, transparent 70%);
+  }
+
+  .tilt-shine {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    border-radius: inherit;
+    overflow: hidden;
+  }
+
+  .tilt-shine::after {
+    content: "";
+    position: absolute;
+    top: -20%;
+    bottom: -20%;
+    left: -20%;
+    width: 60%;
+    background: linear-gradient(
+      105deg,
+      transparent 28%,
+      rgba(255, 255, 255, 0.12) 40%,
+      rgba(255, 255, 255, 0.45) 47%,
+      rgba(255, 255, 255, 0.55) 50%,
+      rgba(255, 255, 255, 0.45) 53%,
+      rgba(255, 255, 255, 0.12) 60%,
+      transparent 72%
+    );
+    transform: translateX(-110%) skewX(-8deg);
+  }
+
+  .tilt-shine.sweeping::after {
+    animation: tilt-shine-sweep 620ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes tilt-shine-sweep {
+    to {
+      transform: translateX(280%) skewX(-8deg);
+    }
+  }
+</style>
+
+<script>
+  (function tiltInit() {
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mql.matches) return;
+
+    // Touch devices don't get tilt — no hover tracking
+    if (window.matchMedia("(any-hover: none)").matches) return;
+
+    const MAX_TILT = 6;     // degrees — subtle but perceptible tilt
+    const EASING = 0.13;    // lower = smoother but laggier
+    const SCALE = 1.0;      // no scale-up — avoids "in your face" feel
+
+    class TiltCard {
+      constructor(el) {
+        this.el = el;
+        this.bounds = null;
+
+        // Current animated rotation values
+        this.rx = 0;
+        this.ry = 0;
+        this.scale = 1;
+
+        // Target values (set by mouse position)
+        this.trx = 0;
+        this.try = 0;
+
+        // Current glare position (%)
+        this.gx = 50;
+        this.gy = 50;
+        this.tgx = 50;
+        this.tgy = 50;
+
+        this.hovering = false;
+        this.raf = null;
+
+        // Build glare overlay
+        this.glare = document.createElement("div");
+        this.glare.className = "tilt-glare";
+
+        // Build shine sweep overlay
+        this.shine = document.createElement("div");
+        this.shine.className = "tilt-shine";
+
+        // Ensure the card is a positioned container
+        const cs = getComputedStyle(el);
+        if (cs.position === "static") el.style.position = "relative";
+        el.style.isolation = "isolate";
+
+        el.append(this.glare);
+        el.append(this.shine);
+
+        // Ensure images inside don't overflow the tilt
+        const imgs = el.querySelectorAll("img");
+        imgs.forEach((img) => {
+          img.style.transform = "translateZ(0)";
+        });
+
+        // Bind event handlers
+        this.onEnter = this.onEnter.bind(this);
+        this.onMove = this.onMove.bind(this);
+        this.onLeave = this.onLeave.bind(this);
+        this.tick = this.tick.bind(this);
+
+        el.addEventListener("mouseenter", this.onEnter);
+        el.addEventListener("mousemove", this.onMove);
+        el.addEventListener("mouseleave", this.onLeave);
+      }
+
+      onEnter() {
+        this.bounds = this.el.getBoundingClientRect();
+        this.hovering = true;
+        this.glare.style.opacity = "1";
+        this.el.style.transition =
+          "border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease";
+
+        // Trigger shine sweep
+        this.shine.classList.remove("sweeping");
+        void this.shine.offsetWidth; // force reflow to restart animation
+        this.shine.classList.add("sweeping");
+
+        if (!this.raf) this.raf = requestAnimationFrame(this.tick);
+      }
+
+      onMove(e) {
+        if (!this.hovering) return;
+        const rect = this.bounds || this.el.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const hw = rect.width / 2;
+        const hh = rect.height / 2;
+
+        // Mouse offset from center mapped to [-1, 1]
+        const rx = (x - hw) / hw; // -1..1
+        const ry = (y - hh) / hh; // -1..1
+
+        this.trx = ry * MAX_TILT;  // negate? let's test: mouse at top → card tilts forward
+        this.try = -rx * MAX_TILT; // mouse at left → card tilts left
+
+        this.tgx = (x / rect.width) * 100;
+        this.tgy = (y / rect.height) * 100;
+      }
+
+      onLeave() {
+        this.hovering = false;
+        this.trx = 0;
+        this.try = 0;
+        this.glare.style.opacity = "0";
+        this.el.style.transition =
+          "transform 380ms cubic-bezier(0.23, 1, 0.32, 1), border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease";
+      }
+
+      tick() {
+        // Smooth interpolation
+        this.rx += (this.trx - this.rx) * EASING;
+        this.ry += (this.try - this.ry) * EASING;
+        this.scale += (this.hovering ? SCALE : 1 - this.scale) * EASING;
+        this.gx += (this.tgx - this.gx) * 0.14;
+        this.gy += (this.tgy - this.gy) * 0.14;
+
+        const rxf = this.rx.toFixed(3);
+        const ryf = this.ry.toFixed(3);
+
+        if (this.hovering || Math.abs(this.rx) > 0.05 || Math.abs(this.ry) > 0.05) {
+          this.el.style.transform =
+            `perspective(1800px) rotateX(${rxf}deg) rotateY(${ryf}deg)`;
+          this.glare.style.background =
+            `radial-gradient(circle at ${this.gx.toFixed(1)}% ${this.gy.toFixed(1)}%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 35%, transparent 70%)`;
+          this.raf = requestAnimationFrame(this.tick);
+        } else {
+          // Settled — reset inline transform so CSS can take over cleanly
+          this.el.style.transform = "";
+          this.el.style.transition =
+            "transform 380ms cubic-bezier(0.23, 1, 0.32, 1), border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease";
+          this.scale = 1;
+          this.raf = null;
+        }
+      }
+
+      destroy() {
+        cancelAnimationFrame(this.raf);
+        this.el.removeEventListener("mouseenter", this.onEnter);
+        this.el.removeEventListener("mousemove", this.onMove);
+        this.el.removeEventListener("mouseleave", this.onLeave);
+        this.glare.remove();
+        this.shine.remove();
+        this.el.style.transform = "";
+        this.el.style.transition = "";
+      }
+    }
+
+    const active = new Map();
+
+    function attach() {
+      document.querySelectorAll(".motion-card").forEach((el) => {
+        if (active.has(el)) return;
+        active.set(el, new TiltCard(el));
+      });
+    }
+
+    // Initial attach
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", attach);
+    } else {
+      attach();
+    }
+
+    // Watch for Astro page transitions adding new cards
+    const observer = new MutationObserver(() => attach());
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Cleanup old instances on navigation (for Astro view transitions)
+    document.addEventListener("astro:before-swap", () => {
+      active.forEach((instance, el) => {
+        instance.destroy();
+      });
+      active.clear();
+    });
+
+    // Re-attach after swap
+    document.addEventListener("astro:after-swap", attach);
+  })();
+</script>

@@ -131,9 +131,10 @@ const socialImageUrl = new URL(image, site.url);
     <title>{pageTitle}</title>
   </head>
   <body>
+    <a href="#main-content" class="skip-link">跳过导航，直达内容</a>
     <div class="flex min-h-screen flex-col">
       <SiteHeader />
-      <main class="flex-1">
+      <main id="main-content" class="flex-1">
         <slot />
       </main>
       <SiteFooter />

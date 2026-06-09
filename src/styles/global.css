@@ -177,6 +177,23 @@ body {
   letter-spacing: 0;
 }
 
+/* Subtle grain texture overlay — editorial/print feel */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+}
+
+:root[data-theme="dark"] body::after {
+  opacity: 0.04;
+}
+
 :root[data-wallpaper-mode="fullscreen"] body {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.48)),
@@ -572,6 +589,28 @@ a {
   text-decoration: none;
 }
 
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  border-radius: var(--glass-radius-control);
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  padding: 0.6rem 1.1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+  transform: translateY(-120%);
+  transition: transform 180ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: none;
+}
+
 button {
   cursor: pointer;
 }
@@ -650,6 +689,7 @@ button {
 }
 
 .fine-link {
+  cursor: pointer;
   color: var(--color-muted);
   transition:
     color 160ms ease,
@@ -662,6 +702,7 @@ button {
 }
 
 .motion-card {
+  cursor: pointer;
   transition:
     transform 180ms ease,
     border-color 180ms ease,
@@ -739,6 +780,7 @@ button {
 }
 
 .nav-link {
+  cursor: pointer;
   color: var(--color-muted);
 }
 
@@ -754,6 +796,7 @@ button {
 .provider-button,
 .secondary-button,
 .notice-box {
+  cursor: pointer;
   border-radius: var(--glass-radius-control);
   background: var(--color-surface-solid);
   color: var(--color-text);
@@ -1031,6 +1074,53 @@ button {
   [data-reveal-stagger] > [data-reveal] {
     transition-delay: 0ms;
   }
+}
+
+/* ── Decorative section divider ─────────────────── */
+
+.decorative-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 2.25rem 0 1.5rem;
+  color: var(--color-border-strong);
+}
+
+.decorative-divider::before,
+.decorative-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-border-strong) 15%,
+    var(--color-border-strong) 85%,
+    transparent
+  );
+}
+
+.decorative-divider::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-border-strong) 85%
+  );
+}
+
+.decorative-divider::after {
+  background: linear-gradient(
+    90deg,
+    var(--color-border-strong) 15%,
+    transparent
+  );
+}
+
+.decorative-divider-icon {
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  opacity: 0.55;
 }
 
 .prose-tech {
