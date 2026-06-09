@@ -14,13 +14,16 @@
     </button>
   </div>
 
-  <!-- Weekday headers -->
-  <div class="cal-weekdays" aria-hidden="true">
-    <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+  <!-- Weekday headers + day cells in a single grid for perfect column alignment -->
+  <div class="cal-grid" data-cal-grid>
+    <span class="cal-weekday">日</span>
+    <span class="cal-weekday">一</span>
+    <span class="cal-weekday">二</span>
+    <span class="cal-weekday">三</span>
+    <span class="cal-weekday">四</span>
+    <span class="cal-weekday">五</span>
+    <span class="cal-weekday">六</span>
   </div>
-
-  <!-- Day grid -->
-  <div class="cal-grid" data-cal-grid></div>
 </div>
 
 <style>
@@ -57,27 +60,20 @@
     background: var(--color-surface-hover);
   }
 
-  .cal-weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
-    margin-bottom: 0.35rem;
-  }
-
-  .cal-weekdays span {
-    display: grid;
-    place-items: center;
-    aspect-ratio: 1;
-    font-size: 0.68rem;
-    color: var(--color-faint);
-    text-align: center;
-    line-height: 1;
-  }
-
   .cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 1px;
+  }
+
+  .cal-weekday {
+    display: grid;
+    place-items: center;
+    font-size: 0.68rem;
+    color: var(--color-faint);
+    text-align: center;
+    line-height: 1;
+    padding-bottom: 0.2rem;
   }
 
   .cal-day {
@@ -157,7 +153,10 @@
       const firstDay = new Date(currentYear, currentMonth, 1).getDay();
       const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-      grid.innerHTML = "";
+      // Keep weekday headers (first 7 children), remove only day cells
+      while (grid.children.length > 7) {
+        grid.removeChild(grid.lastChild);
+      }
 
       // Leading blanks
       for (let i = 0; i < firstDay; i++) {
