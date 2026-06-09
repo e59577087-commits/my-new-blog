@@ -3,6 +3,7 @@ import SiteFooter from "../components/SiteFooter.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 import ScrollTopButton from "../components/ScrollTopButton.astro";
 import AppearanceSettings from "../components/AppearanceSettings.astro";
+import CardTilt from "../components/CardTilt.astro";
 import { site } from "../data/site";
 import "../styles/global.css";
 
@@ -61,7 +62,8 @@ const socialImageUrl = new URL(image, site.url);
           wallpaperMode: "banner",
           bannerTitle: true,
           ripple: true,
-          gradient: false,
+          particles: true,
+          particleHue: 42,
           articleLayout: "list",
         };
         const isObject = (value) => value && typeof value === "object" && !Array.isArray(value);
@@ -79,7 +81,9 @@ const socialImageUrl = new URL(image, site.url);
           next.articleLayout = ["list", "grid"].includes(next.articleLayout) ? next.articleLayout : defaults.articleLayout;
           next.bannerTitle = normalizeBoolean(next.bannerTitle, defaults.bannerTitle);
           next.ripple = normalizeBoolean(next.ripple, defaults.ripple);
-          next.gradient = normalizeBoolean(next.gradient, defaults.gradient);
+          next.particles = normalizeBoolean(next.particles, defaults.particles);
+          const particleHue = Number(next.particleHue);
+          next.particleHue = Number.isFinite(particleHue) ? Math.min(360, Math.max(0, particleHue)) : defaults.particleHue;
           return next;
         };
         const read = () => {
@@ -97,7 +101,8 @@ const socialImageUrl = new URL(image, site.url);
           root.dataset.wallpaperMode = next.wallpaperMode;
           root.dataset.bannerTitle = next.bannerTitle ? "show" : "hide";
           root.dataset.ripple = next.ripple ? "on" : "off";
-          root.dataset.gradient = next.gradient ? "on" : "off";
+          root.dataset.bannerParticles = next.particles ? "on" : "off";
+          root.dataset.particleHue = String(next.particleHue);
           root.dataset.articleLayout = next.articleLayout;
           return next;
         };
@@ -134,6 +139,45 @@ const socialImageUrl = new URL(image, site.url);
       <SiteFooter />
       <ScrollTopButton />
       <AppearanceSettings />
+      <CardTilt />
     </div>
+    <script>
+      (function scrollReveal() {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("revealed");
+                observer.unobserve(entry.target);
+              }
+            }
+          },
+          { threshold: 0.1, rootMargin: "0px 0px -24px 0px" }
+        );
+
+        function indexStaggerContainers() {
+          document.querySelectorAll("[data-reveal-stagger]").forEach((container) => {
+            container.querySelectorAll(":scope > [data-reveal]").forEach((el, i) => {
+              el.style.setProperty("--reveal-i", String(i));
+            });
+          });
+        }
+
+        function attach() {
+          indexStaggerContainers();
+          document.querySelectorAll("[data-reveal]").forEach((el) => observer.observe(el));
+        }
+
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", attach);
+        } else {
+          attach();
+        }
+
+        document.addEventListener("astro:after-swap", attach);
+      })();
+    </script>
   </body>
 </html>

@@ -8,7 +8,7 @@ type Props = {
 const { tool } = Astro.props;
 ---
 
-<a href={`/tools/${tool.slug}/`} class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${tool.name}`}>
+<a href={`/tools/${tool.slug}/`} data-reveal class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${tool.name}`}>
     <img src={tool.screenshot} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-24 shrink-0 object-cover sm:w-32" />
     <div class="min-w-0 flex flex-col justify-center p-4">
       <p class="kicker text-xs">{tool.category}</p>

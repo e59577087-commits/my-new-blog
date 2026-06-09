@@ -246,20 +246,6 @@ body {
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 
-.home-hero-banner::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(135deg, hsl(var(--theme-hue) 80% 92% / 0.52), transparent 54%),
-    linear-gradient(315deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.20));
-}
-
-:root[data-gradient="off"] .home-hero-banner::before {
-  display: none;
-}
 
 :root[data-wallpaper-mode="banner"] .home-hero-banner {
   background: var(--appearance-wallpaper) center / cover no-repeat;
@@ -359,18 +345,6 @@ body {
 
 :root[data-banner-title="hide"] .home-banner-title {
   display: none;
-}
-
-:root[data-gradient="off"] .surface,
-:root[data-gradient="off"] .surface-soft,
-:root[data-gradient="off"] .nav-shell {
-  background-image: none;
-}
-
-:root[data-gradient="off"] *,
-:root[data-gradient="off"] *::before,
-:root[data-gradient="off"] *::after {
-  transition-property: color, background-color, border-color, opacity, transform;
 }
 
 @keyframes banner-ripple {
@@ -1024,6 +998,38 @@ button {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ── Scroll-triggered reveal ──────────────────────── */
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 580ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 580ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger: each child inside a stagger container gets a cascading delay */
+[data-reveal-stagger] > [data-reveal] {
+  transition-delay: calc(var(--reveal-i, 0) * 78ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  [data-reveal-stagger] > [data-reveal] {
+    transition-delay: 0ms;
   }
 }
 

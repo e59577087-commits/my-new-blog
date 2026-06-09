@@ -1,6 +1,7 @@
 ---
 import ToolCard from "../components/ToolCard.astro";
 import ProfileCard from "../components/ProfileCard.astro";
+import BannerParticles from "../components/BannerParticles.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { shareItems } from "../data/share";
 import { tools } from "../data/tools";
@@ -48,6 +49,7 @@ const bannerTitleChars = Array.from(bannerTitle);
 <BaseLayout title="首页">
   <section class="mx-auto max-w-6xl px-4 pt-1 pb-10 sm:px-6 sm:pt-3 sm:pb-14 lg:px-8">
     <section class="home-hero-banner mb-8 flex items-end p-5 sm:p-7">
+      <BannerParticles />
       <div class="home-banner-copy">
         <h1 class="home-banner-title heading-text mt-2 text-3xl leading-tight sm:text-5xl" aria-label={bannerTitle}>
           {bannerTitleChars.map((char, index) => (
@@ -73,7 +75,7 @@ const bannerTitleChars = Array.from(bannerTitle);
 
       <div class="latest-layout grid gap-5 lg:grid-cols-[minmax(0,2.5fr)_minmax(320px,1.6fr)]">
         <!-- Featured article (large card, left column) -->
-        <a href={latest.href} class="surface motion-card reveal group block overflow-hidden rounded-lg">
+        <a href={latest.href} data-reveal class="surface motion-card group block overflow-hidden rounded-lg">
           <img src={latest.image} alt="" loading="eager" decoding="async" fetchpriority="high" width="960" height="621" class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]" />
           <div class="p-5 sm:p-6">
             <div class="flex flex-wrap items-center gap-2">
@@ -89,10 +91,10 @@ const bannerTitleChars = Array.from(bannerTitle);
         </a>
 
         <!-- Article list (3 cards, right column) -->
-        <div data-appearance-article-list="compact">
+        <div data-appearance-article-list="compact" data-reveal-stagger>
           {
             latestList.map((item) => (
-              <a href={item.href} class="surface-soft motion-card flex rounded-lg overflow-hidden">
+              <a href={item.href} data-reveal class="surface-soft motion-card flex rounded-lg overflow-hidden">
                 <img src={item.image} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-28 shrink-0 object-cover sm:w-40" />
                 <div class="min-w-0 flex flex-col justify-center p-4">
                   <div class="flex flex-wrap items-center gap-2">
@@ -131,7 +133,7 @@ const bannerTitleChars = Array.from(bannerTitle);
               </svg>
             </a>
           </div>
-          <div data-appearance-article-list="wide">
+          <div data-appearance-article-list="wide" data-reveal-stagger>
             {previewTools.map((tool) => <ToolCard tool={tool} />)}
           </div>
         </section>
@@ -154,9 +156,9 @@ const bannerTitleChars = Array.from(bannerTitle);
               </svg>
             </a>
           </div>
-          <div data-appearance-article-list="wide">
+          <div data-appearance-article-list="wide" data-reveal-stagger>
             {previewShares.map((item) => (
-              <a href={`/share/${item.slug}/`} class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${item.title}`}>
+              <a href={`/share/${item.slug}/`} data-reveal class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${item.title}`}>
                 <img src={item.screenshot} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-24 shrink-0 object-cover sm:w-32" />
                 <div class="min-w-0 flex flex-col justify-center p-4">
                   <p class="kicker text-xs">{item.category}</p>

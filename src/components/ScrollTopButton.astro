@@ -1,99 +1,213 @@
-<button type="button" class="scroll-top-button" data-scroll-top aria-label="返回顶部">
-  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m18 15-6-6-6 6"></path>
+<button type="button" class="scroll-progress-ring" data-scroll-progress aria-label="返回顶部">
+  <!-- Progress ring -->
+  <svg class="progress-svg" viewBox="0 0 52 52" aria-hidden="true">
+    <!-- Track -->
+    <circle
+      cx="26" cy="26" r="22"
+      fill="none"
+      stroke="var(--color-border)"
+      stroke-width="2.2"
+    />
+    <!-- Filled arc -->
+    <circle
+      cx="26" cy="26" r="22"
+      fill="none"
+      stroke="var(--color-accent)"
+      stroke-width="2.2"
+      stroke-linecap="round"
+      stroke-dasharray="138.23"
+      stroke-dashoffset="138.23"
+      transform="rotate(-90 26 26)"
+      data-progress-arc
+    />
   </svg>
+
+  <!-- Percentage (default visible) -->
+  <span class="progress-label" data-progress-pct aria-hidden="true">0</span>
+
+  <!-- Arrow (visible on hover) -->
+  <span class="progress-arrow-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="18" x2="12" y2="6" />
+      <polyline points="7 10 12 4 17 10" />
+    </svg>
+  </span>
 </button>
 
 <style>
-  .scroll-top-button {
+  .scroll-progress-ring {
     position: fixed;
     right: max(1rem, env(safe-area-inset-right));
     bottom: max(1rem, env(safe-area-inset-bottom));
     z-index: 40;
     display: grid;
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 2.9rem;
+    height: 2.9rem;
     place-items: center;
     border: 1px solid var(--color-border);
-    border-radius: var(--glass-radius-control);
+    border-radius: 999px;
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06)),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.30), rgba(255, 255, 255, 0.06)),
       var(--color-surface-solid);
     color: var(--color-heading);
     box-shadow: var(--shadow-control);
     opacity: 0;
     pointer-events: none;
-    transform: translate3d(0, 18px, 0) scale(0.92);
+    transform: translate3d(0, 14px, 0) scale(0.88);
     transition:
-      opacity 360ms ease,
-      transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 340ms ease,
+      transform 440ms cubic-bezier(0.22, 1, 0.36, 1),
       border-color 180ms ease,
       background-color 180ms ease,
-      color 180ms ease;
+      box-shadow 220ms ease;
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    cursor: pointer;
   }
 
-  .scroll-top-button[data-visible] {
+  .scroll-progress-ring[data-visible] {
     opacity: 1;
     pointer-events: auto;
     transform: translate3d(0, 0, 0) scale(1);
   }
 
-  .scroll-top-button:hover {
+  .scroll-progress-ring:hover {
     border-color: var(--color-accent-border);
     background: var(--color-surface-hover);
-    color: var(--color-heading);
+    box-shadow:
+      var(--shadow-control),
+      0 0 28px var(--color-accent-soft);
+    transform: translate3d(0, -3px, 0) scale(1.05);
   }
 
-  .scroll-top-button:focus-visible {
+  .scroll-progress-ring:focus-visible {
     outline: none;
     box-shadow: var(--shadow-control), var(--focus-ring);
   }
 
-  .scroll-top-button svg {
-    width: 1.15rem;
-    height: 1.15rem;
+  /* Stack children on top of each other */
+  .progress-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .progress-label,
+  .progress-arrow-icon {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    transition:
+      opacity 260ms ease,
+      transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .progress-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--color-heading);
+  }
+
+  .progress-arrow-icon {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  .progress-arrow-icon svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  /* Hover: swap label → arrow */
+  .scroll-progress-ring:hover .progress-label {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  .scroll-progress-ring:hover .progress-arrow-icon {
+    opacity: 1;
+    transform: translateY(-2px);
+    transition:
+      opacity 200ms ease 40ms,
+      transform 300ms cubic-bezier(0.22, 1, 0.36, 1) 40ms;
+  }
+
+  /* Smooth arc fill */
+  [data-progress-arc] {
+    transition: stroke-dashoffset 140ms linear;
   }
 
   @media (min-width: 768px) {
-    .scroll-top-button {
+    .scroll-progress-ring {
       right: max(1.5rem, env(safe-area-inset-right));
       bottom: max(1.5rem, env(safe-area-inset-bottom));
+      width: 3.15rem;
+      height: 3.15rem;
+    }
+
+    .progress-label {
+      font-size: 0.82rem;
+    }
+
+    .progress-arrow-icon svg {
+      width: 1.15rem;
+      height: 1.15rem;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .scroll-top-button {
+    .scroll-progress-ring,
+    .progress-label,
+    .progress-arrow-icon {
       transition-duration: 0.01ms;
+    }
+
+    [data-progress-arc] {
+      transition: none;
     }
   }
 </style>
 
 <script>
-  const button = document.querySelector("[data-scroll-top]");
+  const button = document.querySelector("[data-scroll-progress]");
+  const arc = button?.querySelector("[data-progress-arc]");
+  const label = button?.querySelector("[data-progress-pct]");
 
-  if (button) {
+  if (button && arc && label) {
+    const CIRCUMFERENCE = 138.23; // 2π × 22
     let ticking = false;
 
-    const updateVisibility = () => {
-      const root = document.documentElement;
-      const scrollTop = window.scrollY || root.scrollTop;
-      const scrollHeight = root.scrollHeight;
+    const update = () => {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const docHeight = document.documentElement.scrollHeight;
       const viewportHeight = window.innerHeight;
-      const maxScroll = Math.max(0, scrollHeight - viewportHeight);
-      const distanceFromBottom = scrollHeight - (scrollTop + viewportHeight);
-      const nearBottom = distanceFromBottom <= Math.min(560, Math.max(180, viewportHeight * 0.65));
-      const hasRoomToScroll = scrollTop > Math.min(180, maxScroll * 0.35);
+      const maxScroll = Math.max(1, docHeight - viewportHeight);
 
-      button.toggleAttribute("data-visible", nearBottom && hasRoomToScroll);
+      const progress = Math.min(1, Math.max(0, scrollTop / maxScroll));
+      const pct = Math.round(progress * 100);
+
+      // Arc fill
+      arc.setAttribute("stroke-dashoffset", String(CIRCUMFERENCE * (1 - progress)));
+      // Percentage number
+      label.textContent = String(pct);
+
+      // Show after scrolling past ~200px
+      button.toggleAttribute("data-visible", scrollTop > 200);
+
       ticking = false;
     };
 
     const requestUpdate = () => {
       if (ticking) return;
       ticking = true;
-      window.requestAnimationFrame(updateVisibility);
+      requestAnimationFrame(update);
     };
 
     button.addEventListener("click", () => {
@@ -102,6 +216,6 @@
 
     window.addEventListener("scroll", requestUpdate, { passive: true });
     window.addEventListener("resize", requestUpdate);
-    updateVisibility();
+    update();
   }
 </script>
