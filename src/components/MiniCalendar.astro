@@ -28,6 +28,7 @@
 
 <style>
   .mini-calendar {
+    --cal-cell-size: 1.55rem;
     user-select: none;
   }
 
@@ -62,12 +63,16 @@
 
   .cal-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 1px;
+    grid-template-columns: repeat(7, var(--cal-cell-size));
+    justify-content: center;
+    column-gap: 0.18rem;
+    row-gap: 0.08rem;
   }
 
   .cal-weekday {
     display: grid;
+    width: var(--cal-cell-size);
+    height: 1rem;
     place-items: center;
     font-size: 0.68rem;
     color: var(--color-faint);
@@ -76,13 +81,15 @@
     padding-bottom: 0.2rem;
   }
 
-  .cal-day {
+  :global(.cal-day) {
     position: relative;
+    isolation: isolate;
     display: grid;
+    width: var(--cal-cell-size);
+    height: var(--cal-cell-size);
     place-items: center;
-    aspect-ratio: 1;
     border-radius: 0.38rem;
-    font-size: 0.76rem;
+    font-size: 0.69rem;
     font-variant-numeric: tabular-nums;
     color: var(--color-text);
     text-align: center;
@@ -93,35 +100,47 @@
       color 140ms ease;
   }
 
-  .cal-day:hover {
+  :global(.cal-day-number) {
+    position: relative;
+    z-index: 1;
+    transform: translateX(0.04rem);
+  }
+
+  :global(.cal-day:hover) {
     background: var(--color-field);
   }
 
-  .cal-day[data-today] {
-    color: #b45309;
+  :global(.cal-day[data-today]) {
+    color: #78350f;
     font-weight: 700;
   }
 
-  .cal-day[data-today]::before {
+  :global(.cal-day[data-today]::before) {
     content: "";
     position: absolute;
     inset: 2px;
     border-radius: inherit;
-    background: hsl(38, 92%, 58%);
-    z-index: -1;
+    background: hsl(42, 96%, 62%);
+    box-shadow:
+      0 0 0 1px hsl(36 82% 43% / 0.34),
+      0 4px 10px hsl(38 85% 44% / 0.22);
+    z-index: 0;
   }
 
-  :root[data-theme="dark"] .cal-day[data-today] {
-    color: #fde68a;
+  :global(:root[data-theme="dark"] .cal-day[data-today]) {
+    color: #fff7ed;
   }
 
-  :root[data-theme="dark"] .cal-day[data-today]::before {
-    background: hsl(38, 82%, 48%);
+  :global(:root[data-theme="dark"] .cal-day[data-today]::before) {
+    background: hsl(38, 84%, 42%);
+    box-shadow:
+      0 0 0 1px hsl(38 92% 64% / 0.38),
+      0 4px 12px hsl(38 85% 35% / 0.34);
   }
 
   @media (prefers-reduced-motion: reduce) {
     .cal-nav-btn,
-    .cal-day {
+    :global(.cal-day) {
       transition-duration: 0.01ms;
     }
   }
@@ -170,7 +189,10 @@
       for (let d = 1; d <= daysInMonth; d++) {
         const cell = document.createElement("span");
         cell.className = "cal-day";
-        cell.textContent = String(d);
+        const number = document.createElement("span");
+        number.className = "cal-day-number";
+        number.textContent = String(d);
+        cell.append(number);
         const key = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
         if (key === todayKey) {
           cell.setAttribute("data-today", "");
