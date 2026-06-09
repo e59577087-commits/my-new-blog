@@ -24,25 +24,13 @@ const year = new Date().getFullYear();
         </p>
       </div>
 
-      <!-- Nav + back to top -->
-      <div class="flex flex-col gap-4 sm:items-end">
+      <!-- Nav -->
+      <div class="flex sm:items-end">
         <nav class="flex flex-wrap gap-x-5 gap-y-2" aria-label="页脚导航">
           {site.nav.map((item) => (
             <a href={item.href} class="fine-link text-sm cursor-pointer">{item.label}</a>
           ))}
         </nav>
-
-        <button
-          type="button"
-          class="back-to-top inline-flex items-center gap-1.5 text-xs muted transition-colors duration-200 hover:text-[var(--color-heading)] cursor-pointer"
-          aria-label="返回顶部"
-        >
-          <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="12" y1="19" x2="12" y2="5" />
-            <polyline points="5 12 12 5 19 12" />
-          </svg>
-          回到顶部
-        </button>
       </div>
     </div>
 
@@ -87,21 +75,7 @@ const year = new Date().getFullYear();
     flex-shrink: 0;
   }
 
-  .back-to-top {
-    background: none;
-    border: none;
-    padding: 0;
-    font-family: inherit;
-  }
-
   :root[data-theme="dark"] .footer-accent {
     opacity: 0.7;
   }
 </style>
-
-<script>
-  const backToTop = document.querySelector('.back-to-top');
-  backToTop?.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-</script>
