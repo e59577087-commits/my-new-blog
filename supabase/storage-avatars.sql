@@ -14,7 +14,9 @@ on conflict (id) do update set
   file_size_limit = 2097152,
   allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-alter table storage.objects enable row level security;
+-- Note: storage.objects already has RLS enabled by default in Supabase.
+-- Do NOT run `alter table storage.objects ...` here — the SQL Editor role is
+-- not the table owner and it will fail with: 42501 must be owner of table objects.
 
 drop policy if exists "Avatar images are publicly readable" on storage.objects;
 create policy "Avatar images are publicly readable"
