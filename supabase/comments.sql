@@ -59,3 +59,6 @@ on public.comments
 for delete
 to authenticated
 using (auth.uid() = user_id);
+
+grant select on public.comments to anon;
+grant select, insert, delete on public.comments to authenticated;

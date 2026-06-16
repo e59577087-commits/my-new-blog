@@ -23,7 +23,73 @@ export const getUserDisplayName = (user: User) =>
   "已登录用户";
 
 export const getUserAvatar = (user: User) =>
+  user.user_metadata?.custom_avatar || user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
+
+export const getUserOriginalAvatar = (user: User) =>
   user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
+
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+const AVATAR_DIMENSION = 256;
+
+const resizeImage = (file: File): Promise<Blob> =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      canvas.width = AVATAR_DIMENSION;
+      canvas.height = AVATAR_DIMENSION;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Canvas context unavailable"));
+      const size = Math.min(img.width, img.height);
+      const sx = (img.width - size) / 2;
+      const sy = (img.height - size) / 2;
+      ctx.drawImage(img, sx, sy, size, size, 0, 0, AVATAR_DIMENSION, AVATAR_DIMENSION);
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error("Image resize failed"))),
+        "image/webp",
+        0.85,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to load image"));
+    };
+    img.src = url;
+  });
+
+export const uploadUserAvatar = async (supabase: ReturnType<typeof createBrowserSupabaseClient>, userId: string, file: File): Promise<{ url: string; error?: string }> => {
+  if (!supabase || !userId) return { url: "", error: "Not configured" };
+  if (file.size > MAX_AVATAR_SIZE) return { url: "", error: "File exceeds 2 MB" };
+
+  const blob = await resizeImage(file);
+  const ext = "webp";
+  const path = `${userId}/avatar.${ext}`;
+
+  const { error: uploadError } = await supabase.storage.from("avatars").upload(path, blob, {
+    contentType: "image/webp",
+    upsert: true,
+    cacheControl: "604800",
+  });
+  if (uploadError) return { url: "", error: uploadError.message };
+
+  const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+  // Append a version so the long CDN cache is bypassed immediately after re-upload.
+  const publicUrl = `${urlData.publicUrl}?v=${Date.now()}`;
+
+  const { error: updateError } = await supabase.auth.updateUser({
+    data: { custom_avatar: publicUrl },
+  });
+  if (updateError) return { url: "", error: updateError.message };
+
+  return { url: publicUrl };
+};
+
+export const resetUserAvatar = async (supabase: ReturnType<typeof createBrowserSupabaseClient>): Promise<void> => {
+  if (!supabase) return;
+  await supabase.auth.updateUser({ data: { custom_avatar: null } });
+};
 
 export const getFallbackAvatar = (name: string) => {
   const initial = ([...name.trim()][0] ?? "用")

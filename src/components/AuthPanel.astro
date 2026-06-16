@@ -67,24 +67,48 @@
 
   <div data-auth-signed-in hidden>
     <div class="flex items-start gap-4">
-      <img data-panel-avatar alt="用户头像" class="size-14 rounded-lg border hairline object-cover" />
-      <div class="min-w-0">
+      <div class="relative shrink-0">
+        <button
+          type="button"
+          data-avatar-change
+          class="group/avatar relative block size-14 overflow-hidden rounded-lg border hairline focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-border)]"
+          title="点击更换头像"
+        >
+          <img data-panel-avatar alt="用户头像" class="size-full object-cover" />
+          <div class="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-200 group-hover/avatar:bg-black/40" aria-hidden="true">
+            <svg data-avatar-camera viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-white opacity-0 transition-opacity duration-200 group-hover/avatar:opacity-100">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </div>
+          <div data-avatar-progress class="absolute bottom-0 left-0 h-1 bg-[var(--color-accent)] transition-all duration-300" style="width:0%" hidden></div>
+        </button>
+        <input type="file" data-avatar-input accept="image/jpeg,image/png,image/webp,image/gif" hidden />
+      </div>
+      <div class="min-w-0 flex-1">
         <p class="kicker text-sm font-medium">已登录</p>
         <h2 data-panel-name class="heading-text mt-1 truncate text-2xl font-semibold"></h2>
         <p data-panel-email class="faint-text mt-1 truncate text-sm"></p>
       </div>
     </div>
 
-    <button type="button" data-panel-signout class="secondary-button mt-6 rounded-md border px-4 py-2.5 text-sm transition-colors">
-      退出登录
-    </button>
+    <p data-avatar-hint class="faint-text mt-2 text-xs leading-5">点击头像可更换，支持 JPG / PNG / WebP / GIF，不超过 2 MB</p>
+
+    <div class="mt-5 flex flex-wrap gap-3">
+      <button type="button" data-panel-avatar-reset hidden class="secondary-button rounded-md border px-3 py-2 text-sm transition-colors">
+        恢复默认头像
+      </button>
+      <button type="button" data-panel-signout class="secondary-button rounded-md border px-4 py-2.5 text-sm transition-colors">
+        退出登录
+      </button>
+    </div>
   </div>
 
   <p data-auth-message class="body-text mt-5 text-sm leading-7" aria-live="polite"></p>
 </section>
 
 <script>
-  import { createBrowserSupabaseClient, getFallbackAvatar, getUserAvatar, getUserDisplayName, isSupabaseConfigured } from "../lib/supabaseClient";
+  import { createBrowserSupabaseClient, getFallbackAvatar, getUserAvatar, getUserDisplayName, getUserOriginalAvatar, isSupabaseConfigured, resetUserAvatar, uploadUserAvatar } from "../lib/supabaseClient";
 
   const panel = document.querySelector("[data-auth-panel]");
   const configMissing = panel?.querySelector("[data-auth-config-missing]");
@@ -101,8 +125,14 @@
   const otpForm = panel?.querySelector("[data-otp-form]");
   const otpInput = panel?.querySelector("[data-otp-input]");
   const resendOtpButton = panel?.querySelector("[data-resend-otp]");
+  const avatarChangeButton = panel?.querySelector("[data-avatar-change]");
+  const avatarInput = panel?.querySelector("[data-avatar-input]") as HTMLInputElement | null;
+  const avatarProgress = panel?.querySelector("[data-avatar-progress]") as HTMLElement | null;
+  const avatarResetButton = panel?.querySelector("[data-panel-avatar-reset]") as HTMLButtonElement | null;
+  const avatarHint = panel?.querySelector("[data-avatar-hint]") as HTMLElement | null;
   const supabase = createBrowserSupabaseClient();
   const configuredSiteUrl = import.meta.env.PUBLIC_SITE_URL?.replace(/\/+$/, "");
+  let currentUser: any = null;
 
   const getRedirectTo = () => `${configuredSiteUrl || window.location.origin}/login`;
   let currentEmail = "";
@@ -214,9 +244,14 @@
     const avatarUrl = getUserAvatar(user);
     signedOut.hidden = true;
     signedIn.hidden = false;
+    currentUser = user;
     name.textContent = displayName;
     email.textContent = user.email ?? "";
     avatar.src = avatarUrl || getFallbackAvatar(displayName);
+
+    const hasCustomAvatar = Boolean(user.user_metadata?.custom_avatar);
+    if (avatarResetButton) avatarResetButton.hidden = !hasCustomAvatar;
+    if (avatarHint) avatarHint.hidden = false;
   };
 
   if (!isSupabaseConfigured || !supabase) {
@@ -301,6 +336,80 @@
       setPanelState(null);
       notifyAuthUpdated();
       setMessage("已退出登录。");
+    });
+
+    // Avatar upload handling
+    const handleAvatarFile = async (file: File | null | undefined) => {
+      if (!file || !supabase || !currentUser || !avatar || !avatarProgress) return;
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+      if (!allowedTypes.includes(file.type)) {
+        setMessage("请选择 JPG、PNG、WebP 或 GIF 格式的图片。");
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        setMessage("图片大小不能超过 2 MB。");
+        return;
+      }
+
+      avatarProgress.hidden = false;
+      avatarProgress.style.width = "30%";
+      setMessage("正在上传头像...");
+
+      try {
+        avatarProgress.style.width = "60%";
+        const result = await uploadUserAvatar(supabase, currentUser.id, file);
+        avatarProgress.style.width = "100%";
+
+        if (result.error) {
+          setMessage(`上传失败：${result.error}`);
+          return;
+        }
+
+        currentUser = await getCurrentUser();
+        if (currentUser) {
+          avatar.src = getUserAvatar(currentUser) || getFallbackAvatar(getUserDisplayName(currentUser));
+          if (avatarResetButton) avatarResetButton.hidden = false;
+        }
+        notifyAuthUpdated();
+        setMessage("头像已更新。");
+      } catch (err) {
+        setMessage(`上传失败：${err instanceof Error ? err.message : "未知错误"}`);
+      } finally {
+        setTimeout(() => {
+          if (avatarProgress) avatarProgress.hidden = true;
+          if (avatarProgress) avatarProgress.style.width = "0%";
+        }, 600);
+      }
+    };
+
+    avatarChangeButton?.addEventListener("click", () => avatarInput?.click());
+
+    avatarInput?.addEventListener("change", (event) => {
+      const target = event.target as HTMLInputElement;
+      const file = target.files?.[0];
+      handleAvatarFile(file);
+      if (avatarInput) avatarInput.value = "";
+    });
+
+    avatarResetButton?.addEventListener("click", async () => {
+      if (!supabase || !avatar) return;
+      avatarResetButton.disabled = true;
+      setMessage("正在恢复默认头像...");
+      try {
+        await resetUserAvatar(supabase);
+        currentUser = await getCurrentUser();
+        if (currentUser) {
+          const fallbackUrl = getUserOriginalAvatar(currentUser) || getFallbackAvatar(getUserDisplayName(currentUser));
+          avatar.src = fallbackUrl;
+          avatarResetButton.hidden = true;
+        }
+        notifyAuthUpdated();
+        setMessage("已恢复默认头像。");
+      } catch (err) {
+        setMessage(`恢复失败：${err instanceof Error ? err.message : "未知错误"}`);
+      } finally {
+        if (avatarResetButton) avatarResetButton.disabled = false;
+      }
     });
   }
 </script>
