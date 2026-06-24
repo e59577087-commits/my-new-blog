@@ -10,6 +10,7 @@
 
 :root {
   color-scheme: light;
+  --site-header-height: 3.25rem;
   --theme-transition-duration: 540ms;
   --theme-transition-easing: cubic-bezier(0.65, 0, 0.35, 1);
   --theme-reveal-x: 50vw;
@@ -20,7 +21,7 @@
   --theme-primary-text: hsl(var(--theme-hue) 62% 42%);
   --theme-primary-soft: hsl(var(--theme-hue) 76% 62% / 0.16);
  --theme-primary-border: hsl(var(--theme-hue) 72% 58% / 0.34);
- --appearance-wallpaper: url('/夏.jpg');
+  --appearance-wallpaper: url('/夏.jpeg');
  --color-page: hsl(var(--theme-hue) 48% 94%);
   --color-page-soft: hsl(var(--theme-hue) 46% 98%);
   --color-surface: rgba(255, 255, 255, 0.34);
@@ -70,6 +71,12 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --site-header-height: 4rem;
+  }
 }
 
 :root[data-theme="dark"] {
@@ -251,21 +258,25 @@ body::after {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: clamp(8rem, 20vw, 13rem);
-  border: 1px solid var(--color-border);
-  border-radius: var(--glass-radius-card);
+  min-height: calc(clamp(20rem, 50vh, 42rem) + var(--site-header-height));
+  margin-top: calc(var(--site-header-height) * -1);
+  padding: var(--site-header-height) 0 0;
   background:
     linear-gradient(135deg, hsl(var(--theme-hue) 80% 92% / 0.52), transparent 54%),
     linear-gradient(315deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.20)),
     var(--color-surface);
-  box-shadow: var(--shadow-surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 
 
 :root[data-wallpaper-mode="banner"] .home-hero-banner {
-  background: var(--appearance-wallpaper) center / cover no-repeat;
+  background:
+    linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.28) 100%),
+    var(--appearance-wallpaper) center / cover no-repeat;
+}
+
+:root[data-wallpaper-mode="fullscreen"] .home-hero-banner,
+:root[data-wallpaper-mode="transparent"] .home-hero-banner {
+  background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.26) 100%);
 }
 
 .home-hero-banner::after {
@@ -295,22 +306,25 @@ body::after {
 
 .home-banner-copy {
   position: absolute;
-  inset-inline: 1.25rem;
-  bottom: clamp(0.2rem, 0.9vw, 0.5rem);
+  left: auto;
+  right: 0.75rem;
+  bottom: 0.5rem;
   z-index: 1;
-  text-align: center;
+  max-width: 60rem;
+  padding-inline: 0;
+  text-align: right;
 }
 
 .home-banner-title.heading-text {
   display: inline-flex;
   align-items: baseline;
-  justify-content: center;
+  justify-content: flex-end;
   max-width: 100%;
   overflow: hidden;
   color: #4a3d2e;
   font-family: var(--font-wenkai);
   font-weight: 400;
-  font-size: clamp(0.9rem, 3.6vw, 1.5rem);
+  font-size: clamp(0.8rem, 1.8vw, 1.05rem);
   text-shadow:
     0 1px 0 rgba(255, 255, 255, 0.42),
     0 -1px 0 rgba(255, 255, 255, 0.12),
@@ -320,6 +334,24 @@ body::after {
   transition:
     opacity 220ms ease,
     transform 220ms ease;
+}
+
+:root[data-wallpaper-mode="banner"] .home-banner-title.heading-text,
+:root[data-wallpaper-mode="fullscreen"] .home-banner-title.heading-text,
+:root[data-wallpaper-mode="transparent"] .home-banner-title.heading-text {
+  color: #f8f5ef;
+  text-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(0, 0, 0, 0.28);
+}
+
+:root[data-wallpaper-mode="banner"] .home-banner-cursor,
+:root[data-wallpaper-mode="fullscreen"] .home-banner-cursor,
+:root[data-wallpaper-mode="transparent"] .home-banner-cursor {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 0 14px rgba(255, 255, 255, 0.4),
+    0 5px 14px rgba(0, 0, 0, 0.3);
 }
 
 .home-banner-title-char {
@@ -1136,9 +1168,8 @@ button {
   }
 
   .home-hero-banner {
-    min-height: 6.75rem;
-    margin-bottom: 1.75rem;
-    padding: 1rem;
+    min-height: calc(44vh + var(--site-header-height));
+    margin-bottom: 0;
   }
 
   .mobile-header-auth {
@@ -1146,12 +1177,13 @@ button {
   }
 
   .home-banner-copy {
-    inset-inline: 0.75rem;
-    bottom: 0.2rem;
+    right: 0.5rem;
+    bottom: 0.4rem;
+    padding-inline: 0;
   }
 
   .home-banner-title.heading-text {
-    font-size: clamp(0.84rem, 4.6vw, 1.08rem);
+    font-size: clamp(0.7rem, 2.6vw, 0.9rem);
   }
 
   .surface,

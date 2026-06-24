@@ -48,19 +48,19 @@ const bannerTitleChars = Array.from(bannerTitle);
 ---
 
 <BaseLayout title="首页">
-  <section class="mx-auto max-w-6xl px-4 pt-1 pb-10 sm:px-6 sm:pt-3 sm:pb-14 lg:px-8">
-    <section class="home-hero-banner mb-8 flex items-end p-5 sm:p-7">
-      <BannerParticles />
-      <div class="home-banner-copy">
-        <h1 class="home-banner-title heading-text mt-2 text-3xl leading-tight sm:text-5xl" aria-label={bannerTitle}>
-          {bannerTitleChars.map((char, index) => (
-            <span class="home-banner-title-char" style={`--char-delay: ${280 + index * 170}ms`} aria-hidden="true">{char}</span>
-          ))}
-          <span class="home-banner-cursor" aria-hidden="true"></span>
-        </h1>
-      </div>
-    </section>
+  <section class="home-hero-banner flex items-end">
+    <BannerParticles />
+    <div class="home-banner-copy">
+      <h1 class="home-banner-title heading-text" aria-label={bannerTitle}>
+        {bannerTitleChars.map((char, index) => (
+          <span class="home-banner-title-char" style={`--char-delay: ${280 + index * 170}ms`} aria-hidden="true">{char}</span>
+        ))}
+        <span class="home-banner-cursor" aria-hidden="true"></span>
+      </h1>
+    </div>
+  </section>
 
+  <section class="mx-auto max-w-6xl px-4 pt-10 pb-10 sm:px-6 sm:pt-14 sm:pb-14 lg:px-8">
     <!-- 最新 -->
     {
       latest && (
