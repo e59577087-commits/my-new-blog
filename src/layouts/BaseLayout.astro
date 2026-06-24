@@ -90,7 +90,9 @@ const socialImageUrl = new URL(image, site.url);
         };
         const read = () => {
           try {
-            return normalize(JSON.parse(window.localStorage.getItem(storageKey) || "{}"));
+            const raw = window.localStorage.getItem(storageKey);
+            if (raw === null) return { ...defaults, accentMode: "white" };
+            return normalize(JSON.parse(raw));
           } catch {
             return { ...defaults };
           }
