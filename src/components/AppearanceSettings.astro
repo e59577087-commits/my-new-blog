@@ -21,6 +21,15 @@
         <output data-appearance-hue-output>150</output>
       </div>
       <input class="appearance-hue-slider" data-appearance-hue type="range" min="0" max="360" value="150" aria-label="主题色相" />
+      <div class="appearance-swatches" data-appearance-swatches role="group" aria-label="主题色相预设">
+        <button type="button" class="appearance-swatch" data-hue="0" style="--swatch-hue:0" aria-label="红色" aria-pressed="false"></button>
+        <button type="button" class="appearance-swatch" data-hue="30" style="--swatch-hue:30" aria-label="橙色" aria-pressed="false"></button>
+        <button type="button" class="appearance-swatch" data-hue="50" style="--swatch-hue:50" aria-label="金色" aria-pressed="false"></button>
+        <button type="button" class="appearance-swatch" data-hue="150" style="--swatch-hue:150" aria-label="绿色" aria-pressed="false"></button>
+        <button type="button" class="appearance-swatch" data-hue="210" style="--swatch-hue:210" aria-label="蓝色" aria-pressed="false"></button>
+        <button type="button" class="appearance-swatch" data-hue="270" style="--swatch-hue:270" aria-label="紫色" aria-pressed="false"></button>
+        <button type="button" class="appearance-swatch appearance-swatch--white" data-accent-mode="white" aria-label="纯白" aria-pressed="false"></button>
+      </div>
     </div>
 
     <div class="appearance-section">
@@ -85,7 +94,7 @@
     top: max(4.75rem, env(safe-area-inset-top));
     right: max(1rem, env(safe-area-inset-right));
     z-index: 60;
-    color: hsl(var(--theme-hue, 335) 42% 38%);
+    color: hsl(var(--theme-hue, 335) calc(42% * var(--theme-sat)) 38%);
   }
 
   .appearance-toolbar {
@@ -99,12 +108,12 @@
     width: 2.1rem;
     height: 2.1rem;
     place-items: center;
-    border: 1px solid hsl(var(--theme-hue, 335) 74% 70% / 0.34);
+    border: 1px solid hsl(var(--theme-hue, 335) calc(74% * var(--theme-sat)) 70% / 0.34);
     border-radius: 0.75rem;
     background:
-      linear-gradient(135deg, hsl(var(--theme-hue, 335) 100% 98% / 0.58), hsl(var(--theme-hue, 335) 80% 88% / 0.30)),
-      hsl(var(--theme-hue, 335) 100% 98% / 0.34);
-    box-shadow: 0 8px 22px hsl(var(--theme-hue, 335) 52% 46% / 0.14), 0 1px 0 hsl(0 0% 100% / 0.68) inset;
+      linear-gradient(135deg, hsl(var(--theme-hue, 335) calc(100% * var(--theme-sat)) 98% / 0.58), hsl(var(--theme-hue, 335) calc(80% * var(--theme-sat)) 88% / 0.30)),
+      hsl(var(--theme-hue, 335) calc(100% * var(--theme-sat)) 98% / 0.34);
+    box-shadow: 0 8px 22px hsl(var(--theme-hue, 335) calc(52% * var(--theme-sat)) 46% / 0.14), 0 1px 0 hsl(0 0% 100% / 0.68) inset;
     font-size: 0.88rem;
     line-height: 1;
     -webkit-backdrop-filter: blur(18px) saturate(170%);
@@ -119,8 +128,8 @@
   .appearance-icon-button:hover,
   .appearance-icon-button[aria-expanded="true"] {
     transform: translateY(-1px);
-    border-color: hsl(var(--theme-hue, 335) 74% 60% / 0.52);
-    box-shadow: 0 12px 28px hsl(var(--theme-hue, 335) 52% 46% / 0.20), 0 1px 0 hsl(0 0% 100% / 0.75) inset;
+    border-color: hsl(var(--theme-hue, 335) calc(74% * var(--theme-sat)) 60% / 0.52);
+    box-shadow: 0 12px 28px hsl(var(--theme-hue, 335) calc(52% * var(--theme-sat)) 46% / 0.20), 0 1px 0 hsl(0 0% 100% / 0.75) inset;
   }
 
   .appearance-panel {
@@ -132,12 +141,12 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    border: 1px solid hsl(var(--theme-hue, 335) 76% 78% / 0.38);
+    border: 1px solid hsl(var(--theme-hue, 335) calc(76% * var(--theme-sat)) 78% / 0.38);
     border-radius: 0.85rem;
     background:
-      linear-gradient(145deg, hsl(0 0% 100% / 0.84), hsl(var(--theme-hue, 335) 100% 95% / 0.66)),
-      hsl(var(--theme-hue, 335) 100% 98% / 0.58);
-    box-shadow: 0 18px 48px hsl(var(--theme-hue, 335) 38% 32% / 0.20), 0 1px 0 hsl(0 0% 100% / 0.78) inset;
+      linear-gradient(145deg, hsl(0 0% 100% / 0.84), hsl(var(--theme-hue, 335) calc(100% * var(--theme-sat)) 95% / 0.66)),
+      hsl(var(--theme-hue, 335) calc(100% * var(--theme-sat)) 98% / 0.58);
+    box-shadow: 0 18px 48px hsl(var(--theme-hue, 335) calc(38% * var(--theme-sat)) 32% / 0.20), 0 1px 0 hsl(0 0% 100% / 0.78) inset;
     padding: 0.65rem;
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     backdrop-filter: blur(24px) saturate(180%);
@@ -183,9 +192,9 @@
 
   .appearance-section-title output {
     border-radius: 0.45rem;
-    background: hsl(var(--theme-hue, 335) 82% 74% / 0.20);
+    background: hsl(var(--theme-hue, 335) calc(82% * var(--theme-sat)) 74% / 0.20);
     padding: 0.06rem 0.35rem;
-    color: hsl(var(--theme-hue, 335) 44% 44%);
+    color: hsl(var(--theme-hue, 335) calc(44% * var(--theme-sat)) 44%);
     font-size: 0.62rem;
     font-weight: 700;
     line-height: 1.5;
@@ -194,6 +203,37 @@
   .appearance-hue-slider {
     width: 100%;
     accent-color: var(--theme-primary, hsl(335 72% 58%));
+  }
+
+  .appearance-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.3rem;
+  }
+
+  .appearance-swatch {
+    width: 1.1rem;
+    height: 1.1rem;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--theme-hue, 335) calc(74% * var(--theme-sat)) 70% / 0.34);
+    background: hsl(var(--swatch-hue, 0) 72% 58%);
+    cursor: pointer;
+    transition: box-shadow 160ms ease, transform 160ms ease;
+  }
+
+  .appearance-swatch:hover {
+    transform: translateY(-1px);
+  }
+
+  .appearance-swatch[aria-pressed="true"] {
+    box-shadow: 0 0 0 2px hsl(var(--theme-hue, 335) calc(74% * var(--theme-sat)) 50% / 0.6);
+  }
+
+  .appearance-swatch--white {
+    background: linear-gradient(135deg, #ffffff, #dbe4f0);
+    border-color: hsl(0 0% 82%);
   }
 
   .appearance-options,
@@ -209,8 +249,8 @@
     min-height: 1.75rem;
     border: 1px solid transparent;
     border-radius: 0.45rem;
-    background: hsl(var(--theme-hue, 335) 100% 96% / 0.56);
-    color: hsl(var(--theme-hue, 335) 34% 48%);
+    background: hsl(var(--theme-hue, 335) calc(100% * var(--theme-sat)) 96% / 0.56);
+    color: hsl(var(--theme-hue, 335) calc(34% * var(--theme-sat)) 48%);
     font-size: 0.7rem;
     line-height: 1.25;
     transition:
@@ -229,14 +269,14 @@
   .appearance-options button:hover,
   .appearance-segmented button:hover {
     transform: translateY(-1px);
-    background: hsl(var(--theme-hue, 335) 100% 94% / 0.74);
+    background: hsl(var(--theme-hue, 335) calc(100% * var(--theme-sat)) 94% / 0.74);
   }
 
   .appearance-options button[aria-pressed="true"],
   .appearance-segmented button[aria-pressed="true"] {
-    border-color: hsl(var(--theme-hue, 335) 74% 62% / 0.32);
-    background: hsl(var(--theme-hue, 335) 78% 84% / 0.58);
-    color: hsl(var(--theme-hue, 335) 44% 40%);
+    border-color: hsl(var(--theme-hue, 335) calc(74% * var(--theme-sat)) 62% / 0.32);
+    background: hsl(var(--theme-hue, 335) calc(78% * var(--theme-sat)) 84% / 0.58);
+    color: hsl(var(--theme-hue, 335) calc(44% * var(--theme-sat)) 40%);
     font-weight: 650;
   }
 
@@ -259,9 +299,9 @@
   }
 
   :root[data-theme="dark"] .appearance-panel {
-    border-color: hsl(var(--theme-hue, 335) 72% 64% / 0.24);
+    border-color: hsl(var(--theme-hue, 335) calc(72% * var(--theme-sat)) 64% / 0.24);
     background:
-      linear-gradient(145deg, hsl(220 24% 14% / 0.92), hsl(var(--theme-hue, 335) 38% 18% / 0.70)),
+      linear-gradient(145deg, hsl(220 24% 14% / 0.92), hsl(var(--theme-hue, 335) calc(38% * var(--theme-sat)) 18% / 0.70)),
       hsl(220 24% 12% / 0.84);
     box-shadow: 0 18px 48px hsl(0 0% 0% / 0.40), 0 1px 0 hsl(0 0% 100% / 0.08) inset;
   }
@@ -269,25 +309,25 @@
   :root[data-theme="dark"] .appearance-options button,
   :root[data-theme="dark"] .appearance-segmented button,
   :root[data-theme="dark"] .appearance-switches label {
-    background: hsl(var(--theme-hue, 335) 42% 18% / 0.52);
-    color: hsl(var(--theme-hue, 335) 72% 84%);
+    background: hsl(var(--theme-hue, 335) calc(42% * var(--theme-sat)) 18% / 0.52);
+    color: hsl(var(--theme-hue, 335) calc(72% * var(--theme-sat)) 84%);
   }
 
   :root[data-theme="dark"] .appearance-options button:hover,
   :root[data-theme="dark"] .appearance-segmented button:hover {
-    background: hsl(var(--theme-hue, 335) 42% 24% / 0.68);
+    background: hsl(var(--theme-hue, 335) calc(42% * var(--theme-sat)) 24% / 0.68);
   }
 
   :root[data-theme="dark"] .appearance-options button[aria-pressed="true"],
   :root[data-theme="dark"] .appearance-segmented button[aria-pressed="true"] {
-    border-color: hsl(var(--theme-hue, 335) 72% 64% / 0.38);
-    background: hsl(var(--theme-hue, 335) 58% 32% / 0.62);
-    color: hsl(var(--theme-hue, 335) 88% 90%);
+    border-color: hsl(var(--theme-hue, 335) calc(72% * var(--theme-sat)) 64% / 0.38);
+    background: hsl(var(--theme-hue, 335) calc(58% * var(--theme-sat)) 32% / 0.62);
+    color: hsl(var(--theme-hue, 335) calc(88% * var(--theme-sat)) 90%);
   }
 
   :root[data-theme="dark"] .appearance-section-title output {
-    background: hsl(var(--theme-hue, 335) 62% 34% / 0.28);
-    color: hsl(var(--theme-hue, 335) 84% 86%);
+    background: hsl(var(--theme-hue, 335) calc(62% * var(--theme-sat)) 34% / 0.28);
+    color: hsl(var(--theme-hue, 335) calc(84% * var(--theme-sat)) 86%);
   }
 
   @media (max-width: 640px) {
@@ -402,6 +442,7 @@
   const particleHueOutput = root?.querySelector("[data-appearance-particle-hue-output]");
   const wallpaperGroup = root?.querySelector("[data-appearance-wallpaper]");
   const layoutGroup = root?.querySelector("[data-appearance-layout]");
+  const swatchGroup = root?.querySelector("[data-appearance-swatches]");
   const switches = root?.querySelectorAll("[data-appearance-switch]");
 
   if (appearance && root && toggle && panel && hueInput && hueOutput && wallpaperGroup && layoutGroup && switches) {
@@ -433,6 +474,14 @@
       switches.forEach((input) => {
         input.checked = Boolean(settings[input.dataset.appearanceSwitch]);
       });
+
+      if (swatchGroup) {
+        swatchGroup.querySelectorAll("button").forEach((button) => {
+          const isWhite = button.dataset.accentMode === "white";
+          const pressed = isWhite ? settings.accentMode === "white" : (settings.accentMode !== "white" && Number(button.dataset.hue) === settings.hue);
+          button.setAttribute("aria-pressed", pressed ? "true" : "false");
+        });
+      }
     };
 
     const update = (next) => {
@@ -482,7 +531,7 @@
     });
 
     hueInput.addEventListener("input", () => {
-      update({ hue: Number(hueInput.value) });
+      update({ hue: Number(hueInput.value), accentMode: "color" });
     });
 
     particleHueInput?.addEventListener("input", () => {
@@ -499,6 +548,16 @@
       const button = event.target instanceof HTMLElement ? event.target.closest("button[data-value]") : null;
       if (!button) return;
       update({ articleLayout: button.dataset.value });
+    });
+
+    swatchGroup?.addEventListener("click", (event) => {
+      const button = event.target instanceof HTMLElement ? event.target.closest("button[data-hue], button[data-accent-mode]") : null;
+      if (!button) return;
+      if (button.dataset.accentMode === "white") {
+        update({ accentMode: "white" });
+      } else {
+        update({ hue: Number(button.dataset.hue), accentMode: "color" });
+      }
     });
 
     switches.forEach((input) => {
