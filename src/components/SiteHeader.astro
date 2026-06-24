@@ -1,6 +1,7 @@
 ---
 import AuthStatus from "./AuthStatus.astro";
 import ThemeToggle from "./ThemeToggle.astro";
+import AppearanceSettings from "./AppearanceSettings.astro";
 import { site } from "../data/site";
 
 const pathname = Astro.url.pathname;
@@ -61,6 +62,9 @@ const isActive = (href: string) => {
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
+
+      <!-- Appearance settings (far right) -->
+      <AppearanceSettings />
     </div>
   </div>
 

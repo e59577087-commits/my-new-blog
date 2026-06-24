@@ -90,9 +90,7 @@
 
 <style>
   .appearance-settings {
-    position: fixed;
-    top: max(4.75rem, env(safe-area-inset-top));
-    right: max(1rem, env(safe-area-inset-right));
+    position: relative;
     z-index: 60;
     color: hsl(var(--theme-hue, 335) calc(42% * var(--theme-sat)) 38%);
   }
@@ -105,33 +103,30 @@
 
   .appearance-icon-button {
     display: grid;
-    width: 2.1rem;
-    height: 2.1rem;
+    width: 2.25rem;
+    height: 2.25rem;
     place-items: center;
-    border: 1px solid hsl(var(--theme-hue, 335) calc(74% * var(--theme-sat)) 70% / 0.34);
-    border-radius: 0.75rem;
-    background:
-      linear-gradient(135deg, hsl(var(--theme-hue, 335) calc(100% * var(--theme-sat)) 98% / 0.58), hsl(var(--theme-hue, 335) calc(80% * var(--theme-sat)) 88% / 0.30)),
-      hsl(var(--theme-hue, 335) calc(100% * var(--theme-sat)) 98% / 0.34);
-    box-shadow: 0 8px 22px hsl(var(--theme-hue, 335) calc(52% * var(--theme-sat)) 46% / 0.14), 0 1px 0 hsl(0 0% 100% / 0.68) inset;
-    font-size: 0.88rem;
-    line-height: 1;
-    -webkit-backdrop-filter: blur(18px) saturate(170%);
-    backdrop-filter: blur(18px) saturate(170%);
+    border: 1px solid var(--color-border);
+    border-radius: var(--glass-radius-control);
+    background: var(--color-surface-solid);
+    box-shadow: var(--shadow-control);
+    color: var(--color-text);
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     transition:
-      transform 180ms ease,
       border-color 180ms ease,
       background-color 180ms ease,
+      color 180ms ease,
       box-shadow 180ms ease;
   }
 
   .appearance-icon-button:hover,
   .appearance-icon-button[aria-expanded="true"] {
-    transform: translateY(-1px);
-    border-color: hsl(var(--theme-hue, 335) calc(74% * var(--theme-sat)) 60% / 0.52);
-    box-shadow: 0 12px 28px hsl(var(--theme-hue, 335) calc(52% * var(--theme-sat)) 46% / 0.20), 0 1px 0 hsl(0 0% 100% / 0.75) inset;
+    border-color: var(--color-accent-border);
+    background: var(--color-surface-hover);
+    color: var(--color-heading);
   }
-
   .appearance-panel {
     position: absolute;
     top: calc(100% + 0.5rem);
@@ -331,28 +326,11 @@
   }
 
   @media (max-width: 640px) {
-    .appearance-settings {
-      top: max(4rem, env(safe-area-inset-top));
-      right: max(0.6rem, env(safe-area-inset-right));
-    }
-
-    .appearance-icon-button {
-      width: 1.75rem;
-      height: 1.75rem;
-      border-radius: 0.6rem;
-      font-size: 0.8rem;
-    }
-
     .appearance-panel {
-      position: fixed;
-      top: calc(max(4rem, env(safe-area-inset-top)) + 2.1rem);
-      right: max(0.6rem, env(safe-area-inset-right));
-      width: calc(100vw - 1.2rem);
-      max-width: 15rem;
-      max-height: calc(100dvh - max(4rem, env(safe-area-inset-top)) - 3.5rem);
+      width: min(15rem, calc(100vw - 1.2rem));
+      max-height: min(36rem, calc(100dvh - 6rem));
       border-radius: 0.7rem;
       padding: 0.45rem;
-      transform-origin: top right;
     }
 
     .appearance-section + .appearance-section {
