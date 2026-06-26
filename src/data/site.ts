@@ -13,6 +13,7 @@ export const site = {
     { label: "首页", href: "/" },
     { label: "随笔", href: "/tools/" },
     { label: "分享", href: "/share/" },
+    { label: "学习", href: "/study/" },
     { label: "关于", href: "/about/" },
   ],
 };

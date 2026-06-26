@@ -1,9 +1,9 @@
 ---
-import { getArticleUrl } from "../utils/articles";
+import { getEntryUrl, type Article } from "../utils/articles";
 
 interface Props {
-  prev?: { data: { title: string }; slug: string } | null;
-  next?: { data: { title: string }; slug: string } | null;
+  prev?: Article | null;
+  next?: Article | null;
 }
 
 const { prev, next } = Astro.props;
@@ -14,7 +14,7 @@ const { prev, next } = Astro.props;
     <nav class="mt-16 border-t hairline pt-8">
       <div class="grid gap-4 sm:grid-cols-2">
         {prev ? (
-          <a href={getArticleUrl(prev)} class="surface-soft motion-card group rounded-lg p-4 text-left">
+          <a href={getEntryUrl(prev)} class="surface-soft motion-card group rounded-lg p-4 text-left">
             <span class="faint-text text-xs">← 上一篇</span>
             <h3 class="heading-text mt-1.5 text-base font-medium leading-snug transition-colors group-hover:text-[var(--color-accent-text)] line-clamp-2">
               {prev.data.title}
@@ -25,7 +25,7 @@ const { prev, next } = Astro.props;
         )}
 
         {next ? (
-          <a href={getArticleUrl(next)} class="surface-soft motion-card group rounded-lg p-4 text-right">
+          <a href={getEntryUrl(next)} class="surface-soft motion-card group rounded-lg p-4 text-right">
             <span class="faint-text text-xs">下一篇 →</span>
             <h3 class="heading-text mt-1.5 text-base font-medium leading-snug transition-colors group-hover:text-[var(--color-accent-text)] line-clamp-2">
               {next.data.title}

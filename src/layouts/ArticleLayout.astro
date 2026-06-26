@@ -1,0 +1,100 @@
+---
+import { render } from "astro:content";
+import BaseLayout from "./BaseLayout.astro";
+import Comments from "../components/Comments.astro";
+import PrevNextNav from "../components/PrevNextNav.astro";
+import { formatArticleDate, getArticleSlug, getEntryUrl, type Article } from "../utils/articles";
+
+interface Props {
+  article: Article;
+  prev?: Article | null;
+  next?: Article | null;
+  backHref: string;
+  backLabel: string;
+}
+
+const { article, prev, next, backHref, backLabel } = Astro.props;
+const { Content } = await render(article);
+const slug = getArticleSlug(article);
+const { title, description, date, tags, cover, category, links } = article.data;
+---
+
+<BaseLayout title={title} description={description} type="article" publishedTime={date} image={cover}>
+  <article class="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+    <a href={backHref} class="fine-link text-sm">{backLabel}</a>
+
+    <header class="mt-8 border-b hairline pb-8">
+      {category && <p class="kicker text-xs">{category}</p>}
+      <time datetime={date.toISOString()} class="faint-text text-sm">{formatArticleDate(date)}</time>
+      <h1 class="heading-text mt-4 text-balance text-3xl font-semibold leading-tight sm:text-5xl">{title}</h1>
+      <div class="mt-5 flex flex-wrap gap-2">
+        {tags.map((tag) => <span class="rounded border hairline bg-[var(--color-surface-solid)] px-2.5 py-1 text-xs muted">{tag}</span>)}
+      </div>
+      <img src={cover} alt="" loading="eager" decoding="async" width="960" height="621" class="mt-8 aspect-[16/8] w-full rounded-lg border hairline object-cover" />
+    </header>
+
+    <div class="prose-tech mt-10 max-w-3xl space-y-6">
+      <Content />
+    </div>
+
+    {
+      links.length > 0 && (
+        <nav class="mt-10 flex flex-wrap gap-3">
+          {links.map((link) => (
+            <a href={link.href} class="rounded-lg border hairline bg-[var(--color-surface-solid)] px-5 py-2.5 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-heading)]">{link.label}</a>
+          ))}
+        </nav>
+      )
+    }
+
+    <PrevNextNav {prev} {next} />
+    <Comments slug={slug} />
+  </article>
+</BaseLayout>
+<script>
+  const attachCopyButtons = () => {
+    document.querySelectorAll(".prose-tech pre").forEach((pre) => {
+      if (pre.querySelector(".code-copy")) return;
+      const code = pre.querySelector("code");
+      if (!code) return;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "code-copy";
+      button.textContent = "复制";
+      button.setAttribute("aria-label", "复制代码");
+      const reset = () => {
+        button.textContent = "复制";
+        button.removeAttribute("data-state");
+      };
+      button.addEventListener("click", async () => {
+        const text = code.textContent ?? "";
+        let ok = false;
+        try {
+          await navigator.clipboard.writeText(text);
+          ok = true;
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.setAttribute("readonly", "");
+          ta.style.position = "fixed";
+          ta.style.top = "0";
+          ta.style.left = "0";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            ok = document.execCommand("copy");
+          } catch {}
+          ta.remove();
+        }
+        button.textContent = ok ? "已复制" : "复制失败";
+        button.setAttribute("data-state", ok ? "copied" : "failed");
+        window.setTimeout(reset, 1600);
+      });
+      pre.appendChild(button);
+    });
+  };
+
+  attachCopyButtons();
+  document.addEventListener("astro:after-swap", attachCopyButtons);
+</script>

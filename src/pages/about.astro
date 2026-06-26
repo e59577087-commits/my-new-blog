@@ -2,10 +2,9 @@
 import SectionTitle from "../components/SectionTitle.astro";
 import StatsCard from "../components/StatsCard.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { shareItems } from "../data/share";
-import { tools } from "../data/tools";
+import { getPublishedArticles } from "../utils/articles";
 
-const articleCount = tools.length + shareItems.length;
+const articleCount = (await getPublishedArticles()).length;
 ---
 
 <BaseLayout title="关于" description="关于 happy,for you 这个个人小站。">

@@ -7,10 +7,13 @@ const articles = defineCollection({
     title: z.string(),
     description: z.string().optional(),
     date: z.date(),
-    tags: z.array(z.string()).default([]),
-    cover: z.string(),
-    pinned: z.boolean().default(false),
-    draft: z.boolean().default(false),
+  tags: z.array(z.string()).default([]),
+  cover: z.string(),
+    section: z.enum(["article", "essay", "share", "study"]).default("article"),
+  category: z.string().optional(),
+  pinned: z.boolean().default(false),
+  draft: z.boolean().default(false),
+  links: z.array(z.object({ label: z.string(), href: z.string() })).default([]),
   }),
 });
 

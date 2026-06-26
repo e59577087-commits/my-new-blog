@@ -6,6 +6,7 @@ tags:
   - 测试
 cover: "/1-960.webp"
 pinned: true
+section: article
 draft: false
 ---
 

@@ -1,6 +1,9 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { shareItems } from "../data/share";
+import EntryCard from "../components/EntryCard.astro";
+import { getPublishedBySection } from "../utils/articles";
+
+const shares = await getPublishedBySection("share");
 ---
 
 <BaseLayout title="分享" description="分享一些想记录的东西。">
@@ -12,18 +15,7 @@ import { shareItems } from "../data/share";
     </header>
 
     <div class="mt-6" data-appearance-article-list="catalog">
-      {shareItems.map((item) => (
-        <a href={`/share/${item.slug}/`} class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${item.title}`}>
-            <img src={item.screenshot} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-24 shrink-0 object-cover sm:w-32" />
-            <div class="min-w-0 flex flex-col justify-center p-4">
-              <p class="kicker text-xs">{item.category}</p>
-              <h2 class="heading-text mt-1 truncate text-xl font-semibold leading-7">{item.title}</h2>
-              <div class="mt-2 flex flex-wrap gap-1.5">
-                {item.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2 py-0.5 text-xs muted">{tag}</span>)}
-              </div>
-            </div>
-        </a>
-      ))}
+      {shares.map((entry) => <EntryCard entry={entry} />)}
     </div>
   </section>
 </BaseLayout>

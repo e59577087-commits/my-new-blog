@@ -1,11 +1,11 @@
 import { site } from "../data/site";
-import { getArticleUrl, getPublishedArticles } from "../utils/articles";
+import { getEntryUrl, getPublishedArticles } from "../utils/articles";
 
-const staticRoutes = ["/", "/about/", "/tools/", "/share/", "/login/"];
+const staticRoutes = ["/", "/about/", "/tools/", "/share/", "/study/", "/login/"];
 
 export async function GET() {
   const articles = await getPublishedArticles();
-  const articleRoutes = articles.map(getArticleUrl);
+  const articleRoutes = articles.map(getEntryUrl);
 
   const urls = [...staticRoutes, ...articleRoutes]
     .map((route) => {

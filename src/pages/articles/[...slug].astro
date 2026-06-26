@@ -1,12 +1,9 @@
 ---
-import { render } from "astro:content";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import Comments from "../../components/Comments.astro";
-import PrevNextNav from "../../components/PrevNextNav.astro";
-import { formatArticleDate, getArticleSlug, getPublishedArticles } from "../../utils/articles";
+import ArticleLayout from "../../layouts/ArticleLayout.astro";
+import { getArticleSlug, getPublishedBySection } from "../../utils/articles";
 
 export async function getStaticPaths() {
-  const articles = await getPublishedArticles();
+  const articles = await getPublishedBySection("article");
 
   return articles.map((article, index) => {
     const prev = index < articles.length - 1 ? articles[index + 1] : null;
@@ -19,28 +16,6 @@ export async function getStaticPaths() {
 }
 
 const { article, prev, next } = Astro.props;
-const { Content } = await render(article);
-const articleSlug = getArticleSlug(article);
 ---
 
-<BaseLayout title={article.data.title} description={article.data.description}>
-  <article class="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-    <a href="/" class="fine-link text-sm">返回首页</a>
-
-    <header class="mt-8 border-b hairline pb-8">
-      <time datetime={article.data.date.toISOString()} class="faint-text text-sm">{formatArticleDate(article.data.date)}</time>
-      <h1 class="heading-text mt-4 text-balance text-3xl font-semibold leading-tight sm:text-5xl">{article.data.title}</h1>
-      <div class="mt-5 flex flex-wrap gap-2">
-        {article.data.tags.map((tag) => <span class="rounded border hairline bg-[var(--color-surface-solid)] px-2.5 py-1 text-xs muted">{tag}</span>)}
-      </div>
-      <img src={article.data.cover} alt="" loading="eager" decoding="async" width="960" height="621" class="mt-8 aspect-[16/8] w-full rounded-lg border hairline object-cover" />
-    </header>
-
-    <div class="prose-tech mt-10 max-w-3xl space-y-6">
-      <Content />
-    </div>
-
-    <PrevNextNav {prev} {next} />
-    <Comments slug={articleSlug} />
-  </article>
-</BaseLayout>
+<ArticleLayout article={article} prev={prev} next={next} backHref="/" backLabel="返回首页" />
