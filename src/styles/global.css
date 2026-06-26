@@ -303,7 +303,7 @@ body::after {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: calc(clamp(24rem, 58vh, 48rem) + var(--site-header-height));
+  min-height: calc(clamp(22rem, 54vh, 45rem) + var(--site-header-height));
   margin-top: calc(var(--site-header-height) * -1);
   padding: var(--site-header-height) 0 0;
   background:
@@ -1249,7 +1249,7 @@ button {
   }
 
   .home-hero-banner {
-    min-height: calc(52vh + var(--site-header-height));
+    min-height: calc(50vh + var(--site-header-height));
     margin-bottom: 0;
   }
 
