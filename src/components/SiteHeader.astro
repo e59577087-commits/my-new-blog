@@ -12,7 +12,7 @@ const isActive = (href: string) => {
 ---
 
 <header class="site-header sticky top-0 z-30 border-b hairline">
-  <div class="site-header-inner mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2 sm:min-h-14 sm:gap-4 sm:px-6 lg:px-8">
+  <div class="site-header-inner mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-1.5 sm:min-h-12 sm:gap-4 sm:px-6 lg:px-8">
     <!-- Logo -->
     <a href="/" class="group flex min-w-0 items-center gap-2.5 sm:gap-3" aria-label="返回首页">
       <span class="brand-mark grid size-8 shrink-0 place-items-center overflow-hidden rounded-md border transition-colors group-hover:border-sky-300/30">
@@ -24,7 +24,7 @@ const isActive = (href: string) => {
     <!-- Right side: desktop nav + controls -->
     <div class="header-actions flex items-center gap-1.5 sm:gap-2">
       <!-- Desktop nav (hidden on mobile) -->
-      <nav class="nav-shell hidden items-center gap-1 rounded-md border p-1 sm:flex" aria-label="主导航">
+      <nav class="nav-shell hidden items-center gap-1 rounded-md border p-0.5 sm:flex" aria-label="主导航">
         {
           site.nav.map((item) => (
             <a
