@@ -1253,6 +1253,15 @@ button {
     margin-bottom: 0;
   }
 
+  /* Fit wallpaper by width on phones so the full composition shows (matching
+     desktop) instead of cover-cropping to a narrow vertical sliver. The hero
+     shrinks to the image's natural height at full viewport width. */
+  :root[data-wallpaper-mode="banner"] .home-hero-banner {
+    min-height: calc(46.8vw + var(--site-header-height));
+    background-size: 100% auto;
+    background-position: center bottom;
+  }
+
   .mobile-header-auth {
     display: none !important;
   }
