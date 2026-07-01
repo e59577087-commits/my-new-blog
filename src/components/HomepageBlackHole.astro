@@ -84,6 +84,7 @@
     const root = document.documentElement;
     const container = document.querySelector("[data-home-black-hole-root]");
     const scope = document.querySelector("[data-home-black-hole-scope]");
+    const banner = document.querySelector(".home-hero-banner");
     const canvas = container?.querySelector("[data-home-black-hole-canvas]");
     if (!container || !scope || !canvas) return;
 
@@ -116,6 +117,7 @@ uniform sampler2D uPageTexture;
 uniform vec4 uTextureRect;
 uniform vec4 uViewportRect;
 uniform float uTextureReady;
+uniform vec2 uBannerBand;   // banner top/bottom edge in y-up screen uv (0..1)
 
 out vec4 fragColor;
 
@@ -188,11 +190,16 @@ vec3 stars(vec3 d) {
 vec2 mirrorUV(vec2 u) { return 1.0 - abs(1.0 - mod(u, 2.0)); }
 
 // Sample the page snapshot at a screen-space uv (0..1, y-up like gl_FragCoord).
-// Maps screen uv -> page viewport uv -> texture uv, mirrored so lensed samples
-// that stray off the visible window stay on-page instead of smearing an edge.
+// The texture is uploaded WITHOUT a y-flip, so texel (0,0) is the page's
+// top-left and the v axis runs top-down. Screen uv.y is y-up, so page-from-top
+// = 1 - uv.y within the viewport window; add the scroll offset (uViewportRect).
+// Mirrored so lensed samples that stray off the window stay on-page.
 vec3 pageAt(vec2 uv) {
   vec2 m = mirrorUV(uv);
-  vec2 pageUv = uViewportRect.xy + m * uViewportRect.zw;
+  vec2 pageUv = vec2(
+    uViewportRect.x + m.x * uViewportRect.z,
+    uViewportRect.y + (1.0 - m.y) * uViewportRect.w
+  );
   vec2 texUv = (pageUv - uTextureRect.xy) / uTextureRect.zw;
   return texture(uPageTexture, clamp(texUv, 0.0, 1.0)).rgb;
 }
@@ -212,7 +219,12 @@ void main() {
   float W = B_CRIT / max(rh, 1e-4);
   vec2 pr = rot(vec2(p.x, p.y), DISK_ROLL) * W;
   float b = length(pr);
-  float window = exp(-pow(plen / (7.0 * rh), 2.0));
+  float window = exp(-pow(plen / (3.0 * rh), 2.0));
+  // Banner clip mask: fade to 0 outside the banner's screen band so nothing —
+  // not the lensing, not the shadow — ever spills onto content below/above it.
+  float bandF = 1.5 * rh;
+  float bandMask = smoothstep(uBannerBand.x - bandF, uBannerBand.x + bandF, uv.y)
+                 * (1.0 - smoothstep(uBannerBand.y - bandF, uBannerBand.y + bandF, uv.y));
   float diskOuter = mix(3.25, DISK_OUTER, smoothstep(0.04, 1.0, G));
   float diskGain = DISK_GAIN * mix(0.34, 1.0, smoothstep(0.0, 1.0, G));
   float diskOpacity = mix(0.62, DISK_OPACITY, smoothstep(0.0, 1.0, G));
@@ -230,7 +242,9 @@ void main() {
   // ================= far field: analytic weak deflection ==================
   // Rays with impact parameter past bmax can't touch the disk. Bend the page
   // sample back toward the hole with the finite-camera deflection fit from the
-  // reference, projected onto the page "sky" plane. disp is in world units.
+  // reference, projected onto the page "sky" plane. This is a TRANSPARENT
+  // overlay: alpha ramps from 0 (show the crisp real DOM) up to opaque as the
+  // lensing displacement grows, so only the bent region overwrites the page.
   if (b >= bmax) {
     float u = Z0 * inversesqrt(Z0 * Z0 + b * b);
     float defl = (2.0 / (W * W)) / max(plen, 1e-4)
@@ -247,8 +261,11 @@ void main() {
       vec2 suv = center + sp / vec2(aspect, 1.0);
       term[i] = pageAt(suv)[i];
     }
-    vec3 d = normalize(vec3(-(pr / max(b, 1e-4)) * (2.0 / max(b, 1e-4)), -1.0));
-    fragColor = vec4(term + stars(d) * STAR_GAIN * window, 1.0);
+    // displacement in pixels drives the blend: <~1px is indistinguishable from
+    // the real DOM (keep transparent), ramp to opaque by ~10px of bend.
+    float dispPx = defl * res.y;
+    float a = uTextureReady * smoothstep(1.0, 10.0, dispPx) * bandMask;
+    fragColor = vec4(term, a);
     return;
   }
   vec3 x = vec3(pr, Z0);
@@ -262,11 +279,12 @@ void main() {
   vec3 emitc = vec3(0.0);
   float trans = 1.0;
   bool captured = false;
+  bool trulyCapture = false;  // true only when the ray genuinely crossed r<1
   float sPrev = dot(x, n);
   vec3 xPrev = x;
   for (int i = 0; i < N_STEPS; i++) {
     float r2 = dot(x, x);
-    if (r2 < 1.0) { captured = true; break; }
+    if (r2 < 1.0) { captured = true; trulyCapture = true; break; }
     if (x.z < -Z0 && v.z < 0.0) break;
     if (r2 > 4.0 * Z0 * Z0) break;
     float r = sqrt(r2);
@@ -315,18 +333,23 @@ void main() {
   // Project the straight exit ray onto the page "sky" plane at z = -LENS_DEPTH
   // and map back to screen space, so the page bends, magnifies and mirrors
   // inside the Einstein ring exactly as the reference lenses the terminal.
+  // pageA is the overlay alpha: 0 where the bend is negligible (let the crisp
+  // real DOM show), rising to opaque where the page is strongly displaced.
   vec3 bg = vec3(0.0);
+  float pageA = 0.0;
   if (!captured) {
     vec3 d = normalize(v);
-    bg += stars(d) * STAR_GAIN * window;
     if (d.z < -0.05) {
       float tpl = (-LENS_DEPTH - x.z) / d.z;
       vec3 hp = x + d * tpl;
       vec2 q = rot(hp.xy, -DISK_ROLL) / W;
       vec2 sp = vec2(q.x, q.y);
-      vec2 suv = center + (p + (sp - p) * window) / vec2(aspect, 1.0);
+      vec2 disp = (sp - p) * window;
+      vec2 suv = center + (p + disp) / vec2(aspect, 1.0);
       float toward = smoothstep(0.05, 0.35, -d.z);
-      bg += pageAt(suv) * toward;
+      bg = pageAt(suv) * toward;
+      float bendPx = length(disp) * res.y;
+      pageA = uTextureReady * toward * smoothstep(1.5, 12.0, bendPx);
     }
   }
 
@@ -336,8 +359,39 @@ void main() {
   vec3 photonLight = photonColor * (photon * mix(0.45, 1.25, G) + innerPhoton * mix(0.10, 0.28, G)) * window;
 
   // disk + photon light is HDR; tonemap on top of the lensed page background.
-  vec3 col = bg * trans + (vec3(1.0) - exp(-(emitc + photonLight) * exposure));
-  fragColor = vec4(col, 1.0);
+  vec3 diskGlow = vec3(1.0) - exp(-(emitc + photonLight) * exposure);
+  float glowLum = max(diskGlow.r, max(diskGlow.g, diskGlow.b));
+  vec3 col = bg * trans + diskGlow;
+
+  if (trulyCapture) {
+    // True horizon: light genuinely fell past r=1. Opaque black + disk glow
+    // (the disk in front of the shadow is still visible).
+    fragColor = vec4(diskGlow, bandMask);
+  } else if (captured) {
+    // Forced-capture: ray ran out of integration steps near the photon sphere.
+    // Don't paint black — project the ray direction onto the sky plane and
+    // show the strongly distorted page instead (Einstein ring region).
+    vec3 d2 = normalize(v);
+    vec3 ring = vec3(0.0);
+    float ringA = 0.0;
+    if (d2.z < -0.05) {
+      float tpl2 = (-LENS_DEPTH - x.z) / d2.z;
+      vec3 hp2 = x + d2 * tpl2;
+      vec2 q2 = rot(hp2.xy, -DISK_ROLL) / W;
+      vec2 sp2 = vec2(q2.x, q2.y);
+      vec2 disp2 = (sp2 - p) * window;
+      vec2 suv2 = center + (p + disp2) / vec2(aspect, 1.0);
+      float toward2 = smoothstep(0.05, 0.35, -d2.z);
+      ring = pageAt(suv2) * toward2;
+      float bendPx2 = length(disp2) * res.y;
+      ringA = uTextureReady * toward2 * smoothstep(0.5, 8.0, bendPx2);
+    }
+    float ra = clamp(ringA * trans + glowLum * 2.0 + photon * 0.5, 0.0, 1.0) * bandMask;
+    fragColor = vec4(ring * trans + diskGlow, ra);
+  } else {
+    float a = clamp(pageA * trans + glowLum * 2.0 + photon * 0.5, 0.0, 1.0) * bandMask;
+    fragColor = vec4(col, a);
+  }
 }`;
 
     function compileShader(type, source) {
@@ -377,6 +431,7 @@ void main() {
     const uTextureRect = gl.getUniformLocation(program, "uTextureRect");
     const uViewportRect = gl.getUniformLocation(program, "uViewportRect");
     const uTextureReady = gl.getUniformLocation(program, "uTextureReady");
+    const uBannerBand = gl.getUniformLocation(program, "uBannerBand");
 
     const vertices = new Float32Array([-1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1]);
     const vbo = gl.createBuffer();
@@ -394,7 +449,7 @@ void main() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.uniform1i(uPageTexture, 0);
     gl.uniform4f(uTextureRect, 0, 0, 1, 1);
     gl.uniform4f(uViewportRect, 0, 0, 1, 1);
@@ -409,31 +464,42 @@ void main() {
     let textureRect = { x: 0, y: 0, w: 1, h: 1 };
 
     let bhX = 0, bhY = 0;
-    let bhRadius = 32;
-    let bhState = 'moving'; // 'moving', 'shrinking'
-    let shrinkTimer = 0;
+   let bhVX = 0, bhVY = 0;      // velocity (page px / second) for the bounce
+     let bhRadius = 60;
+     let bhRadiusMin = 28, bhRadiusMax = 160;  // growth-cycle endpoints (set in resize)
+     let bhState = 'growing';   // growing | maxed (motion frozen, await click) | shrinking
+     let stateT = 0;            // seconds elapsed in the current state
+     let lastTime = 0;            // for dt in the size + bounce integration
+     let shaderTime = 0;        // shader iTime (advanced at dilSpeed, not wall-clock)
+     let dilSpeed = 1.0;        // iTime rate: 1 = normal, ~0.08 = near-frozen (maxed)
+     // Banner bounds in PAGE space (top/height from the page top). The hole is a
+    // ball bouncing inside this box, so it lives in the banner and scrolls away
+    // with it.
+    let bannerTop = 0, bannerHeight = 600;
     let roamSeed = Math.random() * 1000;
 
     const CONFIG = {
-      minRadius: 32,
-      maxRadius: 164,
-      moveSpeed: 0.22,
-      growthPerElement: 6,
-      shrinkRate: 0.18,
-      shrinkDelay: 3000,
-      pullDesktop: 14,
-      pullMobile: 9,
-      textPullDesktop: 18,
-      textPullMobile: 11,
-      reach: 7.2,
-      followEase: 0.058,
-      rangeXMin: 0.48,
-      rangeXMax: 0.66,
-      rangeYMin: 0.46,
-      rangeYMax: 0.68,
-      texturePadding: 7.0,
-      textureRefreshMs: 60000,
-      textureMaxSide: 2048,
+      // Shadow size cycle: grows from radiusMinVh to radiusMaxVh over growSec,
+      // holds at max until the hole is clicked, then eases back to min.
+     radiusMinVh: 0.030,
+      radiusMaxVh: 0.080,
+     radiusMin: 28,
+     radiusMax: 160,
+      growSec: 120,             // min -> max grow time, seconds
+     shrinkSec: 2.0,           // max -> min ease-back time on click
+      // Disk look drives off growth (tracks the radius); intensity is fixed.
+      intensity: 0.82,
+     // Bounce: constant-speed ball. reach = how far the lensing extends, in
+     // shadow radii (must match the shader's window divisor); the ball bounces
+     // when its influence circle (reach*rh) touches a banner edge.
+     speed: 62,                // page px / second
+     reach: 3.0,
+     // Bounce wall margin, independent of reach. Smaller = ball gets closer to
+     // the banner edge before reflecting. Lensing may briefly cross the edge at
+     // the turning point, but the shader's bandMask soft-clips it smoothly.
+     bounceReach: 2.0,
+     textureRefreshMs: 3000,
+     textureMaxSide: 2560,
     };
 
     function isEnabled() {
@@ -466,7 +532,7 @@ void main() {
       pageHeight = Math.max(1, Math.round(scope.scrollHeight || scopeRect.height));
       width = Math.max(1, Math.round(window.innerWidth));
       height = Math.max(1, Math.round(window.innerHeight));
-      renderScale = width < 720 ? 0.85 : 1.0;
+      renderScale = width < 720 ? 0.7 : 0.85;
       canvas.width = Math.max(1, Math.round(width * renderScale));
       canvas.height = Math.max(1, Math.round(height * renderScale));
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -475,30 +541,62 @@ void main() {
       textEntries = [];
       needsTargetRefresh = true;
 
+      // Size-cycle endpoints derived from the viewport height, clamped. bhRadius
+      // itself is driven by the state machine in positionAt; here we only keep
+      // it inside the (possibly changed) endpoints after a resize.
+      bhRadiusMin = clamp(height * CONFIG.radiusMinVh, CONFIG.radiusMin, CONFIG.radiusMax);
+      bhRadiusMax = clamp(height * CONFIG.radiusMaxVh, CONFIG.radiusMin, CONFIG.radiusMax);
+      bhRadius = clamp(bhRadius || bhRadiusMin, bhRadiusMin, bhRadiusMax);
+
+      // Banner bounds in PAGE space (relative to the scope/page top).
+      const scopeBox = scope.getBoundingClientRect();
+      if (banner) {
+        const b = banner.getBoundingClientRect();
+        bannerTop = b.top - scopeBox.top;      // px down the page
+        bannerHeight = Math.max(1, b.height);
+      } else {
+        bannerTop = 0;
+        bannerHeight = Math.min(pageHeight, height);
+      }
+
       if (bhX === 0 && bhY === 0) {
         bhX = pageWidth * 0.5;
-        bhY = pageHeight * 0.5;
+        bhY = bannerTop + bannerHeight * 0.5;
+      }
+      // Kick off the bounce in a random diagonal direction (once).
+      if (bhVX === 0 && bhVY === 0) {
+        const ang = roamSeed + Math.PI * 0.25;
+        bhVX = Math.cos(ang) * CONFIG.speed;
+        bhVY = Math.sin(ang) * CONFIG.speed;
       }
     }
 
     function viewportState(state) {
+      // state.x/state.y are PAGE-space px. Convert to screen px via the scope's
+      // current position (scopeRect.top goes negative as you scroll down), so the
+      // hole sits in the banner and scrolls with it. Cull when it's fully off the
+      // viewport (plus a margin) — that's what lets it leave your view.
       const scopeRect = scope.getBoundingClientRect();
+      const screenX = scopeRect.left + state.x;
+      const screenY = scopeRect.top + state.y;
+      const pad = state.radius * 6;
+      // Banner screen edges → y-up uv band for the shader clip mask.
+      const bannerScreenTop = scopeRect.top + bannerTop;
+      const bannerScreenBottom = bannerScreenTop + bannerHeight;
+      const bandLow = clamp(1 - bannerScreenBottom / height, 0, 1);   // y-up uv, lower edge
+      const bandHigh = clamp(1 - bannerScreenTop / height, 0, 1);     // y-up uv, higher edge
       return {
-        x: scopeRect.left + state.x,
-        y: scopeRect.top + state.y,
+        x: screenX,
+        y: screenY,
         rectX: clamp(-scopeRect.left / pageWidth, 0, 1),
         rectY: clamp(-scopeRect.top / pageHeight, 0, 1),
         rectW: width / pageWidth,
         rectH: height / pageHeight,
-        visible: scopeRect.left + state.x > -state.radius * 8 &&
-          scopeRect.left + state.x < width + state.radius * 8 &&
-          scopeRect.top + state.y > -state.radius * 8 &&
-          scopeRect.top + state.y < height + state.radius * 8,
+        bandLow,
+        bandHigh,
+        visible: screenY > -pad && screenY < height + pad &&
+                 screenX > -pad && screenX < width + pad,
       };
-    }
-
-    function setRandomDirection() {
-      roamSeed = Math.random() * 1000;
     }
 
     function scheduleTextureCapture(state, force = false) {
@@ -525,8 +623,17 @@ void main() {
       if (!force && now - lastTextureAt < CONFIG.textureRefreshMs) return;
 
       const sourceRect = scope.getBoundingClientRect();
+      // Capture only the banner band (+ lensing padding) instead of the whole
+      // page: the hole lives in the banner, so this is all the shader samples.
+      // A smaller capture -> higher scale (sharper) + faster -> refreshes more
+      // often without janking the main thread.
+      const pad = CONFIG.reach * bhRadius + 16;
+      const capX = 0;
+      const capW = pageWidth;
+      const capY = Math.max(0, bannerTop - pad);
+      const capH = Math.min(pageHeight - capY, bannerHeight + pad * 2);
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const scale = Math.min(dpr, CONFIG.textureMaxSide / Math.max(pageWidth, pageHeight, 1));
+      const scale = Math.min(dpr, CONFIG.textureMaxSide / Math.max(capW, capH, 1));
 
       textureBusy = true;
 
@@ -536,10 +643,10 @@ void main() {
           logging: false,
           useCORS: true,
           scale,
-          x: 0,
-          y: 0,
-          width: pageWidth,
-          height: pageHeight,
+          x: capX,
+          y: capY,
+          width: capW,
+          height: capH,
           scrollX: -sourceRect.left,
           scrollY: -sourceRect.top,
           ignoreElements: (element) => element === container,
@@ -559,97 +666,23 @@ void main() {
         gl.bindTexture(gl.TEXTURE_2D, pageTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
 
+        // textureRect: the captured sub-region in normalized PAGE space (0..1,
+        // y grows downward like pageUv). The shader maps pageUv back into this
+        // band via texUv = (pageUv - textureRect.xy) / textureRect.zw.
         textureRect = {
-          x: 0,
-          y: 0,
-          w: 1,
-          h: 1,
+          x: capX / pageWidth,
+          y: capY / pageHeight,
+          w: capW / pageWidth,
+          h: capH / pageHeight,
         };
         textureReady = true;
         lastTextureAt = now;
       } catch (error) {
         textureReady = false;
-        console.warn("Black hole page texture capture failed", error);
+        console.warn("Black hole page texture failed", error);
       } finally {
         textureBusy = false;
       }
-    }
-
-    function collectTargets() {
-      const scopeBox = scope.getBoundingClientRect();
-      const selector = [
-        "[data-reveal]",
-        ".motion-card",
-        ".home-banner-copy",
-        ".home-banner-title",
-        ".latest-profile-sidecar",
-        ".decorative-divider",
-      ].join(",");
-
-      targets = Array.from(scope.querySelectorAll(selector)).filter((el) => {
-        const rect = el.getBoundingClientRect();
-        return rect.width > 16 && rect.height > 16;
-      });
-
-      targets.forEach((el) => {
-        el.setAttribute("data-black-hole-warp", "");
-        // Reset consumed state when black hole restarts
-        if (bhRadius <= CONFIG.minRadius + 5) {
-          el.dataset.bhConsumed = 'false';
-        }
-      });
-      targetEntries = targets.map((el) => {
-        const box = el.getBoundingClientRect();
-        return {
-          el,
-          left: box.left - scopeBox.left,
-          top: box.top - scopeBox.top,
-          width: box.width,
-          height: box.height,
-          centerX: box.left - scopeBox.left + box.width * 0.5,
-          centerY: box.top - scopeBox.top + box.height * 0.5,
-          viewportTop: box.top,
-          viewportBottom: box.bottom,
-        };
-      });
-
-      const textSelector = [
-        ".home-banner-title-char",
-        ".home-banner-title",
-        ".heading-text",
-        ".kicker",
-        ".muted",
-        ".faint-text",
-        "time",
-        "[data-appearance-article-list] span",
-        "[data-appearance-article-list] p",
-        "[data-appearance-article-list] h2",
-        "[data-reveal] h2",
-      ].join(",");
-
-      textTargets = Array.from(scope.querySelectorAll(textSelector)).filter((el) => {
-        const rect = el.getBoundingClientRect();
-        return rect.width > 3 && rect.height > 3;
-      });
-
-      textTargets.forEach((el) => {
-        el.setAttribute("data-black-hole-text-warp", "");
-      });
-      textEntries = textTargets.map((el) => {
-        const box = el.getBoundingClientRect();
-        return {
-          el,
-          left: box.left - scopeBox.left,
-          top: box.top - scopeBox.top,
-          width: box.width,
-          height: box.height,
-          centerX: box.left - scopeBox.left + box.width * 0.5,
-          centerY: box.top - scopeBox.top + box.height * 0.5,
-          viewportTop: box.top,
-          viewportBottom: box.bottom,
-        };
-      });
-      needsTargetRefresh = false;
     }
 
     function clearWarp() {
@@ -679,89 +712,85 @@ void main() {
         el.removeAttribute("data-lensing-warp");
       }
     }
-
-    function positionAt(time, deltaTime) {
-      const t = time * 0.001 + roamSeed;
-      const growth = clamp((bhRadius - CONFIG.minRadius) / (CONFIG.maxRadius - CONFIG.minRadius), 0, 1);
-      const margin = bhRadius * mixNumber(0.92, 0.68, growth);
-
-      if (bhState === 'moving') {
-        const speed = mixNumber(0.12, 0.42, growth);
-        const wander = lissa(t * speed);
-        const wobble = {
-          x: Math.cos(t * 0.62) * mixNumber(6, 18, growth),
-          y: Math.sin(t * 0.70) * mixNumber(5, 16, growth),
-        };
-        const rangeX = pageWidth * mixNumber(CONFIG.rangeXMin, CONFIG.rangeXMax, growth);
-        const rangeY = pageHeight * mixNumber(CONFIG.rangeYMin, CONFIG.rangeYMax, growth);
-        const targetX = pageWidth * 0.5 + wander.x * Math.max(120, rangeX - margin * 0.15) + wobble.x;
-        const targetY = pageHeight * 0.5 + wander.y * Math.max(180, rangeY - margin * 0.15) + wobble.y;
-        bhX += (clamp(targetX, margin, pageWidth - margin) - bhX) * CONFIG.followEase;
-        bhY += (clamp(targetY, margin, pageHeight - margin) - bhY) * CONFIG.followEase;
-
-        // Check if reached max size
-        if (bhRadius >= CONFIG.maxRadius) {
-          bhState = 'shrinking';
-          shrinkTimer = Date.now() + CONFIG.shrinkDelay;
-        }
-      } else if (bhState === 'shrinking') {
-        // Wait for delay, then shrink
-        if (Date.now() >= shrinkTimer) {
-          bhRadius = Math.max(CONFIG.minRadius, bhRadius - CONFIG.shrinkRate);
-
-          // When shrunk to min, start moving again
-          if (bhRadius <= CONFIG.minRadius) {
-            bhRadius = CONFIG.minRadius;
-            bhState = 'moving';
-            setRandomDirection();
-          }
-        }
-      }
-
-      return {
-        x: bhX,
-        y: bhY,
-        radius: bhRadius,
-        growth: clamp((bhRadius - CONFIG.minRadius) / (CONFIG.maxRadius - CONFIG.minRadius), 0, 1),
-        intensity: 0.58 + (bhRadius - CONFIG.minRadius) / (CONFIG.maxRadius - CONFIG.minRadius) * 0.38,
-      };
-    }
-
-    function checkConsumption(state) {
-      if (bhState !== 'moving') return;
-
-      const hx = state.x;
-      const hy = state.y;
-
-      for (const entry of targetEntries) {
-        const el = entry.el;
-        if (el.dataset.bhConsumed === 'true') continue;
-
-        const ex = entry.centerX;
-        const ey = entry.centerY;
-        const dist = Math.hypot(hx - ex, hy - ey);
-
-        // Check if element center is inside black hole
-        if (dist < state.radius * 0.7) {
-          el.dataset.bhConsumed = 'true';
-          bhRadius = Math.min(CONFIG.maxRadius, bhRadius + CONFIG.growthPerElement);
-        }
-      }
-    }
-
-    // In full-immersive mode the canvas is opaque, so the CSS DOM-warp that the
-    // old overlay used would be invisible behind it — pure wasted work on top of
-    // the full-screen geodesic trace. All the bending now happens in the shader;
-    // here we only publish the hole's screen position/size for BannerParticles.
-    function warpContent(state) {
-      const scopeRect = scope.getBoundingClientRect();
+    
+    // The canvas is a transparent overlay; all bending happens in the shader.
+    // Publishes the hole's SCREEN position/size for BannerParticles (which
+    // subtracts its own getBoundingClientRect, so it needs viewport px). When
+    // the hole is culled off-screen, mark inactive so particles stop reacting.
+    function warpContent(renderState) {
       window.__blackHoleState = {
-        x: scopeRect.left + state.x,
-        y: scopeRect.top + state.y,
-        radius: state.radius,
-        active: true,
+        x: renderState.x,
+        y: renderState.y,
+        radius: bhRadius,
+        active: renderState.visible,
         textureReady,
       };
+    }
+    
+    function positionAt(time) {
+      // dt in seconds, clamped so a background tab / long frame can't teleport
+      // the ball through a wall.
+      let dt = lastTime ? (time - lastTime) * 0.001 : 0.016;
+      lastTime = time;
+      dt = clamp(dt, 0.0, 0.05);
+      stateT += dt;
+
+      // ---- size cycle: grow -> maxed (slow drift, await click) -> shrink -> grow
+      // The radius eases between bhRadiusMin and bhRadiusMax; the disk's shader
+      // growth tracks the radius, so the disk brightens/widens as the hole grows.
+      // Motion runs at full speed while growing and slows to a creep at max.
+      let moving = false;
+      let speedFactor = 1.0;
+      if (bhState === 'growing') {
+        const p = smoothstep(0.0, 1.0, clamp(stateT / CONFIG.growSec, 0.0, 1.0));
+        bhRadius = mixNumber(bhRadiusMin, bhRadiusMax, p);
+        if (stateT >= CONFIG.growSec) { bhState = 'maxed'; stateT = 0; }
+        moving = true;
+      } else if (bhState === 'shrinking') {
+        const p = smoothstep(0.0, 1.0, clamp(stateT / CONFIG.shrinkSec, 0.0, 1.0));
+        bhRadius = mixNumber(bhRadiusMax, bhRadiusMin, p);
+        if (stateT >= CONFIG.shrinkSec) { bhState = 'growing'; stateT = 0; }
+        moving = false;
+      } else {
+        // maxed: hold at max radius, drift very slowly until the hole is clicked.
+        bhRadius = bhRadiusMax;
+        moving = true;
+      }
+      const growth = clamp(
+        (bhRadius - bhRadiusMin) / Math.max(1, bhRadiusMax - bhRadiusMin), 0.0, 1.0);
+      // Position speed eases with size too (matches the disk's time dilation):
+      // full speed when small, ~5% (a slow drift) by the time it reaches max.
+      speedFactor = mixNumber(1.0, 0.05, growth);
+
+      // Bounce only while growing. The ball's influence circle is bounceReach*rh
+      // (independent of the shader lensing reach); it reflects when that circle
+      // touches a banner edge, and the shader's bandMask soft-clips any overshoot.
+      if (moving) {
+        const influ = CONFIG.bounceReach * bhRadius;
+        const loX = influ, hiX = pageWidth - influ;
+        const loY = bannerTop + influ, hiY = bannerTop + bannerHeight - influ;
+        bhX += bhVX * dt * speedFactor;
+        bhY += bhVY * dt * speedFactor;
+        // reflect off the four walls (guard against a degenerate box where the
+        // influence circle is bigger than the band -> pin to center on that axis)
+        if (hiX > loX) {
+          if (bhX < loX) { bhX = loX; bhVX = Math.abs(bhVX); }
+          else if (bhX > hiX) { bhX = hiX; bhVX = -Math.abs(bhVX); }
+        } else { bhX = pageWidth * 0.5; bhVX = 0; }
+        if (hiY > loY) {
+          if (bhY < loY) { bhY = loY; bhVY = Math.abs(bhVY); }
+          else if (bhY > hiY) { bhY = hiY; bhVY = -Math.abs(bhVY); }
+        } else { bhY = bannerTop + bannerHeight * 0.5; bhVY = 0; }
+      }
+
+     return {
+       x: bhX,
+       y: bhY,
+       radius: bhRadius,
+       growth,
+       intensity: CONFIG.intensity,
+       dt,
+     };
     }
 
     function loop(time) {
@@ -773,28 +802,37 @@ void main() {
         return;
       }
 
-      if (needsTargetRefresh || frame % 120 === 0) collectTargets();
+     const state = positionAt(time);
+     const renderState = viewportState(state);
 
-      const state = positionAt(time);
-      checkConsumption(state);
-      const renderState = viewportState(state);
+       // Gravitational time dilation: while maxed the disk's shader clock runs
+       // at ~8% (near-frozen, faint creep), easing back to full speed while
+       // growing/shrinking. Slowing the iTime *rate* keeps swirl phase
+       // continuous, so the disk slows instead of teleporting its streaks.
+        // Disk rotation slows continuously with size (gravitational time
+        // dilation): full speed when small, ~8% (near-frozen) at max. Using
+        // the iTime-rate path keeps swirl phase continuous (no streak teleport).
+        const targetDil = mixNumber(1.0, 0.08, state.growth);
+       dilSpeed += (targetDil - dilSpeed) * Math.min(1, state.dt * 3);
+       shaderTime += state.dt * dilSpeed;
 
-      gl.uniform2f(uResolution, canvas.width, canvas.height);
-      gl.uniform1f(uTime, time / 1000);
-      gl.uniform2f(uCenter, renderState.x / width, 1.0 - renderState.y / height);
+     gl.uniform2f(uResolution, canvas.width, canvas.height);
+       gl.uniform1f(uTime, shaderTime);
+     gl.uniform2f(uCenter, renderState.x / width, 1.0 - renderState.y / height);
       gl.uniform1f(uRadius, state.radius / height);
       gl.uniform1f(uIntensity, state.intensity);
       gl.uniform1f(uGrowth, state.growth);
       gl.uniform4f(uTextureRect, textureRect.x, textureRect.y, textureRect.w, textureRect.h);
       gl.uniform4f(uViewportRect, renderState.rectX, renderState.rectY, renderState.rectW, renderState.rectH);
       gl.uniform1f(uTextureReady, textureReady ? 1.0 : 0.0);
+      gl.uniform2f(uBannerBand, renderState.bandLow, renderState.bandHigh);
 
       gl.clear(gl.COLOR_BUFFER_BIT);
       if (renderState.visible) {
         gl.drawArrays(gl.TRIANGLES, 0, 6);
       }
 
-      warpContent(state);
+      warpContent(renderState);
       frame += 1;
       animId = requestAnimationFrame(loop);
     }
@@ -802,7 +840,6 @@ void main() {
     function start() {
       if (animId || !isEnabled()) return;
       resize();
-      collectTargets();
       scheduleTextureCapture({ x: bhX || width * 0.5, y: bhY || height * 0.5, radius: bhRadius }, true);
       animId = requestAnimationFrame(loop);
     }
@@ -815,11 +852,36 @@ void main() {
       window.__blackHoleState.active = false;
     }
 
-    window.addEventListener("scroll", () => {
-      needsTargetRefresh = true;
-    }, { passive: true });
+     // Debounced texture refresh on scroll: the page snapshot goes stale the
+     // moment content scrolls, so once scrolling settles (300ms quiet) force a
+     // recapture and the lensing shows fresh content instead of the old frame.
+     let scrollRefreshTimer = 0;
+     window.addEventListener("scroll", () => {
+       needsTargetRefresh = true;
+       if (scrollRefreshTimer) clearTimeout(scrollRefreshTimer);
+       scrollRefreshTimer = window.setTimeout(() => {
+         scrollRefreshTimer = 0;
+         scheduleTextureCapture({ x: bhX, y: bhY, radius: bhRadius }, true);
+       }, 300);
+     }, { passive: true });
 
-    const attrObserver = new MutationObserver(() => {
+     // Click the hole's body (only while it's maxed and frozen) to trigger the
+     // shrink-back -> regrow cycle. Canvas is pointer-events:none, so listen on
+     // document and hit-test against the published screen position/radius.
+     document.addEventListener("click", (e) => {
+       if (bhState !== "maxed") return;
+       const st = window.__blackHoleState;
+       if (!st || !st.active) return;
+       const dx = e.clientX - st.x;
+       const dy = e.clientY - st.y;
+       const hitR = st.radius * 1.15;  // small tolerance around the shadow body
+       if (dx * dx + dy * dy <= hitR * hitR) {
+         bhState = "shrinking";
+         stateT = 0;
+       }
+     }, { passive: true });
+
+   const attrObserver = new MutationObserver(() => {
       if (isEnabled()) start();
       else stop();
     });

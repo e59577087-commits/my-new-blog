@@ -10,7 +10,7 @@
 
 :root {
   color-scheme: light;
-  --site-header-height: 2rem;
+  --site-header-height: 2.75rem;
   --theme-transition-duration: 540ms;
   --theme-transition-easing: cubic-bezier(0.65, 0, 0.35, 1);
   --theme-reveal-x: 50vw;
@@ -76,7 +76,7 @@
 
 @media (min-width: 640px) {
   :root {
-    --site-header-height: 2.5rem;
+    --site-header-height: 2.75rem;
   }
 }
 
@@ -229,7 +229,7 @@ body {
   letter-spacing: 0;
 }
 
-/* Subtle grain texture overlay — editorial/print feel */
+/* Subtle grain texture overlay - editorial/print feel */
 body::after {
   content: "";
   position: fixed;
@@ -240,6 +240,17 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 180px 180px;
+}
+
+.home-black-hole-scope {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-top: calc(var(--site-header-height) * -1);
+}
+
+.home-black-hole-scope .home-hero-banner {
+  margin-top: 0;
 }
 
 :root[data-theme="dark"] body::after {
@@ -322,26 +333,6 @@ body::after {
 :root[data-wallpaper-mode="fullscreen"] .home-hero-banner,
 :root[data-wallpaper-mode="transparent"] .home-hero-banner {
   background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.26) 100%);
-}
-
-.home-hero-banner::after {
-  content: "";
-  position: absolute;
-  inset: -30%;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 28% 34%, hsl(var(--theme-hue) calc(78% * var(--theme-sat)) 70% / 0.22), transparent 22%),
-    radial-gradient(circle at 78% 62%, rgba(255, 255, 255, 0.32), transparent 24%);
-  opacity: 0.7;
-}
-
-:root[data-ripple="on"] .home-hero-banner::after {
-  animation: banner-ripple 9s ease-in-out infinite alternate;
-}
-
-:root[data-ripple="off"] .home-hero-banner::after {
-  display: none;
 }
 
 .home-hero-banner > * {
@@ -444,16 +435,6 @@ body::after {
 
 :root[data-banner-title="hide"] .home-banner-title {
   display: none;
-}
-
-@keyframes banner-ripple {
-  from {
-    transform: translate3d(-1.5%, -1%, 0) scale(1);
-  }
-
-  to {
-    transform: translate3d(1.5%, 1%, 0) scale(1.04);
-  }
 }
 
 @keyframes banner-title-char {
@@ -846,17 +827,46 @@ button {
 }
 
 .site-header {
-  border-color: var(--color-border);
-  background: color-mix(in srgb, var(--color-header), transparent 30%);
-  -webkit-backdrop-filter: blur(8px) saturate(var(--glass-saturate));
-  backdrop-filter: blur(8px) saturate(var(--glass-saturate));
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 8px 32px rgba(0, 0, 0, 0.04);
+  /* Hero/transparent state: nearly invisible, just enough blur to keep text legible */
+  border-color: transparent;
+  background: transparent;
+  -webkit-backdrop-filter: blur(2px) saturate(var(--glass-saturate));
+  backdrop-filter: blur(2px) saturate(var(--glass-saturate));
+  box-shadow: none;
 }
 
 .site-header .site-header-inner {
   min-height: var(--site-header-height);
   padding-block: 0.25rem;
 }
+
+/* Scrolled state: deeper frost + stronger separation once past the hero */
+.site-header.is-scrolled {
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--color-header), transparent 0%);
+  -webkit-backdrop-filter: blur(26px) saturate(var(--glass-saturate));
+  backdrop-filter: blur(26px) saturate(var(--glass-saturate));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 10px 40px rgba(0, 0, 0, 0.08);
+  transition: background 280ms ease, -webkit-backdrop-filter 280ms ease, backdrop-filter 280ms ease, box-shadow 280ms ease;
+}
+
+.site-header {
+  transition: background 280ms ease, -webkit-backdrop-filter 280ms ease, backdrop-filter 280ms ease, box-shadow 280ms ease;
+}
+/* Smooth the border-color transition too */
+.site-header,
+.site-header.is-scrolled {
+  transition-property: background, -webkit-backdrop-filter, backdrop-filter, box-shadow, border-color;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header,
+  .site-header.is-scrolled {
+    transition: none;
+  }
+}
+
 
 @media (min-width: 640px) {
   .site-header .site-header-inner {
@@ -1253,13 +1263,11 @@ button {
     margin-bottom: 0;
   }
 
-  /* Fit wallpaper by width on phones so the full composition shows (matching
-     desktop) instead of cover-cropping to a narrow vertical sliver. The hero
-     shrinks to the image's natural height at full viewport width. */
+  /* Keep the wallpaper covering the banner on phones; width-fitting can expose
+     the page background above wide images. */
   :root[data-wallpaper-mode="banner"] .home-hero-banner {
-    min-height: calc(46.8vw + var(--site-header-height));
-    background-size: 100% auto;
-    background-position: center bottom;
+    background-size: cover;
+    background-position: center;
   }
 
   .mobile-header-auth {

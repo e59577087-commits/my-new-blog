@@ -3,6 +3,7 @@ import EntryCard from "../components/EntryCard.astro";
 import ProfileCard from "../components/ProfileCard.astro";
 import MiniCalendar from "../components/MiniCalendar.astro";
 import BannerParticles from "../components/BannerParticles.astro";
+import HomepageBlackHole from "../components/HomepageBlackHole.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { formatArticleDate, getEntryUrl, getPublishedArticles, getSectionLabel } from "../utils/articles";
 
@@ -28,7 +29,9 @@ const bannerTitleChars = Array.from(bannerTitle);
 ---
 
 <BaseLayout title="首页">
-  <section class="home-hero-banner flex items-end">
+  <div class="home-black-hole-scope" data-home-black-hole-scope>
+    <HomepageBlackHole />
+    <section class="home-hero-banner flex items-end">
     <BannerParticles />
     <div class="home-banner-copy">
       <h1 class="home-banner-title heading-text" aria-label={bannerTitle}>
@@ -40,7 +43,7 @@ const bannerTitleChars = Array.from(bannerTitle);
     </div>
   </section>
 
-  <section class="mx-auto max-w-6xl px-4 pt-10 pb-10 sm:px-6 sm:pt-14 sm:pb-14 lg:px-8">
+    <section class="mx-auto max-w-6xl px-4 pt-10 pb-10 sm:px-6 sm:pt-14 sm:pb-14 lg:px-8">
     <!-- 最新 -->
     {
       latest && (
@@ -201,5 +204,6 @@ const bannerTitleChars = Array.from(bannerTitle);
       )
     }
 
-  </section>
+    </section>
+  </div>
 </BaseLayout>

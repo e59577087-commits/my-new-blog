@@ -127,4 +127,25 @@ const isActive = (href: string) => {
       link.addEventListener('click', close);
     });
   }
+
+  // Frosted-header scroll state: transparent over hero, deeper frost once scrolled past it
+  const header = document.querySelector('.site-header');
+  if (header) {
+    const threshold = () => {
+      const hero = document.querySelector('.home-hero-banner');
+      // Fall back to ~40% of viewport when there is no hero (inner pages)
+      return hero ? hero.offsetHeight * 0.6 : window.innerHeight * 0.4;
+    };
+    const update = () => {
+      header.classList.toggle('is-scrolled', window.scrollY > threshold());
+    };
+    update();
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { update(); ticking = false; });
+    }, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+  }
 </script>
