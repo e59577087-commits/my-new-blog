@@ -1,0 +1,848 @@
+<div class="home-black-hole-root" data-home-black-hole-root aria-hidden="true">
+  <canvas data-home-black-hole-canvas></canvas>
+</div>
+
+<style>
+  .home-black-hole-root {
+    position: fixed;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .home-black-hole-root canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  :root[data-home-black-hole="off"] .home-black-hole-root {
+    display: none;
+  }
+
+  :global([data-black-hole-warp]) {
+    --bh-warp-x: 0px;
+    --bh-warp-y: 0px;
+    --bh-warp-scale: 1;
+    --bh-warp-blur: 0px;
+    --bh-warp-brightness: 1;
+    --bh-warp-rotate: 0deg;
+    transform: translate3d(var(--bh-warp-x), var(--bh-warp-y), 0) 
+               scale(var(--bh-warp-scale)) 
+               rotate(var(--bh-warp-rotate));
+    filter: blur(var(--bh-warp-blur)) brightness(var(--bh-warp-brightness));
+    transform-origin: var(--bh-origin-x, 50%) var(--bh-origin-y, 50%);
+    will-change: transform, filter;
+  }
+
+  :global([data-black-hole-text-warp]) {
+    --bh-text-x: 0px;
+    --bh-text-y: 0px;
+    --bh-text-scale-x: 1;
+    --bh-text-scale-y: 1;
+    --bh-text-blur: 0px;
+    --bh-text-opacity: 1;
+    --bh-text-skew: 0deg;
+    display: inline-block;
+    transform: translate3d(var(--bh-text-x), var(--bh-text-y), 0)
+               scale(var(--bh-text-scale-x), var(--bh-text-scale-y))
+               skewX(var(--bh-text-skew));
+    transform-origin: var(--bh-text-origin-x, 50%) var(--bh-text-origin-y, 50%);
+    filter: blur(var(--bh-text-blur));
+    opacity: var(--bh-text-opacity);
+    will-change: transform, filter, opacity;
+  }
+
+  :global([data-black-hole-text-warp][data-bh-text-consumed="true"]) {
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-black-hole-root {
+      display: none;
+    }
+    :global([data-black-hole-warp]) {
+      transform: none;
+      filter: none;
+    }
+    :global([data-black-hole-text-warp]) {
+      transform: none;
+      filter: none;
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  import html2canvas from "html2canvas";
+
+  (function homepageBlackHoleWebGL() {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reduceMotion.matches) return;
+
+    const root = document.documentElement;
+    const container = document.querySelector("[data-home-black-hole-root]");
+    const scope = document.querySelector("[data-home-black-hole-scope]");
+    const canvas = container?.querySelector("[data-home-black-hole-canvas]");
+    if (!container || !scope || !canvas) return;
+
+    const gl = canvas.getContext("webgl2", { alpha: true, premultipliedAlpha: false });
+    if (!gl) {
+      console.warn("WebGL2 not supported");
+      return;
+    }
+
+    // Expose black hole position for particles
+    window.__blackHoleState = { x: 0, y: 0, radius: 0, active: false, textureReady: false };
+
+    const VERT = `#version 300 es
+    in vec2 aPos;
+    void main() {
+      gl_Position = vec4(aPos, 0.0, 1.0);
+    }`;
+
+    const FRAG = `#version 300 es
+precision highp float;
+precision highp int;
+
+uniform vec2 iResolution;
+uniform float iTime;
+uniform vec2 uCenter;
+uniform float uRadius;
+uniform float uIntensity;
+uniform float uGrowth;
+uniform sampler2D uPageTexture;
+uniform vec4 uTextureRect;
+uniform vec4 uViewportRect;
+uniform float uTextureReady;
+
+out vec4 fragColor;
+
+const float STAR_GAIN = 0.0;
+const float DISK_INNER = 1.8;
+const float DISK_OUTER = 8.0;
+const float DISK_INCL = 1.5;
+const float DISK_ROLL = 0.35;
+const float DISK_GAIN = 2.2;
+const float DISK_OPACITY = 0.90;
+const float DISK_TEMP = 5500.0;
+const float DOPPLER_MIX = 0.60;
+const float DISK_BEAM = 2.5;
+const float DISK_SPEED = 5.0;
+const float DISK_WIND = 7.0;
+const float DISK_CONTRAST = 1.6;
+const float EXPOSURE = 1.4;
+const float DILATION_MIN = 0.08;
+const float LENS_DEPTH = 13.0;
+
+#define B_CRIT 2.5980762
+#define N_STEPS 48
+
+float hash21(vec2 p) {
+  p = fract(p * vec2(234.34, 435.345));
+  p += dot(p, p + 34.23);
+  return fract(p.x * p.y);
+}
+
+float vnoiseWrapY(vec2 p, float perY) {
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float y0 = mod(i.y, perY), y1 = mod(i.y + 1.0, perY);
+  return mix(
+    mix(hash21(vec2(i.x, y0)), hash21(vec2(i.x + 1.0, y0)), f.x),
+    mix(hash21(vec2(i.x, y1)), hash21(vec2(i.x + 1.0, y1)), f.x),
+    f.y
+  );
+}
+
+vec2 rot(vec2 v, float a) {
+  float c = cos(a), s = sin(a);
+  return vec2(c * v.x - s * v.y, s * v.x + c * v.y);
+}
+
+vec3 blackbody(float T) {
+  float t = clamp(T, 1500.0, 40000.0) / 100.0;
+  float r = t <= 66.0 ? 1.0 : clamp(1.292936 * pow(t - 60.0, -0.1332047), 0.0, 1.0);
+  float g = t <= 66.0 ? clamp(0.3900816 * log(t) - 0.6318414, 0.0, 1.0)
+                      : clamp(1.1298909 * pow(t - 60.0, -0.0755148), 0.0, 1.0);
+  float b = t >= 66.0 ? 1.0 : (t <= 19.0 ? 0.0 : clamp(0.5432068 * log(t - 10.0) - 1.1962540, 0.0, 1.0));
+  return vec3(r, g, b);
+}
+
+vec3 stars(vec3 d) {
+  vec2 sph = vec2(atan(d.x, -d.z), asin(clamp(d.y, -1.0, 1.0)));
+  vec2 g = sph * 40.0;
+  vec2 id = floor(g);
+  float h = hash21(id);
+  if (h < 0.92) return vec3(0.0);
+  vec2 f = fract(g) - 0.5;
+  vec2 off = (vec2(hash21(id + 17.3), hash21(id + 31.7)) - 0.5) * 0.7;
+  float spark = smoothstep(0.10, 0.0, length(f - off));
+  float tw = 0.7 + 0.3 * sin(iTime * (0.5 + 2.0 * hash21(id + 5.1)) + 40.0 * h);
+  vec3 tint = mix(vec3(1.0, 0.82, 0.60), vec3(0.75, 0.85, 1.0), hash21(id + 2.9));
+  return tint * spark * tw * ((h - 0.92) / 0.08);
+}
+
+// mirrored repeat keeps lensed samples on-screen without hard edge smearing
+vec2 mirrorUV(vec2 u) { return 1.0 - abs(1.0 - mod(u, 2.0)); }
+
+// Sample the page snapshot at a screen-space uv (0..1, y-up like gl_FragCoord).
+// Maps screen uv -> page viewport uv -> texture uv, mirrored so lensed samples
+// that stray off the visible window stay on-page instead of smearing an edge.
+vec3 pageAt(vec2 uv) {
+  vec2 m = mirrorUV(uv);
+  vec2 pageUv = uViewportRect.xy + m * uViewportRect.zw;
+  vec2 texUv = (pageUv - uTextureRect.xy) / uTextureRect.zw;
+  return texture(uPageTexture, clamp(texUv, 0.0, 1.0)).rgb;
+}
+
+void main() {
+  vec2 res = iResolution.xy;
+  vec2 uv = gl_FragCoord.xy / res;
+  float aspect = res.x / res.y;
+  float t = iTime;
+  float I = uIntensity;
+  float G = clamp(uGrowth, 0.0, 1.0);
+  vec2 center = uCenter;
+  float rh = uRadius;
+  float dil = mix(1.0, DILATION_MIN, I);
+  vec2 p = (uv - center) * vec2(aspect, 1.0);
+  float plen = length(p);
+  float W = B_CRIT / max(rh, 1e-4);
+  vec2 pr = rot(vec2(p.x, p.y), DISK_ROLL) * W;
+  float b = length(pr);
+  float window = exp(-pow(plen / (7.0 * rh), 2.0));
+  float diskOuter = mix(3.25, DISK_OUTER, smoothstep(0.04, 1.0, G));
+  float diskGain = DISK_GAIN * mix(0.34, 1.0, smoothstep(0.0, 1.0, G));
+  float diskOpacity = mix(0.62, DISK_OPACITY, smoothstep(0.0, 1.0, G));
+  float diskContrast = mix(0.42, DISK_CONTRAST, smoothstep(0.0, 1.0, G));
+  float diskWind = mix(3.0, DISK_WIND, smoothstep(0.08, 1.0, G));
+  float diskSpeed = mix(2.4, DISK_SPEED, smoothstep(0.0, 1.0, G));
+  float diskBeam = mix(1.45, DISK_BEAM, smoothstep(0.1, 1.0, G));
+  float dopplerMix = mix(0.22, DOPPLER_MIX, smoothstep(0.12, 1.0, G));
+  float exposure = mix(0.9, EXPOSURE, smoothstep(0.0, 1.0, G));
+  float rin = max(DISK_INNER, 1.6);
+  float rout = max(diskOuter, rin + 0.5);
+  float bmax = rout + 3.0;
+  float Z0 = max(14.0, rout + 5.0);
+
+  // ================= far field: analytic weak deflection ==================
+  // Rays with impact parameter past bmax can't touch the disk. Bend the page
+  // sample back toward the hole with the finite-camera deflection fit from the
+  // reference, projected onto the page "sky" plane. disp is in world units.
+  if (b >= bmax) {
+    float u = Z0 * inversesqrt(Z0 * Z0 + b * b);
+    float defl = (2.0 / (W * W)) / max(plen, 1e-4)
+               * (1.29 * u + 0.07) * max(LENS_DEPTH - 2.14 * u + 0.75, 0.0)
+               * window;
+    vec2 dir = p / max(plen, 1e-5);
+    vec3 term;
+    // mild chromatic aberration: blue bends a touch more than red, faded in
+    // away from the handoff circle
+    float ab = 0.035 * smoothstep(1.0, 2.0, b / bmax);
+    for (int i = 0; i < 3; i++) {
+      float k = 1.0 + (float(i) - 1.0) * ab;
+      vec2 sp = p - dir * defl * k;
+      vec2 suv = center + sp / vec2(aspect, 1.0);
+      term[i] = pageAt(suv)[i];
+    }
+    vec3 d = normalize(vec3(-(pr / max(b, 1e-4)) * (2.0 / max(b, 1e-4)), -1.0));
+    fragColor = vec4(term + stars(d) * STAR_GAIN * window, 1.0);
+    return;
+  }
+  vec3 x = vec3(pr, Z0);
+  vec3 v = vec3(0.0, 0.0, -1.0);
+  float h2 = dot(pr, pr);
+  float ci = cos(DISK_INCL), si = sin(DISK_INCL);
+  vec3 n = vec3(0.0, si, ci);
+  vec3 e2 = vec3(0.0, ci, -si);
+  float sdir = DISK_SPEED < 0.0 ? -1.0 : 1.0;
+  float spd = abs(diskSpeed);
+  vec3 emitc = vec3(0.0);
+  float trans = 1.0;
+  bool captured = false;
+  float sPrev = dot(x, n);
+  vec3 xPrev = x;
+  for (int i = 0; i < N_STEPS; i++) {
+    float r2 = dot(x, x);
+    if (r2 < 1.0) { captured = true; break; }
+    if (x.z < -Z0 && v.z < 0.0) break;
+    if (r2 > 4.0 * Z0 * Z0) break;
+    float r = sqrt(r2);
+    float dt = clamp(0.16 * r, 0.03, 1.5);
+    vec3 a = -1.5 * h2 * x / (r2 * r2 * r);
+    v += a * (0.5 * dt);
+    x += v * dt;
+    r2 = dot(x, x);
+    r = sqrt(r2);
+    a = -1.5 * h2 * x / (r2 * r2 * r);
+    v += a * (0.5 * dt);
+    float s = dot(x, n);
+    if (s * sPrev < 0.0 && trans > 0.02) {
+      float tc = sPrev / (sPrev - s);
+      vec3 xc = mix(xPrev, x, tc);
+      float rc = length(xc);
+      if (rc > rin && rc < rout) {
+        float band = smoothstep(rin, rin * 1.25, rc) * (1.0 - smoothstep(rout * 0.70, rout, rc));
+        float phi = atan(dot(xc, e2), xc.x);
+        float turns = phi / 6.2831853;
+        float kep = pow(rin / rc, 1.5);
+        float gloc = sqrt(max(1.0 - 1.5 / rc, 0.02));
+        float swirl = rc * diskWind * 0.12 - t * kep * spd * gloc * dil * sdir;
+        float streaks = vnoiseWrapY(vec2(rc * 2.8, turns * 19.0 + swirl * 3.0), 19.0) * 0.65 +
+                        vnoiseWrapY(vec2(rc * 1.0, turns * 9.0 + swirl * 1.5 + 7.0), 9.0) * 0.35;
+        streaks = 0.35 + diskContrast * streaks * streaks;
+        vec3 gasdir = normalize(cross(n, xc)) * sdir;
+        float beta = clamp(inversesqrt(max(2.0 * (rc - 1.0), 0.2)), 0.0, 0.99);
+        float g = gloc / max(1.0 + beta * dot(gasdir, normalize(v)), 0.05);
+        g = mix(1.0, g, dopplerMix);
+        float xpr = max(1.0 - sqrt(rin / rc), 0.0);
+        float tprof = pow(rin / rc, 0.75) * pow(xpr, 0.25) / 0.488;
+        vec3 cbb = blackbody(DISK_TEMP * tprof * g);
+        float boost = pow(g, diskBeam);
+        float density = band * streaks;
+        emitc += trans * cbb * (diskGain * 2.2 * density * tprof * tprof * boost);
+        trans *= 1.0 - clamp(diskOpacity * density, 0.0, 1.0);
+      }
+    }
+    sPrev = s;
+    xPrev = x;
+  }
+  if (!captured && dot(x, x) < 4.0) captured = true;
+
+  // ---- background: where did the escaped ray come from? ----
+  // Project the straight exit ray onto the page "sky" plane at z = -LENS_DEPTH
+  // and map back to screen space, so the page bends, magnifies and mirrors
+  // inside the Einstein ring exactly as the reference lenses the terminal.
+  vec3 bg = vec3(0.0);
+  if (!captured) {
+    vec3 d = normalize(v);
+    bg += stars(d) * STAR_GAIN * window;
+    if (d.z < -0.05) {
+      float tpl = (-LENS_DEPTH - x.z) / d.z;
+      vec3 hp = x + d * tpl;
+      vec2 q = rot(hp.xy, -DISK_ROLL) / W;
+      vec2 sp = vec2(q.x, q.y);
+      vec2 suv = center + (p + (sp - p) * window) / vec2(aspect, 1.0);
+      float toward = smoothstep(0.05, 0.35, -d.z);
+      bg += pageAt(suv) * toward;
+    }
+  }
+
+  float photon = exp(-pow((b - B_CRIT) / mix(0.075, 0.16, G), 2.0));
+  float innerPhoton = exp(-pow((b - B_CRIT * 0.82) / mix(0.045, 0.08, G), 2.0));
+  vec3 photonColor = mix(vec3(0.86, 0.78, 0.66), vec3(1.0, 0.80, 0.42), G);
+  vec3 photonLight = photonColor * (photon * mix(0.45, 1.25, G) + innerPhoton * mix(0.10, 0.28, G)) * window;
+
+  // disk + photon light is HDR; tonemap on top of the lensed page background.
+  vec3 col = bg * trans + (vec3(1.0) - exp(-(emitc + photonLight) * exposure));
+  fragColor = vec4(col, 1.0);
+}`;
+
+    function compileShader(type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error("Shader error:", gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+
+    const vertShader = compileShader(gl.VERTEX_SHADER, VERT);
+    const fragShader = compileShader(gl.FRAGMENT_SHADER, FRAG);
+    if (!vertShader || !fragShader) return;
+
+    const program = gl.createProgram();
+    gl.attachShader(program, vertShader);
+    gl.attachShader(program, fragShader);
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.error("Program error:", gl.getProgramInfoLog(program));
+      return;
+    }
+
+    gl.useProgram(program);
+
+    const uResolution = gl.getUniformLocation(program, "iResolution");
+    const uTime = gl.getUniformLocation(program, "iTime");
+    const uCenter = gl.getUniformLocation(program, "uCenter");
+    const uRadius = gl.getUniformLocation(program, "uRadius");
+    const uIntensity = gl.getUniformLocation(program, "uIntensity");
+    const uGrowth = gl.getUniformLocation(program, "uGrowth");
+    const uPageTexture = gl.getUniformLocation(program, "uPageTexture");
+    const uTextureRect = gl.getUniformLocation(program, "uTextureRect");
+    const uViewportRect = gl.getUniformLocation(program, "uViewportRect");
+    const uTextureReady = gl.getUniformLocation(program, "uTextureReady");
+
+    const vertices = new Float32Array([-1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1]);
+    const vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+    const aPos = gl.getAttribLocation(program, "aPos");
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+    const pageTexture = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, pageTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.uniform1i(uPageTexture, 0);
+    gl.uniform4f(uTextureRect, 0, 0, 1, 1);
+    gl.uniform4f(uViewportRect, 0, 0, 1, 1);
+    gl.uniform1f(uTextureReady, 0);
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    let width = 0, height = 0, renderScale = 1, pageWidth = 0, pageHeight = 0, frame = 0, animId = 0, targets = [], textTargets = [], targetEntries = [], textEntries = [];
+    let needsTargetRefresh = true;
+    let textureReady = false, textureBusy = false, textureScheduled = false, lastTextureAt = 0;
+    let textureRect = { x: 0, y: 0, w: 1, h: 1 };
+
+    let bhX = 0, bhY = 0;
+    let bhRadius = 32;
+    let bhState = 'moving'; // 'moving', 'shrinking'
+    let shrinkTimer = 0;
+    let roamSeed = Math.random() * 1000;
+
+    const CONFIG = {
+      minRadius: 32,
+      maxRadius: 164,
+      moveSpeed: 0.22,
+      growthPerElement: 6,
+      shrinkRate: 0.18,
+      shrinkDelay: 3000,
+      pullDesktop: 14,
+      pullMobile: 9,
+      textPullDesktop: 18,
+      textPullMobile: 11,
+      reach: 7.2,
+      followEase: 0.058,
+      rangeXMin: 0.48,
+      rangeXMax: 0.66,
+      rangeYMin: 0.46,
+      rangeYMax: 0.68,
+      texturePadding: 7.0,
+      textureRefreshMs: 60000,
+      textureMaxSide: 2048,
+    };
+
+    function isEnabled() {
+      return root.dataset.homeBlackHole !== "off";
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function smoothstep(edge0, edge1, x) {
+      const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+      return t * t * (3 - 2 * t);
+    }
+
+    function mixNumber(a, b, t) {
+      return a + (b - a) * clamp(t, 0, 1);
+    }
+
+    function lissa(t) {
+      return {
+        x: 0.75 * Math.sin(t * 0.41) + 0.25 * Math.sin(t * 0.89 + 1),
+        y: 0.7 * Math.sin(t * 0.63 + 2.1) + 0.3 * Math.sin(t * 1.17),
+      };
+    }
+
+    function resize() {
+      const scopeRect = scope.getBoundingClientRect();
+      pageWidth = Math.max(1, Math.round(scope.scrollWidth || scopeRect.width));
+      pageHeight = Math.max(1, Math.round(scope.scrollHeight || scopeRect.height));
+      width = Math.max(1, Math.round(window.innerWidth));
+      height = Math.max(1, Math.round(window.innerHeight));
+      renderScale = width < 720 ? 0.85 : 1.0;
+      canvas.width = Math.max(1, Math.round(width * renderScale));
+      canvas.height = Math.max(1, Math.round(height * renderScale));
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      textureReady = false;
+      targetEntries = [];
+      textEntries = [];
+      needsTargetRefresh = true;
+
+      if (bhX === 0 && bhY === 0) {
+        bhX = pageWidth * 0.5;
+        bhY = pageHeight * 0.5;
+      }
+    }
+
+    function viewportState(state) {
+      const scopeRect = scope.getBoundingClientRect();
+      return {
+        x: scopeRect.left + state.x,
+        y: scopeRect.top + state.y,
+        rectX: clamp(-scopeRect.left / pageWidth, 0, 1),
+        rectY: clamp(-scopeRect.top / pageHeight, 0, 1),
+        rectW: width / pageWidth,
+        rectH: height / pageHeight,
+        visible: scopeRect.left + state.x > -state.radius * 8 &&
+          scopeRect.left + state.x < width + state.radius * 8 &&
+          scopeRect.top + state.y > -state.radius * 8 &&
+          scopeRect.top + state.y < height + state.radius * 8,
+      };
+    }
+
+    function setRandomDirection() {
+      roamSeed = Math.random() * 1000;
+    }
+
+    function scheduleTextureCapture(state, force = false) {
+      if (textureBusy || textureScheduled || !pageWidth || !pageHeight || !isEnabled()) return;
+      const now = performance.now();
+      if (!force && now - lastTextureAt < CONFIG.textureRefreshMs) return;
+
+      textureScheduled = true;
+      const run = () => {
+        textureScheduled = false;
+        captureWholePageTexture(force);
+      };
+
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(run, { timeout: force ? 250 : 900 });
+      } else {
+        window.setTimeout(run, force ? 0 : 160);
+      }
+    }
+
+    async function captureWholePageTexture(force = false) {
+      if (textureBusy || !pageWidth || !pageHeight || !isEnabled()) return;
+      const now = performance.now();
+      if (!force && now - lastTextureAt < CONFIG.textureRefreshMs) return;
+
+      const sourceRect = scope.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const scale = Math.min(dpr, CONFIG.textureMaxSide / Math.max(pageWidth, pageHeight, 1));
+
+      textureBusy = true;
+
+      try {
+        const bitmap = await html2canvas(scope, {
+          backgroundColor: null,
+          logging: false,
+          useCORS: true,
+          scale,
+          x: 0,
+          y: 0,
+          width: pageWidth,
+          height: pageHeight,
+          scrollX: -sourceRect.left,
+          scrollY: -sourceRect.top,
+          ignoreElements: (element) => element === container,
+          onclone: (clonedDocument) => {
+            const clonedScope = clonedDocument.querySelector("[data-home-black-hole-scope]");
+            clonedScope?.querySelector("[data-home-black-hole-root]")?.remove();
+
+            clonedScope?.querySelectorAll("[data-black-hole-warp], [data-black-hole-text-warp]").forEach((element) => {
+              element.style.setProperty("transform", "none", "important");
+              element.style.setProperty("filter", "none", "important");
+              element.style.setProperty("opacity", "1", "important");
+            });
+          },
+        });
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, pageTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+
+        textureRect = {
+          x: 0,
+          y: 0,
+          w: 1,
+          h: 1,
+        };
+        textureReady = true;
+        lastTextureAt = now;
+      } catch (error) {
+        textureReady = false;
+        console.warn("Black hole page texture capture failed", error);
+      } finally {
+        textureBusy = false;
+      }
+    }
+
+    function collectTargets() {
+      const scopeBox = scope.getBoundingClientRect();
+      const selector = [
+        "[data-reveal]",
+        ".motion-card",
+        ".home-banner-copy",
+        ".home-banner-title",
+        ".latest-profile-sidecar",
+        ".decorative-divider",
+      ].join(",");
+
+      targets = Array.from(scope.querySelectorAll(selector)).filter((el) => {
+        const rect = el.getBoundingClientRect();
+        return rect.width > 16 && rect.height > 16;
+      });
+
+      targets.forEach((el) => {
+        el.setAttribute("data-black-hole-warp", "");
+        // Reset consumed state when black hole restarts
+        if (bhRadius <= CONFIG.minRadius + 5) {
+          el.dataset.bhConsumed = 'false';
+        }
+      });
+      targetEntries = targets.map((el) => {
+        const box = el.getBoundingClientRect();
+        return {
+          el,
+          left: box.left - scopeBox.left,
+          top: box.top - scopeBox.top,
+          width: box.width,
+          height: box.height,
+          centerX: box.left - scopeBox.left + box.width * 0.5,
+          centerY: box.top - scopeBox.top + box.height * 0.5,
+          viewportTop: box.top,
+          viewportBottom: box.bottom,
+        };
+      });
+
+      const textSelector = [
+        ".home-banner-title-char",
+        ".home-banner-title",
+        ".heading-text",
+        ".kicker",
+        ".muted",
+        ".faint-text",
+        "time",
+        "[data-appearance-article-list] span",
+        "[data-appearance-article-list] p",
+        "[data-appearance-article-list] h2",
+        "[data-reveal] h2",
+      ].join(",");
+
+      textTargets = Array.from(scope.querySelectorAll(textSelector)).filter((el) => {
+        const rect = el.getBoundingClientRect();
+        return rect.width > 3 && rect.height > 3;
+      });
+
+      textTargets.forEach((el) => {
+        el.setAttribute("data-black-hole-text-warp", "");
+      });
+      textEntries = textTargets.map((el) => {
+        const box = el.getBoundingClientRect();
+        return {
+          el,
+          left: box.left - scopeBox.left,
+          top: box.top - scopeBox.top,
+          width: box.width,
+          height: box.height,
+          centerX: box.left - scopeBox.left + box.width * 0.5,
+          centerY: box.top - scopeBox.top + box.height * 0.5,
+          viewportTop: box.top,
+          viewportBottom: box.bottom,
+        };
+      });
+      needsTargetRefresh = false;
+    }
+
+    function clearWarp() {
+      for (const el of targets) {
+        el.removeAttribute("data-black-hole-warp");
+        el.style.removeProperty("--bh-warp-x");
+        el.style.removeProperty("--bh-warp-y");
+        el.style.removeProperty("--bh-warp-scale");
+        el.style.removeProperty("--bh-warp-blur");
+        el.style.removeProperty("--bh-warp-brightness");
+        el.style.removeProperty("--bh-warp-rotate");
+        el.style.removeProperty("--bh-origin-x");
+        el.style.removeProperty("--bh-origin-y");
+      }
+      for (const el of textTargets) {
+        el.removeAttribute("data-black-hole-text-warp");
+        el.style.removeProperty("--bh-text-x");
+        el.style.removeProperty("--bh-text-y");
+        el.style.removeProperty("--bh-text-scale-x");
+        el.style.removeProperty("--bh-text-scale-y");
+        el.style.removeProperty("--bh-text-blur");
+        el.style.removeProperty("--bh-text-opacity");
+        el.style.removeProperty("--bh-text-skew");
+        el.style.removeProperty("--bh-text-origin-x");
+        el.style.removeProperty("--bh-text-origin-y");
+        el.removeAttribute("data-bh-text-consumed");
+        el.removeAttribute("data-lensing-warp");
+      }
+    }
+
+    function positionAt(time, deltaTime) {
+      const t = time * 0.001 + roamSeed;
+      const growth = clamp((bhRadius - CONFIG.minRadius) / (CONFIG.maxRadius - CONFIG.minRadius), 0, 1);
+      const margin = bhRadius * mixNumber(0.92, 0.68, growth);
+
+      if (bhState === 'moving') {
+        const speed = mixNumber(0.12, 0.42, growth);
+        const wander = lissa(t * speed);
+        const wobble = {
+          x: Math.cos(t * 0.62) * mixNumber(6, 18, growth),
+          y: Math.sin(t * 0.70) * mixNumber(5, 16, growth),
+        };
+        const rangeX = pageWidth * mixNumber(CONFIG.rangeXMin, CONFIG.rangeXMax, growth);
+        const rangeY = pageHeight * mixNumber(CONFIG.rangeYMin, CONFIG.rangeYMax, growth);
+        const targetX = pageWidth * 0.5 + wander.x * Math.max(120, rangeX - margin * 0.15) + wobble.x;
+        const targetY = pageHeight * 0.5 + wander.y * Math.max(180, rangeY - margin * 0.15) + wobble.y;
+        bhX += (clamp(targetX, margin, pageWidth - margin) - bhX) * CONFIG.followEase;
+        bhY += (clamp(targetY, margin, pageHeight - margin) - bhY) * CONFIG.followEase;
+
+        // Check if reached max size
+        if (bhRadius >= CONFIG.maxRadius) {
+          bhState = 'shrinking';
+          shrinkTimer = Date.now() + CONFIG.shrinkDelay;
+        }
+      } else if (bhState === 'shrinking') {
+        // Wait for delay, then shrink
+        if (Date.now() >= shrinkTimer) {
+          bhRadius = Math.max(CONFIG.minRadius, bhRadius - CONFIG.shrinkRate);
+
+          // When shrunk to min, start moving again
+          if (bhRadius <= CONFIG.minRadius) {
+            bhRadius = CONFIG.minRadius;
+            bhState = 'moving';
+            setRandomDirection();
+          }
+        }
+      }
+
+      return {
+        x: bhX,
+        y: bhY,
+        radius: bhRadius,
+        growth: clamp((bhRadius - CONFIG.minRadius) / (CONFIG.maxRadius - CONFIG.minRadius), 0, 1),
+        intensity: 0.58 + (bhRadius - CONFIG.minRadius) / (CONFIG.maxRadius - CONFIG.minRadius) * 0.38,
+      };
+    }
+
+    function checkConsumption(state) {
+      if (bhState !== 'moving') return;
+
+      const hx = state.x;
+      const hy = state.y;
+
+      for (const entry of targetEntries) {
+        const el = entry.el;
+        if (el.dataset.bhConsumed === 'true') continue;
+
+        const ex = entry.centerX;
+        const ey = entry.centerY;
+        const dist = Math.hypot(hx - ex, hy - ey);
+
+        // Check if element center is inside black hole
+        if (dist < state.radius * 0.7) {
+          el.dataset.bhConsumed = 'true';
+          bhRadius = Math.min(CONFIG.maxRadius, bhRadius + CONFIG.growthPerElement);
+        }
+      }
+    }
+
+    // In full-immersive mode the canvas is opaque, so the CSS DOM-warp that the
+    // old overlay used would be invisible behind it — pure wasted work on top of
+    // the full-screen geodesic trace. All the bending now happens in the shader;
+    // here we only publish the hole's screen position/size for BannerParticles.
+    function warpContent(state) {
+      const scopeRect = scope.getBoundingClientRect();
+      window.__blackHoleState = {
+        x: scopeRect.left + state.x,
+        y: scopeRect.top + state.y,
+        radius: state.radius,
+        active: true,
+        textureReady,
+      };
+    }
+
+    function loop(time) {
+      if (!isEnabled()) {
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        clearWarp();
+        window.__blackHoleState.active = false;
+        animId = 0;
+        return;
+      }
+
+      if (needsTargetRefresh || frame % 120 === 0) collectTargets();
+
+      const state = positionAt(time);
+      checkConsumption(state);
+      const renderState = viewportState(state);
+
+      gl.uniform2f(uResolution, canvas.width, canvas.height);
+      gl.uniform1f(uTime, time / 1000);
+      gl.uniform2f(uCenter, renderState.x / width, 1.0 - renderState.y / height);
+      gl.uniform1f(uRadius, state.radius / height);
+      gl.uniform1f(uIntensity, state.intensity);
+      gl.uniform1f(uGrowth, state.growth);
+      gl.uniform4f(uTextureRect, textureRect.x, textureRect.y, textureRect.w, textureRect.h);
+      gl.uniform4f(uViewportRect, renderState.rectX, renderState.rectY, renderState.rectW, renderState.rectH);
+      gl.uniform1f(uTextureReady, textureReady ? 1.0 : 0.0);
+
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      if (renderState.visible) {
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+
+      warpContent(state);
+      frame += 1;
+      animId = requestAnimationFrame(loop);
+    }
+
+    function start() {
+      if (animId || !isEnabled()) return;
+      resize();
+      collectTargets();
+      scheduleTextureCapture({ x: bhX || width * 0.5, y: bhY || height * 0.5, radius: bhRadius }, true);
+      animId = requestAnimationFrame(loop);
+    }
+
+    function stop() {
+      if (animId) cancelAnimationFrame(animId);
+      animId = 0;
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      clearWarp();
+      window.__blackHoleState.active = false;
+    }
+
+    window.addEventListener("scroll", () => {
+      needsTargetRefresh = true;
+    }, { passive: true });
+
+    const attrObserver = new MutationObserver(() => {
+      if (isEnabled()) start();
+      else stop();
+    });
+    attrObserver.observe(root, { attributes: true, attributeFilter: ["data-home-black-hole"] });
+
+    const resizeObserver = new ResizeObserver(() => {
+      resize();
+      needsTargetRefresh = true;
+      scheduleTextureCapture({ x: bhX || width * 0.5, y: bhY || height * 0.5, radius: bhRadius }, true);
+    });
+    resizeObserver.observe(container);
+
+    window.addEventListener("resize", () => {
+      resize();
+      needsTargetRefresh = true;
+      scheduleTextureCapture({ x: bhX || width * 0.5, y: bhY || height * 0.5, radius: bhRadius }, true);
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stop();
+      else start();
+    });
+
+    start();
+  })();
+</script>
