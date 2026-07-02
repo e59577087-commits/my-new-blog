@@ -1258,17 +1258,18 @@ button {
     max-width: calc(100vw - 8.5rem);
   }
 
-  .home-hero-banner {
-    min-height: calc(46vh + var(--site-header-height));
-    margin-bottom: 0;
-  }
+ .home-hero-banner {
+    min-height: calc(40vh + var(--site-header-height));
+   margin-bottom: 0;
+ }
 
-  /* Keep the wallpaper covering the banner on phones; width-fitting can expose
-     the page background above wide images. */
-  :root[data-wallpaper-mode="banner"] .home-hero-banner {
-    background-size: cover;
-    background-position: center;
-  }
+  /* A wide landscape wallpaper crops heavily inside a portrait banner with
+     cover; bias the focal point up so the subject stays in frame, and keep
+     cover so the band stays filled (no exposed page background). */
+ :root[data-wallpaper-mode="banner"] .home-hero-banner {
+   background-size: cover;
+    background-position: center 32%;
+ }
 
   .mobile-header-auth {
     display: none !important;
