@@ -873,7 +873,16 @@ float dil = mix(1.0, DILATION_MIN, I);
     function start() {
       if (animId || !isEnabled()) return;
       resize();
-      scheduleTextureCapture({ x: bhX || width * 0.5, y: bhY || height * 0.5, radius: bhRadius }, true);
+     scheduleTextureCapture({ x: bhX || width * 0.5, y: bhY || height * 0.5, radius: bhRadius }, true);
+      // One-shot recapture a few seconds after load to catch banner content
+      // that wasn't ready for the first capture: the title typing animation
+      // (wraps up ~3s in) and the wallpaper image finishing decode. Replaces
+      // the old per-scroll recapture, which blocked the main thread and janked.
+      window.setTimeout(() => {
+        if (animId && isEnabled()) {
+          scheduleTextureCapture({ x: bhX, y: bhY, radius: bhRadius }, true);
+        }
+      }, 4500);
       animId = requestAnimationFrame(loop);
     }
 
@@ -885,18 +894,23 @@ float dil = mix(1.0, DILATION_MIN, I);
       window.__blackHoleState.active = false;
     }
 
-     // Debounced texture refresh on scroll: the page snapshot goes stale the
-     // moment content scrolls, so once scrolling settles (300ms quiet) force a
-     // recapture and the lensing shows fresh content instead of the old frame.
-     let scrollRefreshTimer = 0;
-     window.addEventListener("scroll", () => {
-       needsTargetRefresh = true;
-       if (scrollRefreshTimer) clearTimeout(scrollRefreshTimer);
-       scrollRefreshTimer = window.setTimeout(() => {
-         scrollRefreshTimer = 0;
-         scheduleTextureCapture({ x: bhX, y: bhY, radius: bhRadius }, true);
-       }, 300);
-     }, { passive: true });
+     // Recapture when appearance changes alter the banner's pixels (wallpaper
+     // mode, theme, title visibility, hue): the proper replacement for the old
+     // per-scroll recapture, which blocked the main thread and janked scrolling.
+     // The shader tracks scroll position in real time via uViewportRect, and the
+     // banner's page-space content is static during scroll, so no scroll capture
+     // is needed for correctness.
+     let appearanceRefreshTimer = 0;
+     const appearanceObserver = new MutationObserver(() => {
+       if (appearanceRefreshTimer) clearTimeout(appearanceRefreshTimer);
+       appearanceRefreshTimer = window.setTimeout(() => {
+         appearanceRefreshTimer = 0;
+         if (animId && isEnabled()) {
+           scheduleTextureCapture({ x: bhX, y: bhY, radius: bhRadius }, true);
+         }
+       }, 400);
+     });
+     appearanceObserver.observe(root, { attributes: true, attributeFilter: ["data-wallpaper-mode", "data-theme", "data-banner-title", "style"] });
 
      // Click the hole's body (only while it's maxed and frozen) to trigger the
      // shrink-back -> regrow cycle. Canvas is pointer-events:none, so listen on
