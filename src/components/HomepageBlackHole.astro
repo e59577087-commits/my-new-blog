@@ -555,9 +555,10 @@ float dil = mix(1.0, DILATION_MIN, I);
       pageHeight = Math.max(1, Math.round(scope.scrollHeight || scopeRect.height));
       width = Math.max(1, Math.round(window.innerWidth));
       height = Math.max(1, Math.round(window.innerHeight));
-      // Bumped from 0.7 to 0.8 so the disk/photon-ring/lensing stay crisp on
-      // phones; only the mobile branch changes, desktop stays 0.85.
-      renderScale = width < 720 ? 0.8 : 0.85;
+      // Kept at 0.7 on phones: bumping to 0.8 regressed the black hole on
+      // some mobile GPUs (likely a WebGL context loss from the extra fragment
+      // budget; this code has no webglcontextlost recovery). Desktop stays 0.85.
+      renderScale = width < 720 ? 0.7 : 0.85;
       canvas.width = Math.max(1, Math.round(width * renderScale));
       canvas.height = Math.max(1, Math.round(height * renderScale));
       gl.viewport(0, 0, canvas.width, canvas.height);
