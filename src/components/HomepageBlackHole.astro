@@ -113,6 +113,7 @@ uniform vec2 uCenter;
 uniform float uRadius;
 uniform float uIntensity;
 uniform float uGrowth;
+uniform float uPresetT;
 uniform sampler2D uPageTexture;
 uniform vec4 uTextureRect;
 uniform vec4 uViewportRect;
@@ -121,22 +122,46 @@ uniform vec2 uBannerBand;   // banner top/bottom edge in y-up screen uv (0..1)
 
 out vec4 fragColor;
 
-const float STAR_GAIN = 0.0;
-const float DISK_INNER = 1.8;
-const float DISK_OUTER = 8.0;
-const float DISK_INCL = 1.5;
-const float DISK_ROLL = 0.35;
-const float DISK_GAIN = 2.2;
-const float DISK_OPACITY = 0.90;
-const float DISK_TEMP = 5500.0;
-const float DOPPLER_MIX = 0.60;
-const float DISK_BEAM = 2.5;
-const float DISK_SPEED = 5.0;
-const float DISK_WIND = 7.0;
-const float DISK_CONTRAST = 1.6;
-const float EXPOSURE = 1.4;
-const float DILATION_MIN = 0.08;
-const float LENS_DEPTH = 13.0;
+    const float DILATION_MIN = 0.08;
+    const float LENS_DEPTH = 13.0;
+
+    // Disk look bundle: 8 presets tour the same forms the reference's demo
+    // mode does (Inferno bookends the loop). demoLook() crossfades between
+    // adjacent presets by growth, so the disk changes appearance as the hole
+    // grows -- 0..1 maps to the full tour, matching the reference seam for seam.
+    struct DiskLook {
+      float temp, incl, roll, inner, outer, opac, dopp, beam,
+            gain, contr, wind, speed, expo, star;
+    };
+    #define DEMO_N 8
+    #define DEMO_XFADE 0.18
+    DiskLook lookAt(int i) {
+      if (i == 0) return DiskLook( 5500.0, 1.50,  0.35, 1.8,  8.0, 0.90, 0.60, 2.5, 2.2, 1.6, 7.0, 5.0, 1.40, 0.0);
+      if (i == 1) return DiskLook( 4500.0, 1.52,  0.10, 2.2,  7.0, 0.85, 0.35, 2.0, 1.4, 0.5, 7.0, 5.0, 1.20, 0.0);
+      if (i == 2) return DiskLook( 3800.0, 0.55, -0.30, 2.2,  6.0, 0.45, 0.90, 3.5, 1.6, 0.4, 3.0, 2.5, 1.10, 0.0);
+      if (i == 3) return DiskLook( 6500.0, 0.30,  0.00, 3.0, 10.0, 0.50, 0.80, 2.5, 1.0, 1.1, 7.0, 5.0, 1.00, 0.0);
+      if (i == 4) return DiskLook(15000.0, 1.30,  0.35, 3.0, 14.0, 0.35, 1.00, 4.0, 1.2, 1.3, 8.0, 5.0, 0.80, 0.0);
+      if (i == 5) return DiskLook(18000.0, 1.05,  0.55, 3.0, 16.0, 0.30, 1.00, 5.0, 1.0, 1.5, 9.0, 6.0, 0.75, 0.0);
+      if (i == 6) return DiskLook( 5500.0, 1.50,  0.35, 1.8,  8.0, 0.00, 1.00, 2.5, 0.0, 1.6, 7.0, 5.0, 1.00, 0.6);
+      return            DiskLook( 5500.0, 1.50,  0.35, 1.8,  8.0, 0.90, 0.60, 2.5, 2.2, 1.6, 7.0, 5.0, 1.40, 0.0);
+    }
+    DiskLook mixLook(DiskLook a, DiskLook b, float f) {
+      return DiskLook(
+        mix(a.temp, b.temp, f), mix(a.incl, b.incl, f),
+        mix(a.roll, b.roll, f), mix(a.inner, b.inner, f),
+        mix(a.outer, b.outer, f), mix(a.opac, b.opac, f),
+        mix(a.dopp, b.dopp, f), mix(a.beam, b.beam, f),
+        mix(a.gain, b.gain, f), mix(a.contr, b.contr, f),
+        mix(a.wind, b.wind, f), mix(a.speed, b.speed, f),
+        mix(a.expo, b.expo, f), mix(a.star, b.star, f));
+    }
+    DiskLook demoLook(float growth) {
+      float u = clamp(growth, 0.0, 1.0) * float(DEMO_N);
+      int i = int(min(u, float(DEMO_N) - 0.001));
+      float f = smoothstep(1.0 - DEMO_XFADE, 1.0, fract(u));
+      int j = i + 1; if (j >= DEMO_N) j = 0;
+      return mixLook(lookAt(i), lookAt(j), f);
+    }
 
 #define B_CRIT 2.5980762
 #define N_STEPS 48
@@ -213,11 +238,12 @@ void main() {
   float G = clamp(uGrowth, 0.0, 1.0);
   vec2 center = uCenter;
   float rh = uRadius;
-  float dil = mix(1.0, DILATION_MIN, I);
+float dil = mix(1.0, DILATION_MIN, I);
+  DiskLook L = demoLook(uPresetT);
   vec2 p = (uv - center) * vec2(aspect, 1.0);
   float plen = length(p);
   float W = B_CRIT / max(rh, 1e-4);
-  vec2 pr = rot(vec2(p.x, p.y), DISK_ROLL) * W;
+  vec2 pr = rot(vec2(p.x, p.y), L.roll) * W;
   float b = length(pr);
   float window = exp(-pow(plen / (3.0 * rh), 2.0));
   // Banner clip mask: fade to 0 outside the banner's screen band so nothing —
@@ -225,21 +251,12 @@ void main() {
   float bandF = 1.5 * rh;
   float bandMask = smoothstep(uBannerBand.x - bandF, uBannerBand.x + bandF, uv.y)
                  * (1.0 - smoothstep(uBannerBand.y - bandF, uBannerBand.y + bandF, uv.y));
-  float diskOuter = mix(3.25, DISK_OUTER, smoothstep(0.04, 1.0, G));
-  float diskGain = DISK_GAIN * mix(0.34, 1.0, smoothstep(0.0, 1.0, G));
-  float diskOpacity = mix(0.62, DISK_OPACITY, smoothstep(0.0, 1.0, G));
-  float diskContrast = mix(0.42, DISK_CONTRAST, smoothstep(0.0, 1.0, G));
-  float diskWind = mix(3.0, DISK_WIND, smoothstep(0.08, 1.0, G));
-  float diskSpeed = mix(2.4, DISK_SPEED, smoothstep(0.0, 1.0, G));
-  float diskBeam = mix(1.45, DISK_BEAM, smoothstep(0.1, 1.0, G));
-  float dopplerMix = mix(0.22, DOPPLER_MIX, smoothstep(0.12, 1.0, G));
-  float exposure = mix(0.9, EXPOSURE, smoothstep(0.0, 1.0, G));
-  float rin = max(DISK_INNER, 1.6);
-  float rout = max(diskOuter, rin + 0.5);
+  float rin = max(L.inner, 1.6);
+  float rout = max(L.outer, rin + 0.5);
   float bmax = rout + 3.0;
   float Z0 = max(14.0, rout + 5.0);
 
-  // ================= far field: analytic weak deflection ==================
+ // ================= far field: analytic weak deflection ==================
   // Rays with impact parameter past bmax can't touch the disk. Bend the page
   // sample back toward the hole with the finite-camera deflection fit from the
   // reference, projected onto the page "sky" plane. This is a TRANSPARENT
@@ -259,10 +276,14 @@ void main() {
       float k = 1.0 + (float(i) - 1.0) * ab;
       vec2 sp = p - dir * defl * k;
       vec2 suv = center + sp / vec2(aspect, 1.0);
-      term[i] = pageAt(suv)[i];
-    }
-    // displacement in pixels drives the blend: <~1px is indistinguishable from
-    // the real DOM (keep transparent), ramp to opaque by ~10px of bend.
+     term[i] = pageAt(suv)[i];
+   }
+    // lensed starfield through the weak-field bend (color only; alpha stays
+    // displacement-driven so stars never paint a new opaque area)
+    vec3 sfwd = normalize(vec3(-(pr / b) * (2.0 / b), -1.0));
+    term += stars(sfwd) * L.star * window;
+   // displacement in pixels drives the blend: <~1px is indistinguishable from
+   // the real DOM (keep transparent), ramp to opaque by ~10px of bend.
     float dispPx = defl * res.y;
     float a = uTextureReady * smoothstep(1.0, 10.0, dispPx) * bandMask;
     fragColor = vec4(term, a);
@@ -270,13 +291,13 @@ void main() {
   }
   vec3 x = vec3(pr, Z0);
   vec3 v = vec3(0.0, 0.0, -1.0);
-  float h2 = dot(pr, pr);
-  float ci = cos(DISK_INCL), si = sin(DISK_INCL);
-  vec3 n = vec3(0.0, si, ci);
-  vec3 e2 = vec3(0.0, ci, -si);
-  float sdir = DISK_SPEED < 0.0 ? -1.0 : 1.0;
-  float spd = abs(diskSpeed);
-  vec3 emitc = vec3(0.0);
+ float h2 = dot(pr, pr);
+  float ci = cos(L.incl), si = sin(L.incl);
+ vec3 n = vec3(0.0, si, ci);
+ vec3 e2 = vec3(0.0, ci, -si);
+  float sdir = L.speed < 0.0 ? -1.0 : 1.0;
+  float spd = abs(L.speed);
+ vec3 emitc = vec3(0.0);
   float trans = 1.0;
   bool captured = false;
   bool trulyCapture = false;  // true only when the ray genuinely crossed r<1
@@ -306,22 +327,22 @@ void main() {
         float phi = atan(dot(xc, e2), xc.x);
         float turns = phi / 6.2831853;
         float kep = pow(rin / rc, 1.5);
-        float gloc = sqrt(max(1.0 - 1.5 / rc, 0.02));
-        float swirl = rc * diskWind * 0.12 - t * kep * spd * gloc * dil * sdir;
-        float streaks = vnoiseWrapY(vec2(rc * 2.8, turns * 19.0 + swirl * 3.0), 19.0) * 0.65 +
-                        vnoiseWrapY(vec2(rc * 1.0, turns * 9.0 + swirl * 1.5 + 7.0), 9.0) * 0.35;
-        streaks = 0.35 + diskContrast * streaks * streaks;
-        vec3 gasdir = normalize(cross(n, xc)) * sdir;
-        float beta = clamp(inversesqrt(max(2.0 * (rc - 1.0), 0.2)), 0.0, 0.99);
-        float g = gloc / max(1.0 + beta * dot(gasdir, normalize(v)), 0.05);
-        g = mix(1.0, g, dopplerMix);
-        float xpr = max(1.0 - sqrt(rin / rc), 0.0);
-        float tprof = pow(rin / rc, 0.75) * pow(xpr, 0.25) / 0.488;
-        vec3 cbb = blackbody(DISK_TEMP * tprof * g);
-        float boost = pow(g, diskBeam);
-        float density = band * streaks;
-        emitc += trans * cbb * (diskGain * 2.2 * density * tprof * tprof * boost);
-        trans *= 1.0 - clamp(diskOpacity * density, 0.0, 1.0);
+       float gloc = sqrt(max(1.0 - 1.5 / rc, 0.02));
+        float swirl = rc * L.wind * 0.12 - t * kep * spd * gloc * dil * sdir;
+       float streaks = vnoiseWrapY(vec2(rc * 2.8, turns * 19.0 + swirl * 3.0), 19.0) * 0.65 +
+                       vnoiseWrapY(vec2(rc * 1.0, turns * 9.0 + swirl * 1.5 + 7.0), 9.0) * 0.35;
+        streaks = 0.35 + L.contr * streaks * streaks;
+       vec3 gasdir = normalize(cross(n, xc)) * sdir;
+       float beta = clamp(inversesqrt(max(2.0 * (rc - 1.0), 0.2)), 0.0, 0.99);
+       float g = gloc / max(1.0 + beta * dot(gasdir, normalize(v)), 0.05);
+        g = mix(1.0, g, L.dopp);
+       float xpr = max(1.0 - sqrt(rin / rc), 0.0);
+       float tprof = pow(rin / rc, 0.75) * pow(xpr, 0.25) / 0.488;
+        vec3 cbb = blackbody(L.temp * tprof * g);
+        float boost = pow(g, L.beam);
+       float density = band * streaks;
+        emitc += trans * cbb * (L.gain * 2.2 * density * tprof * tprof * boost);
+        trans *= 1.0 - clamp(L.opac * density, 0.0, 1.0);
       }
     }
     sPrev = s;
@@ -337,19 +358,20 @@ void main() {
   // real DOM show), rising to opaque where the page is strongly displaced.
   vec3 bg = vec3(0.0);
   float pageA = 0.0;
-  if (!captured) {
-    vec3 d = normalize(v);
-    if (d.z < -0.05) {
-      float tpl = (-LENS_DEPTH - x.z) / d.z;
-      vec3 hp = x + d * tpl;
-      vec2 q = rot(hp.xy, -DISK_ROLL) / W;
-      vec2 sp = vec2(q.x, q.y);
-      vec2 disp = (sp - p) * window;
-      vec2 suv = center + (p + disp) / vec2(aspect, 1.0);
-      float toward = smoothstep(0.05, 0.35, -d.z);
-      bg = pageAt(suv) * toward;
-      float bendPx = length(disp) * res.y;
-      pageA = uTextureReady * toward * smoothstep(1.5, 12.0, bendPx);
+ if (!captured) {
+   vec3 d = normalize(v);
+    bg += stars(d) * L.star * window;
+   if (d.z < -0.05) {
+     float tpl = (-LENS_DEPTH - x.z) / d.z;
+     vec3 hp = x + d * tpl;
+      vec2 q = rot(hp.xy, -L.roll) / W;
+     vec2 sp = vec2(q.x, q.y);
+     vec2 disp = (sp - p) * window;
+     vec2 suv = center + (p + disp) / vec2(aspect, 1.0);
+     float toward = smoothstep(0.05, 0.35, -d.z);
+      bg += pageAt(suv) * toward;
+     float bendPx = length(disp) * res.y;
+     pageA = uTextureReady * toward * smoothstep(1.5, 12.0, bendPx);
     }
   }
 
@@ -358,9 +380,9 @@ void main() {
   vec3 photonColor = mix(vec3(0.86, 0.78, 0.66), vec3(1.0, 0.80, 0.42), G);
   vec3 photonLight = photonColor * (photon * mix(0.45, 1.25, G) + innerPhoton * mix(0.10, 0.28, G)) * window;
 
-  // disk + photon light is HDR; tonemap on top of the lensed page background.
-  vec3 diskGlow = vec3(1.0) - exp(-(emitc + photonLight) * exposure);
-  float glowLum = max(diskGlow.r, max(diskGlow.g, diskGlow.b));
+ // disk + photon light is HDR; tonemap on top of the lensed page background.
+  vec3 diskGlow = vec3(1.0) - exp(-(emitc + photonLight) * L.expo);
+ float glowLum = max(diskGlow.r, max(diskGlow.g, diskGlow.b));
   vec3 col = bg * trans + diskGlow;
 
   if (trulyCapture) {
@@ -376,9 +398,9 @@ void main() {
     float ringA = 0.0;
     if (d2.z < -0.05) {
       float tpl2 = (-LENS_DEPTH - x.z) / d2.z;
-      vec3 hp2 = x + d2 * tpl2;
-      vec2 q2 = rot(hp2.xy, -DISK_ROLL) / W;
-      vec2 sp2 = vec2(q2.x, q2.y);
+     vec3 hp2 = x + d2 * tpl2;
+      vec2 q2 = rot(hp2.xy, -L.roll) / W;
+     vec2 sp2 = vec2(q2.x, q2.y);
       vec2 disp2 = (sp2 - p) * window;
       vec2 suv2 = center + (p + disp2) / vec2(aspect, 1.0);
       float toward2 = smoothstep(0.05, 0.35, -d2.z);
@@ -426,8 +448,9 @@ void main() {
     const uCenter = gl.getUniformLocation(program, "uCenter");
     const uRadius = gl.getUniformLocation(program, "uRadius");
     const uIntensity = gl.getUniformLocation(program, "uIntensity");
-    const uGrowth = gl.getUniformLocation(program, "uGrowth");
-    const uPageTexture = gl.getUniformLocation(program, "uPageTexture");
+   const uGrowth = gl.getUniformLocation(program, "uGrowth");
+    const uPresetT = gl.getUniformLocation(program, "uPresetT");
+   const uPageTexture = gl.getUniformLocation(program, "uPageTexture");
     const uTextureRect = gl.getUniformLocation(program, "uTextureRect");
     const uViewportRect = gl.getUniformLocation(program, "uViewportRect");
     const uTextureReady = gl.getUniformLocation(program, "uTextureReady");
@@ -740,22 +763,27 @@ void main() {
       // growth tracks the radius, so the disk brightens/widens as the hole grows.
       // Motion runs at full speed while growing and slows to a creep at max.
       let moving = false;
-      let speedFactor = 1.0;
-      if (bhState === 'growing') {
-        const p = smoothstep(0.0, 1.0, clamp(stateT / CONFIG.growSec, 0.0, 1.0));
-        bhRadius = mixNumber(bhRadiusMin, bhRadiusMax, p);
-        if (stateT >= CONFIG.growSec) { bhState = 'maxed'; stateT = 0; }
-        moving = true;
-      } else if (bhState === 'shrinking') {
-        const p = smoothstep(0.0, 1.0, clamp(stateT / CONFIG.shrinkSec, 0.0, 1.0));
-        bhRadius = mixNumber(bhRadiusMax, bhRadiusMin, p);
-        if (stateT >= CONFIG.shrinkSec) { bhState = 'growing'; stateT = 0; }
-        moving = false;
-      } else {
-        // maxed: hold at max radius, drift very slowly until the hole is clicked.
-        bhRadius = bhRadiusMax;
-        moving = true;
-      }
+     let speedFactor = 1.0;
+     let presetT = 1.0;
+     if (bhState === 'growing') {
+       const p = smoothstep(0.0, 1.0, clamp(stateT / CONFIG.growSec, 0.0, 1.0));
+       bhRadius = mixNumber(bhRadiusMin, bhRadiusMax, p);
+       presetT = clamp(stateT / CONFIG.growSec, 0.0, 1.0);
+       if (stateT >= CONFIG.growSec) { bhState = 'maxed'; stateT = 0; }
+       moving = true;
+     } else if (bhState === 'shrinking') {
+       const s = clamp(stateT / CONFIG.shrinkSec, 0.0, 1.0);
+       const p = 1.0 - Math.pow(1.0 - s, 2.0);
+       bhRadius = mixNumber(bhRadiusMax, bhRadiusMin, p);
+       if (stateT >= CONFIG.shrinkSec) { bhState = 'growing'; stateT = 0; }
+       moving = false;
+       presetT = 1.0;
+     } else {
+       // maxed: hold at max radius, drift very slowly until the hole is clicked.
+       bhRadius = bhRadiusMax;
+       moving = true;
+       presetT = 1.0;
+     }
       const growth = clamp(
         (bhRadius - bhRadiusMin) / Math.max(1, bhRadiusMax - bhRadiusMin), 0.0, 1.0);
       // Position speed eases with size too (matches the disk's time dilation):
@@ -786,10 +814,11 @@ void main() {
      return {
        x: bhX,
        y: bhY,
-       radius: bhRadius,
-       growth,
-       intensity: CONFIG.intensity,
-       dt,
+      radius: bhRadius,
+      growth,
+      presetT,
+      intensity: CONFIG.intensity,
+      dt,
      };
     }
 
@@ -821,8 +850,9 @@ void main() {
      gl.uniform2f(uCenter, renderState.x / width, 1.0 - renderState.y / height);
       gl.uniform1f(uRadius, state.radius / height);
       gl.uniform1f(uIntensity, state.intensity);
-      gl.uniform1f(uGrowth, state.growth);
-      gl.uniform4f(uTextureRect, textureRect.x, textureRect.y, textureRect.w, textureRect.h);
+     gl.uniform1f(uGrowth, state.growth);
+     gl.uniform1f(uPresetT, state.presetT);
+     gl.uniform4f(uTextureRect, textureRect.x, textureRect.y, textureRect.w, textureRect.h);
       gl.uniform4f(uViewportRect, renderState.rectX, renderState.rectY, renderState.rectW, renderState.rectH);
       gl.uniform1f(uTextureReady, textureReady ? 1.0 : 0.0);
       gl.uniform2f(uBannerBand, renderState.bandLow, renderState.bandHigh);
