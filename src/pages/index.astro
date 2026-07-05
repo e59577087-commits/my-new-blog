@@ -24,7 +24,12 @@ const latestList = latestItems.slice(1, 5);
 const previewTools = articles.filter((article) => article.data.section === "essay").slice(0, 3);
 const previewShares = articles.filter((article) => article.data.section === "share").slice(0, 3);
 const previewStudy = articles.filter((article) => article.data.section === "study").slice(0, 3);
-const bannerTitle = "从负数到零，真的绕好大一圈呀";
+// 横幅标题池：每次加载随机播放一句。SSR 默认渲染第一句，保证无 JS / SEO 可见。
+const bannerTitles = [
+  "从负数到零，真的绕好大一圈呀",
+  "“我想说其实你很好，你自己却不知道”",
+];
+const bannerTitle = bannerTitles[0];
 const bannerTitleChars = Array.from(bannerTitle);
 ---
 
@@ -40,6 +45,36 @@ const bannerTitleChars = Array.from(bannerTitle);
         ))}
         <span class="home-banner-cursor" aria-hidden="true"></span>
       </h1>
+      <script type="application/json" id="banner-titles-data" is:inline set:html={JSON.stringify(bannerTitles)}></script>
+      <script is:inline>
+        (function () {
+          var data = document.getElementById("banner-titles-data");
+          var h1 = document.querySelector(".home-banner-title");
+          if (!data || !h1) return;
+          var pool = JSON.parse(data.textContent || "[]");
+          if (!pool || pool.length < 2) return;
+          var current = h1.getAttribute("aria-label") || "";
+          var pick = pool[Math.floor(Math.random() * pool.length)];
+          if (pick === current) return;
+          var chars = Array.from(pick);
+          var cursor = h1.querySelector(".home-banner-cursor");
+          h1.setAttribute("aria-label", pick);
+          var oldChars = h1.querySelectorAll(".home-banner-title-char");
+          for (var i = 0; i < oldChars.length; i++) oldChars[i].remove();
+          var firstDelay = 280;
+          var step = 170;
+          var frag = document.createDocumentFragment();
+          for (var j = 0; j < chars.length; j++) {
+            var s = document.createElement("span");
+            s.className = "home-banner-title-char";
+            s.setAttribute("aria-hidden", "true");
+            s.style.setProperty("--char-delay", firstDelay + j * step + "ms");
+            s.textContent = chars[j];
+            frag.appendChild(s);
+          }
+          h1.insertBefore(frag, cursor || null);
+        })();
+      </script>
     </div>
   </section>
 
