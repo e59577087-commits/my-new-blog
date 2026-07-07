@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480" role="img" aria-label="默认封面">
+  <rect width="960" height="480" fill="#0f1115"/>
+  <path d="M0 80h960M0 160h960M0 240h960M0 320h960M0 400h960M160 0v480M320 0v480M480 0v480M640 0v480M800 0v480" stroke="#16181d" stroke-width="1"/>
+  <circle cx="480" cy="220" r="46" fill="none" stroke="#7dd3fc" stroke-width="2.5"/>
+  <path d="M458 220a22 22 0 0 1 44 0" fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="480" y="312" fill="#cbd5e1" font-family="Inter, Microsoft YaHei, sans-serif" font-size="30" font-weight="600" text-anchor="middle" letter-spacing="1">happy, for you</text>
+  <text x="480" y="346" fill="#64748b" font-family="Inter, Microsoft YaHei, sans-serif" font-size="16" text-anchor="middle">未设置封面</text>
+</svg>

@@ -5,14 +5,14 @@ import MiniCalendar from "../components/MiniCalendar.astro";
 import BannerParticles from "../components/BannerParticles.astro";
 import HomepageBlackHole from "../components/HomepageBlackHole.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { formatArticleDate, getEntryUrl, getPublishedArticles, getSectionLabel } from "../utils/articles";
+import { formatArticleDate, getEntryUrl, getPublishedArticles, getSectionLabel, coverOrDefault } from "../utils/articles";
 
 const articles = await getPublishedArticles();
 const latestItems = articles
   .map((article) => ({
     title: article.data.title,
     href: getEntryUrl(article),
-    image: article.data.cover,
+    image: coverOrDefault(article.data.cover),
     date: article.data.date,
     tags: article.data.tags,
     category: getSectionLabel(article),

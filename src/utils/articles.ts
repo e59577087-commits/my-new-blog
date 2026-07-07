@@ -3,6 +3,10 @@ import { getCollection, type CollectionEntry } from "astro:content";
 export type Article = CollectionEntry<"articles">;
 export type Section = "article" | "essay" | "share";
 
+// cover 缺省时的默认封面,见 public/covers/default.svg
+export const DEFAULT_COVER = "/covers/default.svg";
+export const coverOrDefault = (cover?: string): string => cover ?? DEFAULT_COVER;
+
 const articleModules = import.meta.glob("../content/articles/**/*.md");
 
 export const getArticleSlug = (article: Article) => article.id.replace(/\.md$/, "");

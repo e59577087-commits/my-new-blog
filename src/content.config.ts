@@ -8,7 +8,7 @@ const articles = defineCollection({
     description: z.string().optional(),
     date: z.date(),
   tags: z.array(z.string()).default([]),
-  cover: z.string(),
+    cover: z.string().optional(),
     section: z.enum(["article", "essay", "share", "study"]).default("article"),
   category: z.string().optional(),
   pinned: z.boolean().default(false),
