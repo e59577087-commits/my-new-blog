@@ -109,9 +109,13 @@ export const remarkObsidian: Plugin<[], Root> = () => (tree) => {
         out.push(img);
       } else {
         const [target, alias] = splitOnPipe(wiki);
+        // 支持 Obsidian 锚点: [[笔记#标题]] 或 [[笔记#^块ID]]
+        const hashIndex = target.indexOf("#");
+        const base = hashIndex === -1 ? target : target.slice(0, hashIndex);
+        const hash = hashIndex === -1 ? "" : target.slice(hashIndex);
         const link: Link = {
           type: "link",
-          url: resolveHref(target),
+          url: resolveHref(base) + hash,
           children: [{ type: "text", value: (alias ?? target).trim() }],
         };
         out.push(link);

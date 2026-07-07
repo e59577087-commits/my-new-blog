@@ -1,7 +1,7 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 
 export type Article = CollectionEntry<"articles">;
-export type Section = "article" | "essay" | "share";
+export type Section = "article" | "essay" | "share" | "study";
 
 // cover 缺省时的默认封面,见 public/covers/default.svg
 export const DEFAULT_COVER = "/covers/default.svg";
