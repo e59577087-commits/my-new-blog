@@ -4,6 +4,7 @@ import { unified } from '@astrojs/markdown-remark';
 
 import tailwindcss from '@tailwindcss/vite';
 import { remarkObsidian } from './src/utils/remark-obsidian';
+import { remarkExternalLinks } from './src/utils/remark-external-links';
 
 const siteUrl = (process.env.PUBLIC_SITE_URL ?? 'https://example.com').replace(/\/$/, '');
 
@@ -12,7 +13,7 @@ export default defineConfig({
   site: siteUrl,
   markdown: {
     processor: unified({
-      remarkPlugins: [remarkObsidian],
+      remarkPlugins: [remarkObsidian, remarkExternalLinks],
     }),
     shikiConfig: {
       theme: 'github-dark',
