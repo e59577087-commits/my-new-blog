@@ -26,6 +26,14 @@ const basename = (p: string): string => p.split(/[\\/]/).pop() ?? p;
 // 图片目标可能是 文件夹/图片.png,统一取 basename 指向 public 根
 const toImgSrc = (target: string): string => `/${basename(target).trim()}`;
 
+const parseImageSize = (meta?: string): Record<string, string> | undefined => {
+  const value = meta?.trim();
+  if (!value) return undefined;
+  const m = /^(\d+)(?:x(\d+))?$/.exec(value);
+  if (!m) return undefined;
+  return m[2] ? { width: m[1], height: m[2] } : { width: m[1] };
+};
+
 // 查不到目标笔记时的回退地址
 const fallbackHref = (target: string): string => `/articles/${target.trim()}/`;
 
@@ -79,14 +87,14 @@ const buildLinkMap = (): LinkMap => {
   return { bySlug, byBasename };
 };
 
-const LINK_MAP = buildLinkMap();
-
-const resolveHref = (target: string): string => {
+const resolveHref = (target: string, linkMap: LinkMap): string => {
   const t = target.trim();
-  return LINK_MAP.bySlug.get(t) ?? LINK_MAP.byBasename.get(basename(t)) ?? fallbackHref(target);
+  return linkMap.bySlug.get(t) ?? linkMap.byBasename.get(basename(t)) ?? fallbackHref(target);
 };
 
 export const remarkObsidian: Plugin<[], Root> = () => (tree) => {
+  const linkMap = buildLinkMap();
+
   visit(tree, "text", (node: Text, index, parent: Parent | undefined) => {
     if (!parent || typeof index !== "number") return;
     const value = node.value;
@@ -104,8 +112,10 @@ export const remarkObsidian: Plugin<[], Root> = () => (tree) => {
         out.push({ type: "text", value: value.slice(last, m.index) });
       }
       if (embed !== undefined) {
-        const [path] = splitOnPipe(embed);
+        const [path, size] = splitOnPipe(embed);
         const img: Image = { type: "image", url: toImgSrc(path), alt: basename(path).trim() };
+        const hProperties = parseImageSize(size);
+        if (hProperties) img.data = { hProperties };
         out.push(img);
       } else {
         const [target, alias] = splitOnPipe(wiki);
@@ -115,7 +125,7 @@ export const remarkObsidian: Plugin<[], Root> = () => (tree) => {
         const hash = hashIndex === -1 ? "" : target.slice(hashIndex);
         const link: Link = {
           type: "link",
-          url: resolveHref(base) + hash,
+          url: resolveHref(base, linkMap) + hash,
           children: [{ type: "text", value: (alias ?? target).trim() }],
         };
         out.push(link);

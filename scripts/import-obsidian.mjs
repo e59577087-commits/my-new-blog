@@ -7,6 +7,7 @@
 //   --title <title>    覆盖标题 (默认: 文件名)
 //   --draft            标记为草稿
 //   --pinned           置顶文章
+//   --force            允许覆盖已存在的目标文章
 //   --dry-run          仅预览,不写入文件
 //
 // 示例:
@@ -14,9 +15,9 @@
 //   node scripts/import-obsidian.mjs ~/obsidian/笔记/我的文章.md --vault ~/obsidian --draft
 
 import { readFileSync, writeFileSync, copyFileSync, statSync, existsSync, readdirSync, mkdirSync } from "node:fs";
-import { basename, join, dirname, resolve, relative, extname } from "node:path";
+import { basename, join, dirname, resolve, extname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { randomUUID } from "node:crypto";
+import yaml from "js-yaml";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ARTICLES_DIR = resolve(__dirname, "..", "src", "content", "articles");
@@ -26,7 +27,7 @@ const PUBLIC_DIR = resolve(__dirname, "..", "public");
 
 function parseArgs(args) {
   const positional = [];
-  const options = { section: "article", draft: false, pinned: false, vault: null, title: null, dryRun: false };
+  const options = { section: "article", draft: false, pinned: false, force: false, vault: null, title: null, dryRun: false };
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
@@ -35,6 +36,7 @@ function parseArgs(args) {
       case "--title": options.title = args[++i]; break;
       case "--draft": options.draft = true; break;
       case "--pinned": options.pinned = true; break;
+      case "--force": options.force = true; break;
       case "--dry-run": options.dryRun = true; break;
       default:
         if (args[i].startsWith("--")) {
@@ -83,59 +85,38 @@ function parseFrontmatter(content) {
 
   const raw = m[1];
   const body = content.slice(m[0].length);
-  const data = {};
 
-  // 解析简单 YAML (单行 key: value, 支持字符串、数组、布尔)
-  const lines = raw.split(/\r?\n/);
-  let currentKey = null, currentArray = null;
-
-  for (const line of lines) {
-    const arrayItem = /^\s+-\s+(.+)/.exec(line);
-    if (arrayItem && currentKey) {
-      if (!data[currentKey]) data[currentKey] = [];
-      data[currentKey].push(arrayItem[1].replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1").trim());
-      continue;
+  try {
+    const parsed = yaml.load(raw) ?? {};
+    if (typeof parsed !== "object" || Array.isArray(parsed)) {
+      return { data: {}, body };
     }
-
-    const kv = /^\s*(\w[\w-]*)\s*:\s*(.*)/.exec(line);
-    if (kv) {
-      currentKey = kv[1];
-      let value = kv[2].trim();
-      // 去掉行尾注释
-      value = value.replace(/\s*#.*$/, "");
-      // 去掉引号
-      value = value.replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1");
-      // 布尔值
-      if (value === "true") value = true;
-      else if (value === "false") value = false;
-      else if (/^\d+$/.test(value)) value = parseInt(value, 10);
-
-      data[currentKey] = value;
-      currentArray = null;
-    }
+    return { data: parsed, body };
+  } catch (error) {
+    console.error("Frontmatter YAML 解析失败:");
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
   }
-
-  return { data, body };
 }
 
 function generateFrontmatter({ title, date, tags, cover, section, draft, pinned, description }) {
-  const lines = ["---"];
-  lines.push(`title: "${title}"`);
-  lines.push(`description: "${description ?? ""}"`);
-  lines.push(`date: ${formatDate(date)}`);
-  if (tags && tags.length > 0) {
-    lines.push("tags:");
-    for (const tag of tags) lines.push(`  - ${tag}`);
-  } else {
-    lines.push("tags: []");
-  }
-  if (cover) lines.push(`cover: "${cover}"`);
-  lines.push(`section: ${section}`);
-  lines.push(`draft: ${draft}`);
-  lines.push(`pinned: ${pinned}`);
-  lines.push("---");
-  lines.push("");
-  return lines.join("\n");
+  const data = {
+    title,
+    description: description ?? "",
+    date: formatDate(date),
+    tags: tags ?? [],
+    ...(cover ? { cover } : {}),
+    section,
+    draft,
+    pinned,
+  };
+  const raw = yaml.dump(data, {
+    lineWidth: -1,
+    noRefs: true,
+    sortKeys: false,
+    quotingType: "\"",
+  }).trimEnd();
+  return `---\n${raw}\n---\n\n`;
 }
 
 function formatDate(date) {
@@ -204,8 +185,10 @@ function findImageRefs(body) {
   let m;
   while ((m = re.exec(body)) !== null) {
     const [full, path] = m;
-    const cleanPath = path.split("|")[0].trim(); // 去掉 |尺寸 后缀
-    refs.push({ full, path: cleanPath, index: m.index });
+    const pipeIndex = path.indexOf("|");
+    const cleanPath = (pipeIndex === -1 ? path : path.slice(0, pipeIndex)).trim();
+    const suffix = pipeIndex === -1 ? "" : path.slice(pipeIndex);
+    refs.push({ full, path: cleanPath, suffix, index: m.index });
   }
   return refs;
 }
@@ -271,6 +254,11 @@ function main() {
   // 检查目标文件是否已存在
   const destFile = join(ARTICLES_DIR, `${fileName}.md`);
   if (existsSync(destFile) && !options.dryRun) {
+    if (!options.force) {
+      console.error(`目标文件已存在: ${destFile}`);
+      console.error("如需覆盖,请重新运行并添加 --force。");
+      process.exit(1);
+    }
     console.warn(`⚠ 目标文件已存在,将被覆盖: ${destFile}`);
   }
 
@@ -304,10 +292,7 @@ function main() {
   for (const ref of imageRefs) {
     const newName = imageMap.get(ref.path);
     if (!newName) continue;
-    // 保留 |尺寸 后缀
-    const pipeIndex = ref.path.indexOf("|");
-    const suffix = pipeIndex === -1 ? "" : ref.path.slice(pipeIndex);
-    processedBody = processedBody.replace(ref.full, `![[${newName}${suffix}]]`);
+    processedBody = processedBody.replace(ref.full, `![[${newName}${ref.suffix}]]`);
   }
 
   // 自动设置封面 (第一张图片)

@@ -1,12 +1,12 @@
 const siteUrl = (import.meta.env.PUBLIC_SITE_URL ?? "https://example.com").replace(/\/$/, "");
 
 export const site = {
-  name: "happy,for you",
-  brandName: "happy,for you",
+  name: "haven,for you",
+  brandName: "haven,for you",
   avatar: "/头像1.jpeg",
   description: "记录随笔片段、喜欢的东西和慢慢整理好的生活小事。",
   url: siteUrl,
-  author: "happy,for you",
+  author: "haven,for you",
   startDate: "2026-05-20",
   socialPreview: "/og.svg",
   nav: [

@@ -1,0 +1,154 @@
+---
+import type { MarkdownHeading } from "astro";
+
+interface Props {
+  headings: MarkdownHeading[];
+  variant: "desktop" | "mobile";
+}
+
+const { headings, variant } = Astro.props;
+---
+
+{
+  variant === "mobile" ? (
+    <details class="article-toc article-toc-mobile surface-soft rounded-lg border hairline" data-article-toc="mobile">
+      <summary class="heading-text cursor-pointer px-4 py-3 text-sm font-semibold">本文目录</summary>
+      <nav aria-label="文章目录" class="border-t hairline px-3 py-3">
+        <ol class="space-y-1">
+          {headings.map((heading) => (
+            <li>
+              <a
+                href={`#${heading.slug}`}
+                data-toc-depth={heading.depth}
+                class:list={["toc-link", heading.depth === 3 && "toc-link-nested"]}
+              >
+                {heading.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </details>
+  ) : (
+    <nav aria-label="文章目录" class="article-toc article-toc-desktop" data-article-toc="desktop">
+      <p class="heading-text mb-3 text-sm font-semibold">本文目录</p>
+      <ol class="space-y-1 border-l hairline py-1">
+        {headings.map((heading) => (
+          <li>
+            <a
+              href={`#${heading.slug}`}
+              data-toc-depth={heading.depth}
+              class:list={["toc-link", heading.depth === 3 && "toc-link-nested"]}
+            >
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )
+}
+
+<style>
+  .toc-link {
+    display: block;
+    margin-left: -1px;
+    border-left: 2px solid transparent;
+    padding: 0.4rem 0.75rem;
+    color: var(--color-muted);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+  }
+
+  .toc-link:hover,
+  .toc-link:focus-visible,
+  .toc-link[aria-current="location"] {
+    border-left-color: var(--color-accent-border);
+    color: var(--color-heading);
+    background: var(--color-surface-soft);
+    outline: none;
+  }
+
+  .toc-link-nested {
+    padding-left: 1.5rem;
+    font-size: 0.775rem;
+  }
+
+  .article-toc-mobile summary {
+    list-style-position: inside;
+  }
+
+  :global(.prose-tech :is(h2, h3)) {
+    scroll-margin-top: calc(var(--site-header-height) + 1.5rem);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toc-link {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const initializeArticleToc = () => {
+    const roots = Array.from(document.querySelectorAll<HTMLElement>("[data-article-toc]"));
+    if (roots.length === 0 || !("IntersectionObserver" in window)) return;
+
+    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>("[data-article-toc] a[href^='#']"));
+    const headingIds = links
+      .map((link) => {
+        try {
+          return decodeURIComponent(link.hash.slice(1));
+        } catch {
+          return link.hash.slice(1);
+        }
+      })
+      .filter((id, index, ids) => id && ids.indexOf(id) === index);
+    const headings = headingIds
+      .map((id) => document.getElementById(id))
+      .filter((heading): heading is HTMLElement => heading instanceof HTMLElement);
+    if (headings.length === 0) return;
+
+    const markActive = (activeId: string) => {
+      for (const link of links) {
+        let id = link.hash.slice(1);
+        try {
+          id = decodeURIComponent(id);
+        } catch {}
+
+        if (id === activeId) {
+          link.setAttribute("aria-current", "location");
+        } else {
+          link.removeAttribute("aria-current");
+        }
+      }
+    };
+
+    const updateActiveHeading = () => {
+      let active = headings[0];
+      const readingLine = 112;
+
+      for (const heading of headings) {
+        if (heading.getBoundingClientRect().top <= readingLine) active = heading;
+        else break;
+      }
+
+      const reachedPageEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
+      if (reachedPageEnd) active = headings[headings.length - 1];
+      markActive(active.id);
+    };
+
+    const observer = new IntersectionObserver(updateActiveHeading, {
+      rootMargin: "-96px 0px -70% 0px",
+      threshold: 0,
+    });
+
+    headings.forEach((heading) => observer.observe(heading));
+    window.addEventListener("resize", updateActiveHeading, { passive: true });
+    updateActiveHeading();
+  };
+
+  initializeArticleToc();
+</script>
