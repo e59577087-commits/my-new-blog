@@ -1,0 +1,58 @@
+---
+import { coverOrDefault, getEntryUrl, type Article } from "../utils/articles";
+
+interface EssayGroup {
+  key: string;
+  label: string;
+  entries: Article[];
+}
+
+interface Props {
+  groups: EssayGroup[];
+}
+
+const { groups } = Astro.props;
+---
+
+{
+  groups.length > 0 ? (
+    <div class="essay-timeline" data-essay-timeline>
+      {groups.map((group, groupIndex) => (
+        <section class="essay-month" aria-labelledby={`essay-month-${group.key}`}>
+          <header class="essay-month-header">
+            <span class="essay-month-mark" aria-hidden="true"></span>
+            <h2 id={`essay-month-${group.key}`}>{group.label}</h2>
+          </header>
+          <ol class="essay-month-list">
+            {group.entries.map((entry, entryIndex) => (
+              <li class:list={["essay-entry", groupIndex === 0 && entryIndex === 0 && "essay-entry-latest"]}>
+                <time datetime={entry.data.date.toISOString()}>
+                  {new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit" }).format(entry.data.date)}
+                </time>
+                <a href={getEntryUrl(entry)} class="essay-entry-card" aria-label={`阅读随笔：${entry.data.title}`}>
+                  <img src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="160" height="120" />
+                  <div class="essay-entry-copy">
+                    <p class="essay-entry-kicker">{groupIndex === 0 && entryIndex === 0 ? "最新记录" : "生活切片"}</p>
+                    <h3>{entry.data.title}</h3>
+                    {entry.data.description && <p class="essay-entry-description">{entry.data.description}</p>}
+                    {entry.data.tags.length > 0 && (
+                      <ul class="essay-entry-tags" aria-label="文章标签">
+                        {entry.data.tags.map((tag) => <li>{tag}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </div>
+  ) : (
+    <div class="section-empty section-empty-essay" data-essay-empty>
+      <p class="kicker">JOURNAL</p>
+      <h2>故事还在路上</h2>
+      <p>等下一段生活发生，再回来写给你看。</p>
+    </div>
+  )
+}

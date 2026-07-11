@@ -1,0 +1,99 @@
+---
+import { coverOrDefault, getEntryUrl, type Article } from "../utils/articles";
+
+interface Props {
+  articles: Article[];
+  filters: string[];
+}
+
+const { articles, filters } = Astro.props;
+const normalizeTags = (tags: string[]) => [...new Set(tags.map((tag) => tag.trim()).filter(Boolean))];
+const encodedTags = (tags: string[]) => normalizeTags(tags).map(encodeURIComponent).join("|");
+---
+
+{
+  articles.length > 0 ? (
+    <div class="share-library" data-share-library>
+      <div class="share-filter-shell" aria-label="按标签筛选分享文章">
+        <div class="share-filters" role="group">
+          <button type="button" data-share-filter="all" aria-pressed="true">全部</button>
+          {filters.map((filter) => (
+            <button type="button" data-share-filter={filter} aria-pressed="false">{filter}</button>
+          ))}
+        </div>
+      </div>
+
+      <div class="share-grid">
+        {articles.map((entry) => {
+          const tags = normalizeTags(entry.data.tags);
+          return (
+            <article class="share-card" data-share-card data-share-tags={encodedTags(tags)}>
+              <a href={getEntryUrl(entry)} aria-label={`阅读分享：${entry.data.title}`}>
+                <img src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="480" height="300" />
+                <div class="share-card-body">
+                  <div class="share-card-meta">
+                    <span>{entry.data.category ?? "经验分享"}</span>
+                    <time datetime={entry.data.date.toISOString()}>
+                      {new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "short", day: "numeric" }).format(entry.data.date)}
+                    </time>
+                  </div>
+                  <h2>{entry.data.title}</h2>
+                  {entry.data.description && <p class="share-card-description">{entry.data.description}</p>}
+                  {tags.length > 0 && (
+                    <ul class="share-card-tags" aria-label="文章标签">
+                      {tags.map((tag) => <li>{tag}</li>)}
+                    </ul>
+                  )}
+                </div>
+              </a>
+            </article>
+          );
+        })}
+      </div>
+
+      <div class="section-empty section-empty-share" data-share-empty hidden aria-live="polite">
+        <p class="kicker">NO MATCHES</p>
+        <h2>这个标签下还没有内容</h2>
+        <p>换一个分类看看，或者回到全部分享。</p>
+        <button type="button" data-share-reset>查看全部</button>
+      </div>
+    </div>
+  ) : (
+    <div class="section-empty section-empty-share" data-share-library-empty>
+      <p class="kicker">LIBRARY</p>
+      <h2>资料库正在整理</h2>
+      <p>下一份值得分享的经验，很快就会放进这里。</p>
+    </div>
+  )
+}
+
+<script>
+  const attachShareFilters = () => {
+    document.querySelectorAll<HTMLElement>("[data-share-library]").forEach((library) => {
+      if (library.dataset.filterReady === "true") return;
+      library.dataset.filterReady = "true";
+
+      const buttons = Array.from(library.querySelectorAll<HTMLButtonElement>("[data-share-filter]"));
+      const cards = Array.from(library.querySelectorAll<HTMLElement>("[data-share-card]"));
+      const empty = library.querySelector<HTMLElement>("[data-share-empty]");
+
+      const applyFilter = (filter: string) => {
+        let visibleCount = 0;
+        buttons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.shareFilter === filter)));
+        cards.forEach((card) => {
+          const tags = (card.dataset.shareTags ?? "").split("|").filter(Boolean).map(decodeURIComponent);
+          const visible = filter === "all" || tags.includes(filter);
+          card.hidden = !visible;
+          if (visible) visibleCount += 1;
+        });
+        if (empty) empty.hidden = visibleCount > 0;
+      };
+
+      buttons.forEach((button) => button.addEventListener("click", () => applyFilter(button.dataset.shareFilter ?? "all")));
+      library.querySelector<HTMLButtonElement>("[data-share-reset]")?.addEventListener("click", () => applyFilter("all"));
+    });
+  };
+
+  attachShareFilters();
+  document.addEventListener("astro:after-swap", attachShareFilters);
+</script>

@@ -1,21 +1,24 @@
 ---
-import EntryCard from "../components/EntryCard.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import StudyDossier from "../components/StudyDossier.astro";
 import { getPublishedBySection } from "../utils/articles";
 
 const studies = await getPublishedBySection("study");
+const normalizedTags = (tags: string[]) => tags.map((tag) => tag.trim()).filter(Boolean);
+const completed = studies.filter((entry) => normalizedTags(entry.data.tags).includes("已整理"));
+const ongoing = studies.filter((entry) => !normalizedTags(entry.data.tags).includes("已整理"));
 ---
 
 <BaseLayout title="学习" description="记下新学到的东西。">
-  <section class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-    <header>
+  <section class="study-index mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+    <header class="section-intro section-intro-study">
       <div>
-        <h1 class="heading-text text-3xl font-semibold leading-tight sm:text-4xl">学习</h1>
+        <h1 class="heading-text">学习</h1>
+        <p class="section-subtitle">仙人抚我顶（<span class="study-subtitle-strike">并非挠自己头</span>）</p>
       </div>
+      <p class="section-stat">{studies.length} 则札记 · {ongoing.length} 项研习中</p>
     </header>
 
-    <div class="mt-6" data-appearance-article-list="catalog">
-      {studies.map((entry) => <EntryCard entry={entry} />)}
-    </div>
+    <StudyDossier ongoing={ongoing} completed={completed} />
   </section>
 </BaseLayout>

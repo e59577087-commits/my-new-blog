@@ -1,21 +1,32 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import EntryCard from "../components/EntryCard.astro";
+import ShareLibrary from "../components/ShareLibrary.astro";
 import { getPublishedBySection } from "../utils/articles";
 
 const shares = await getPublishedBySection("share");
+const filters: string[] = [];
+const seenFilters = new Set<string>();
+
+for (const share of shares) {
+  for (const rawTag of share.data.tags) {
+    const tag = rawTag.trim();
+    if (!tag || seenFilters.has(tag)) continue;
+    seenFilters.add(tag);
+    filters.push(tag);
+  }
+}
 ---
 
-<BaseLayout title="分享" description="分享一些想记录的东西。">
-  <section class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-    <header>
+<BaseLayout title="分享" description="教程、资源与值得反复使用的经验。">
+  <section class="share-index mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+    <header class="section-intro section-intro-share">
       <div>
-        <h1 class="heading-text text-3xl font-semibold leading-tight sm:text-4xl">分享</h1>
+        <h1 class="heading-text">分享</h1>
+        <p class="section-subtitle">任君采撷</p>
       </div>
+      <p class="section-stat">{shares.length} 份分享 · {filters.length} 个主题</p>
     </header>
 
-    <div class="mt-6" data-appearance-article-list="catalog">
-      {shares.map((entry) => <EntryCard entry={entry} />)}
-    </div>
+    <ShareLibrary articles={shares} filters={filters} />
   </section>
 </BaseLayout>

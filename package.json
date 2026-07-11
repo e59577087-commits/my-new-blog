@@ -13,7 +13,9 @@
     "import:obsidian": "node scripts/import-obsidian.mjs",
     "test:obsidian": "node --test scripts/import-obsidian.test.mjs",
     "test:toc": "node --test scripts/article-toc.test.mjs",
-    "test:external-links": "node --test scripts/external-links.test.mjs"
+    "test:sections": "node --test scripts/section-index.test.mjs",
+    "test:external-links": "node --test scripts/external-links.test.mjs",
+    "test:study": "node --test scripts/study-index.test.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.2.0",

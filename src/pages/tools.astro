@@ -1,21 +1,40 @@
 ---
-import EntryCard from "../components/EntryCard.astro";
+import EssayTimeline from "../components/EssayTimeline.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getPublishedBySection } from "../utils/articles";
 
 const essays = await getPublishedBySection("essay");
+const groupedEssays = new Map<string, typeof essays>();
+
+for (const essay of essays) {
+  const year = essay.data.date.getFullYear();
+  const month = essay.data.date.getMonth() + 1;
+  const key = `${year}-${String(month).padStart(2, "0")}`;
+  const entries = groupedEssays.get(key) ?? [];
+  entries.push(essay);
+  groupedEssays.set(key, entries);
+}
+
+const essayGroups = Array.from(groupedEssays, ([key, entries]) => {
+  const [year, month] = key.split("-").map(Number);
+  return { key, label: `${year}年${month}月`, entries };
+});
+
+const latestMonth = essays[0]
+  ? new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long" }).format(essays[0].data.date)
+  : null;
 ---
 
 <BaseLayout title="随笔" description="一些最近常出现在生活里的小东西。">
-  <section class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-    <header>
+  <section class="essay-index mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+    <header class="section-intro section-intro-essay">
       <div>
-        <h1 class="heading-text text-3xl font-semibold leading-tight sm:text-4xl">随笔</h1>
+        <h1 class="heading-text">随笔</h1>
+        <p class="section-subtitle">浮生拾遗</p>
       </div>
+      <p class="section-stat">{essays.length} 篇记录{latestMonth && <> · 最近更新于 {latestMonth}</>}</p>
     </header>
 
-    <div class="mt-6" data-appearance-article-list="catalog">
-      {essays.map((entry) => <EntryCard entry={entry} />)}
-    </div>
+    <EssayTimeline groups={essayGroups} />
   </section>
 </BaseLayout>

@@ -1,0 +1,114 @@
+---
+import { coverOrDefault, getEntryUrl, type Article } from "../utils/articles";
+
+interface Props {
+  ongoing: Article[];
+  completed: Article[];
+}
+
+const { ongoing, completed } = Astro.props;
+const STATUS_TAGS = new Set(["学习中", "已整理"]);
+const topicTags = (article: Article) => [
+  ...new Set(article.data.tags.map((tag) => tag.trim()).filter((tag) => tag && !STATUS_TAGS.has(tag))),
+];
+const formatDate = (date: Date) => new Intl.DateTimeFormat("zh-CN", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+}).format(date);
+---
+
+{
+  ongoing.length === 0 && completed.length === 0 ? (
+    <div class="study-dossier" data-study-dossier>
+      <div class="study-empty" data-study-empty>
+        <p class="kicker">STUDIUM</p>
+        <h2>卷帙待启</h2>
+        <p>案头尚静，待第一则求知札记落笔。</p>
+      </div>
+    </div>
+  ) : (
+    <div class="study-dossier" data-study-dossier>
+      <section class="study-group study-group-ongoing" aria-labelledby="study-ongoing-title">
+        <header class="study-group-header">
+          <div>
+            <p class="study-group-kicker">IN PROGRESS</p>
+            <h2 id="study-ongoing-title">正在研习</h2>
+          </div>
+          <span>{ongoing.length} 项</span>
+        </header>
+
+        {ongoing.length > 0 ? (
+          <ol class="study-ongoing-grid">
+            {ongoing.map((entry) => {
+              const tags = topicTags(entry);
+              return (
+                <li class="study-scroll-card" data-study-state="ongoing">
+                  <a href={getEntryUrl(entry)} aria-label={`继续研习：${entry.data.title}`}>
+                    <img src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="320" height="240" />
+                    <div class="study-scroll-copy">
+                      <div class="study-card-meta">
+                        <span class="study-status study-status-ongoing">研习中</span>
+                        <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
+                      </div>
+                      <p class="study-category">{entry.data.category ?? "学习札记"}</p>
+                      <h3>{entry.data.title}</h3>
+                      {entry.data.description && <p class="study-description">{entry.data.description}</p>}
+                      {tags.length > 0 && (
+                        <ul class="study-topic-tags" data-study-topic-tags aria-label="主题标签">
+                          {tags.map((tag) => <li>{tag}</li>)}
+                        </ul>
+                      )}
+                    </div>
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+        ) : (
+          <div class="study-group-empty" data-study-ongoing-empty>案头暂时没有正在研习的课题。</div>
+        )}
+      </section>
+
+      <section class="study-group study-group-completed" aria-labelledby="study-completed-title">
+        <header class="study-group-header">
+          <div>
+            <p class="study-group-kicker">ARCHIVE</p>
+            <h2 id="study-completed-title">已成篇章</h2>
+          </div>
+          <span>{completed.length} 篇</span>
+        </header>
+
+        {completed.length > 0 ? (
+          <ol class="study-archive-list">
+            {completed.map((entry) => {
+              const tags = topicTags(entry);
+              return (
+                <li class="study-archive-entry" data-study-state="completed">
+                  <a href={getEntryUrl(entry)} aria-label={`阅读已整理文章：${entry.data.title}`}>
+                    <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
+                    <div class="study-archive-copy">
+                      <div class="study-card-meta">
+                        <span class="study-status study-status-completed">已整理</span>
+                        <span>{entry.data.category ?? "知识归档"}</span>
+                      </div>
+                      <h3>{entry.data.title}</h3>
+                      {entry.data.description && <p class="study-description">{entry.data.description}</p>}
+                      {tags.length > 0 && (
+                        <ul class="study-topic-tags" data-study-topic-tags aria-label="主题标签">
+                          {tags.map((tag) => <li>{tag}</li>)}
+                        </ul>
+                      )}
+                    </div>
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+        ) : (
+          <div class="study-group-empty" data-study-completed-empty>尚无成篇归档，且待他日整理成章。</div>
+        )}
+      </section>
+    </div>
+  )
+}
