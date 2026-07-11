@@ -14,7 +14,7 @@
 1. 使用 Node 测试运行器执行一次 Astro 生产构建并读取 `dist/about/index.html`。
 2. 添加失败断言，要求构建结果包含：
    - 页面根节点 `data-about-rain-window`；
-   - 左侧内容区和右侧窗景区；
+   - 左侧内容区和右侧无边框雨景区；
    - `雨夜小猫.mp4` 视频路径；
    - `autoplay`、`muted`、`loop` 和 `playsinline`；
    - `ABOUT · LIGHT RAIN`、主标题、自述和站点信号；
@@ -59,12 +59,12 @@
 
 **步骤**
 
-1. 输出语义清晰的窗景容器、视频玻璃区和纯装饰层。
+1. 输出语义清晰的雨景容器、视频区和纯氛围层。
 2. 视频设置 `src="/雨夜小猫.mp4"`、`poster="/雨夜小猫-poster.webp"`、`autoplay muted loop playsinline`，不显示控件，也不提供声音。
-3. 使用 scoped CSS 构建外框、横竖格栅、玻璃反光、暗角、低对比雨痕、窗台和室内剪影；装饰元素全部 `aria-hidden="true"`。
+3. 使用 scoped CSS 构建无边框视频面、玻璃反光、暗角和低对比雨痕；不添加外框、横竖格栅、窗台或植物，装饰元素全部 `aria-hidden="true"`。
 4. 初始状态让窗景轻微模糊且亮度较低；组件挂载后触发约 1.2 秒的清晰过渡，并派发窗景就绪事件供左栏开始入场。
 5. 桌面端监听容器内 `pointermove`，通过 CSS 变量驱动视频与前景进行小幅差速位移；`pointerleave` 时平滑回正。
-6. 视频触发 `error` 时给容器添加降级状态，保留深蓝渐变、窗框和 poster，不影响页面内容。
+6. 视频触发 `error` 时给容器添加降级状态，保留深蓝渐变和 poster，不影响页面内容。
 7. 在 `prefers-reduced-motion: reduce` 下停止雨痕和视差、不自动播放视频，并直接展示 poster 与最终清晰状态。
 8. 初始化函数保证同一组件实例只初始化一次，并在 `astro:after-swap` 后为新页面实例重新挂载。
 
