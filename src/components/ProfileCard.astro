@@ -20,7 +20,7 @@ const socialLinks = [
 ];
 ---
 
-<aside class="profile-card surface flex flex-col items-center overflow-hidden rounded-lg p-5 sm:p-6" aria-label="个人介绍">
+<aside class="profile-card surface flex flex-col items-center overflow-hidden rounded-lg p-4 sm:p-5" aria-label="个人介绍">
   <!-- Decorative top accent line -->
   <div class="profile-accent" aria-hidden="true"></div>
 
@@ -29,15 +29,15 @@ const socialLinks = [
     <div class="profile-avatar-ring" aria-hidden="true"></div>
   </a>
 
-  <p class="mt-3.5 text-[15px] font-semibold heading-text">站主：Easar</p>
+  <p class="mt-3 text-[15px] font-semibold heading-text">站主：E1sar</p>
   <p class="mt-1 text-xs muted leading-relaxed">Welcome to get to know me</p>
   <p class="mt-0.5 text-xs muted leading-relaxed">（看看我的，说不定有惊喜）</p>
 
-  <div class="profile-social-links mt-5 flex w-full flex-col gap-1.5">
+  <div class="profile-social-links mt-4 flex w-full flex-col gap-1">
     {socialLinks.map((link) => (
       <a
         href={link.href}
-        class="profile-social-link group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-[var(--color-field)] cursor-pointer"
+        class="profile-social-link group flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-all duration-200 hover:bg-[var(--color-field)] cursor-pointer"
         target="_blank"
         rel="noopener noreferrer"
         aria-label={link.label}
@@ -97,7 +97,7 @@ const socialLinks = [
   }
 
   .profile-avatar-link {
-    margin-top: 1.25rem;
+    margin-top: 1rem;
   }
 
   /* Subtle glow ring around avatar */
@@ -122,7 +122,7 @@ const socialLinks = [
 
   .profile-social-links {
     border-top: 1px solid var(--color-border);
-    padding-top: 0.85rem;
+    padding-top: 0.7rem;
   }
 
   .profile-link-arrow {

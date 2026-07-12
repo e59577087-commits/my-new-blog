@@ -1,0 +1,145 @@
+<time
+  class="about-glass-clock"
+  data-about-glass-clock
+  aria-label="当前时间"
+  aria-live="off"
+>
+  <span class="glass-clock__time-row">
+    <span class="glass-clock__face" aria-hidden="true">
+      <span data-clock-hours>--</span><span class="glass-clock__colon">:</span><span data-clock-minutes>--</span>
+    </span>
+    <span class="glass-clock__seconds" aria-hidden="true">
+      <span class="glass-clock__colon">:</span><span data-clock-seconds>--</span>
+    </span>
+  </span>
+  <span class="glass-clock__date" data-clock-date aria-hidden="true">----年--月--日</span>
+</time>
+
+<style>
+  .about-glass-clock {
+    position: absolute;
+    z-index: 10;
+    top: calc(var(--site-header-height) + clamp(1.25rem, 3.5vw, 3rem));
+    left: clamp(1rem, 4vw, 4rem);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    color: rgba(235, 246, 250, 0.62);
+    font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: clamp(2.8rem, 6vw, 5.4rem);
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+    letter-spacing: -0.08em;
+    line-height: 0.9;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .glass-clock__face,
+  .glass-clock__seconds,
+  .glass-clock__date {
+    background: linear-gradient(
+      165deg,
+      rgba(255, 255, 255, 0.96) 4%,
+      rgba(218, 235, 242, 0.46) 38%,
+      rgba(255, 255, 255, 0.74) 68%,
+      rgba(164, 194, 207, 0.34) 96%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.26);
+    text-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.36),
+      0 5px 18px rgba(1, 7, 12, 0.38);
+  }
+
+  .glass-clock__colon {
+    display: inline-block;
+    margin-inline: 0.02em 0.08em;
+    opacity: 0.72;
+  }
+
+  .glass-clock__time-row {
+    display: inline-flex;
+    align-items: baseline;
+  }
+
+  .glass-clock__seconds {
+    display: inline-flex;
+    align-items: baseline;
+    font-size: 0.42em;
+    letter-spacing: -0.04em;
+    transform: translateY(0.2em);
+  }
+
+  .glass-clock__date {
+    margin-top: 0.8em;
+    font-size: 0.22em;
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+    opacity: 0.72;
+  }
+
+  @media (max-width: 640px) {
+    .about-glass-clock {
+      top: calc(var(--site-header-height) + 1rem);
+      left: 1rem;
+      font-size: clamp(2.25rem, 13vw, 3.5rem);
+    }
+  }
+</style>
+
+<script>
+  function initAboutGlassClocks() {
+    document.querySelectorAll("[data-about-glass-clock]:not([data-clock-mounted])").forEach((clock) => {
+      if (!(clock instanceof HTMLTimeElement)) return;
+      clock.dataset.clockMounted = "true";
+
+      const hours = clock.querySelector("[data-clock-hours]");
+      const minutes = clock.querySelector("[data-clock-minutes]");
+      const seconds = clock.querySelector("[data-clock-seconds]");
+      const date = clock.querySelector("[data-clock-date]");
+      if (!hours || !minutes || !seconds || !date) return;
+
+      const updateClock = () => {
+        const now = new Date();
+        const [hour, minute, second] = now.toLocaleTimeString("en-GB", {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }).split(":");
+        const year = String(now.getFullYear());
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+
+        hours.textContent = hour;
+        minutes.textContent = minute;
+        seconds.textContent = second;
+        date.textContent = `${year}年${month}月${day}日`;
+        clock.dateTime = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+        clock.setAttribute("aria-label", `${year} 年 ${month} 月 ${day} 日，当前时间 ${hour} 时 ${minute} 分 ${second} 秒`);
+      };
+
+      updateClock();
+      const timer = window.setInterval(updateClock, 1000);
+
+      document.addEventListener("astro:before-swap", () => {
+        window.clearInterval(timer);
+        delete clock.dataset.clockMounted;
+      }, { once: true });
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initAboutGlassClocks, { once: true });
+  } else {
+    initAboutGlassClocks();
+  }
+
+  document.addEventListener("astro:after-swap", initAboutGlassClocks);
+</script>

@@ -15,7 +15,9 @@
     "test:toc": "node --test scripts/article-toc.test.mjs",
     "test:sections": "node --test scripts/section-index.test.mjs",
     "test:external-links": "node --test scripts/external-links.test.mjs",
-    "test:study": "node --test scripts/study-index.test.mjs"
+    "test:study": "node --test scripts/study-index.test.mjs",
+    "test:about": "node --test scripts/about-rain-window.test.mjs",
+    "test:word-count": "node --test scripts/article-word-count.test.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.2.0",
