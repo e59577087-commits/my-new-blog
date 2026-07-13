@@ -660,6 +660,18 @@ float dil = mix(1.0, DILATION_MIN, I);
       const capH = Math.min(pageHeight - capY, bannerHeight + pad * 2);
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const scale = Math.min(dpr, CONFIG.textureMaxSide / Math.max(capW, capH, 1));
+      const bodyBackdropProperties = [
+        "background-color",
+        "background-image",
+        "background-position",
+        "background-size",
+        "background-repeat",
+        "background-attachment",
+        "background-origin",
+        "background-clip",
+      ];
+      const bodyStyles = window.getComputedStyle(document.body);
+      const bodyBackdrop = bodyBackdropProperties.map((property) => [property, bodyStyles.getPropertyValue(property)]);
 
       textureBusy = true;
 
@@ -678,6 +690,11 @@ float dil = mix(1.0, DILATION_MIN, I);
           ignoreElements: (element) => element === container,
           onclone: (clonedDocument) => {
             const clonedScope = clonedDocument.querySelector("[data-home-black-hole-scope]");
+            if (clonedScope) {
+              for (const [property, value] of bodyBackdrop) {
+                clonedScope.style.setProperty(property, value, "important");
+              }
+            }
             clonedScope?.querySelector("[data-home-black-hole-root]")?.remove();
 
             clonedScope?.querySelectorAll("[data-black-hole-warp], [data-black-hole-text-warp]").forEach((element) => {
