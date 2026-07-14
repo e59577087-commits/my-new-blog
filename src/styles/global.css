@@ -1394,6 +1394,11 @@ button {
   line-height: 1.9;
 }
 
+.prose-tech img[width] {
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .prose-tech a {
   color: var(--color-accent-text);
   text-decoration: underline;

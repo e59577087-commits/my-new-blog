@@ -12,6 +12,7 @@ const singleArticle = resolve(articlesDir, "__toc-single.md");
 const multipleOutput = resolve(root, "dist", "study", "__toc-multiple", "index.html");
 const singleOutput = resolve(root, "dist", "study", "__toc-single", "index.html");
 const tocComponent = resolve(root, "src", "components", "ArticleToc.astro");
+const gkdArticle = resolve(articlesDir, "GKD，好用的跳开屏广告软件.md");
 
 let multipleHtml = "";
 let singleHtml = "";
@@ -91,6 +92,20 @@ test("uses Astro heading slugs and preserves level-three hierarchy", () => {
 
 test("does not render a TOC for fewer than two level-two or level-three headings", () => {
   assert.ok(!singleHtml.includes("data-article-toc="), "single-heading article should not render a TOC");
+});
+
+test("uses TOC-eligible section headings in the GKD article", () => {
+  const source = readFileSync(gkdArticle, "utf8");
+  const headings = [...source.matchAll(/^(#{1,6})\s+(.+)$/gm)].map((match) => ({
+    depth: match[1].length,
+    text: match[2],
+  }));
+
+  assert.deepEqual(headings, [
+    { depth: 2, text: "闲聊" },
+    { depth: 2, text: "安装" },
+    { depth: 2, text: "导入规则" },
+  ]);
 });
 
 test("progressively marks the current desktop section for assistive technology", () => {
