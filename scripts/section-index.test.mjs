@@ -200,6 +200,13 @@ test("builds normalized share filters from published article tags", () => {
   assert.ok(!shareHtml.includes("不应出现的草稿"), "draft article leaked into the page");
 });
 
+test("uses 分享 as the default share card category", () => {
+  assert.match(
+    shareHtml,
+    /<div class="share-card-meta"><span>分享<\/span><time[^>]*>[\s\S]*?<\/time><\/div><h2>工具分享<\/h2>/,
+  );
+});
+
 test("renders accessible filter state and no-results recovery", () => {
   assert.match(shareHtml, /data-share-filter="all"[^>]*aria-pressed="true"/);
   assert.ok(shareHtml.includes("data-share-tags"), "filterable tag data is missing from cards");

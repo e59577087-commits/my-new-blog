@@ -32,7 +32,7 @@ const encodedTags = (tags: string[]) => normalizeTags(tags).map(encodeURICompone
                 <img src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="480" height="300" />
                 <div class="share-card-body">
                   <div class="share-card-meta">
-                    <span>{entry.data.category ?? "经验分享"}</span>
+                    <span>{entry.data.category ?? "分享"}</span>
                     <time datetime={entry.data.date.toISOString()}>
                       {new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "short", day: "numeric" }).format(entry.data.date)}
                     </time>
