@@ -8,7 +8,9 @@ import { spawnSync } from "node:child_process";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixture = resolve(root, "src", "content", "articles", "__external-links.md");
 const output = resolve(root, "dist", "study", "__external-links", "index.html");
+const gkdOutput = resolve(root, "dist", "share", "gkd好用的跳开屏广告软件", "index.html");
 let html = "";
+let gkdHtml = "";
 
 const anchorAttributes = (label) => {
   const match = new RegExp(`<a([^>]*)>${label}</a>`).exec(html);
@@ -53,6 +55,7 @@ draft: false
 
   assert.equal(build.status, 0, `${build.error ?? ""}\n${build.stdout}\n${build.stderr}`);
   html = readFileSync(output, "utf8");
+  gkdHtml = readFileSync(gkdOutput, "utf8");
 });
 
 after(() => {
@@ -77,4 +80,17 @@ test("keeps non-HTTP and Obsidian links in the current tab", () => {
     assert.ok(!attributes.includes('target="_blank"'), `${label} should not open a new tab`);
     assert.ok(!attributes.includes("noopener"), `${label} should not receive external-link security attributes`);
   }
+});
+
+test("keeps the GKD subscription URL separate from its following screenshot", () => {
+  assert.match(
+    gkdHtml,
+    /<a href="https:\/\/gkd667\.vv\.ax\/gkd\.json5"[^>]*>https:\/\/gkd667\.vv\.ax\/gkd\.json5<\/a>/,
+    "subscription URL swallowed the following prose or image markup",
+  );
+  assert.match(
+    gkdHtml,
+    /<img src="\/Screenshot_20260714_165555%201\.jpg"[^>]*width="100">/,
+    "subscription input screenshot is missing",
+  );
 });
