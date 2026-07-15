@@ -19,15 +19,7 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat("zh-CN", {
 ---
 
 {
-  ongoing.length === 0 && completed.length === 0 ? (
-    <div class="study-dossier" data-study-dossier>
-      <div class="study-empty" data-study-empty>
-        <p class="kicker">STUDIUM</p>
-        <h2>卷帙待启</h2>
-        <p>案头尚静，待第一则求知札记落笔。</p>
-      </div>
-    </div>
-  ) : (
+  (ongoing.length > 0 || completed.length > 0) && (
     <div class="study-dossier" data-study-dossier>
       <section class="study-group study-group-ongoing" aria-labelledby="study-ongoing-title">
         <header class="study-group-header">

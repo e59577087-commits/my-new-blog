@@ -1,0 +1,345 @@
+<dialog class="article-image-lightbox" data-article-image-lightbox aria-label="文章图片预览">
+  <div class="article-image-lightbox-panel">
+    <button class="article-image-lightbox-close" type="button" data-lightbox-close aria-label="关闭大图">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 6l12 12M18 6 6 18"></path>
+      </svg>
+    </button>
+
+    <figure class="article-image-lightbox-figure">
+      <img data-lightbox-image alt="" />
+      <figcaption data-lightbox-caption hidden></figcaption>
+    </figure>
+
+    <p class="article-image-lightbox-hint" aria-hidden="true">点击空白处或按 Esc 关闭</p>
+  </div>
+</dialog>
+
+<script>
+  import { createArticleImageLightboxController, getArticleImageLightboxMode } from "../utils/articleImageLightbox";
+
+  let teardownArticleImageLightbox: (() => void) | undefined;
+
+  const filenameLikeAlt = /(?:^|[/\\])[^/\\]+\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
+
+  const attachArticleImageLightbox = () => {
+    teardownArticleImageLightbox?.();
+
+    const dialog = document.querySelector<HTMLDialogElement>("[data-article-image-lightbox]");
+    const preview = dialog?.querySelector<HTMLImageElement>("[data-lightbox-image]");
+    const caption = dialog?.querySelector<HTMLElement>("[data-lightbox-caption]");
+    const closeButton = dialog?.querySelector<HTMLButtonElement>("[data-lightbox-close]");
+    if (!dialog || !preview || !caption || !closeButton) return;
+
+    const controller = createArticleImageLightboxController({
+      dialog,
+      preview,
+      caption,
+      onOpenChange(open) {
+        if (open) document.documentElement.dataset.imageLightboxOpen = "true";
+        else delete document.documentElement.dataset.imageLightboxOpen;
+      },
+    });
+
+    const closeFromButton = () => controller.close();
+    const closeFromBackdrop = (event: MouseEvent) => {
+      if (event.target === dialog) controller.close();
+    };
+
+    closeButton.addEventListener("click", closeFromButton);
+    dialog.addEventListener("click", closeFromBackdrop);
+
+    document.querySelectorAll<HTMLImageElement>(".prose-tech img").forEach((image) => {
+      if (image.dataset.articleLightboxEnhanced === "true" || image.closest("a, button")) return;
+
+      const preference = image.dataset.lightbox ?? image.closest<HTMLElement>("[data-lightbox]")?.dataset.lightbox;
+      const width = Number(image.getAttribute("width")) || undefined;
+      const mode = getArticleImageLightboxMode({
+        src: image.getAttribute("src") || image.src,
+        alt: image.alt,
+        width,
+        preference,
+      });
+      if (mode === "off" || !image.parentNode) return;
+
+      const trigger = document.createElement("button");
+      trigger.type = "button";
+      trigger.className = `article-image-trigger article-image-trigger--${mode}`;
+      trigger.dataset.articleImageTrigger = "";
+      const accessibleDescription = image.alt.trim() && !filenameLikeAlt.test(image.alt.trim()) ? `：${image.alt.trim()}` : "";
+      trigger.setAttribute("aria-label", `查看大图${accessibleDescription}`);
+
+      const zoomLabel = document.createElement("span");
+      zoomLabel.className = "article-image-zoom-label";
+      zoomLabel.setAttribute("aria-hidden", "true");
+      zoomLabel.textContent = "查看大图";
+
+      image.parentNode.insertBefore(trigger, image);
+      trigger.append(image, zoomLabel);
+      image.dataset.articleLightboxEnhanced = "true";
+
+      trigger.addEventListener("click", () => {
+        const alt = image.alt.trim();
+        controller.open({
+          trigger,
+          src: image.src,
+          currentSrc: image.currentSrc,
+          alt,
+          caption: alt && !filenameLikeAlt.test(alt) ? alt : "",
+        });
+      });
+    });
+
+    teardownArticleImageLightbox = () => {
+      controller.close();
+      controller.destroy();
+      closeButton.removeEventListener("click", closeFromButton);
+      dialog.removeEventListener("click", closeFromBackdrop);
+      delete document.documentElement.dataset.imageLightboxOpen;
+    };
+  };
+
+  attachArticleImageLightbox();
+  document.addEventListener("astro:after-swap", attachArticleImageLightbox);
+</script>
+
+<style is:global>
+  :root[data-image-lightbox-open="true"] {
+    overflow: hidden;
+  }
+
+  .article-image-trigger {
+    position: relative;
+    border: 0;
+    border-radius: var(--glass-radius-card);
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    cursor: zoom-in;
+    isolation: isolate;
+  }
+
+  .article-image-trigger--thumbnail {
+    display: block;
+    inline-size: min(100%, 18rem);
+    max-inline-size: 18rem;
+    margin: 1.8em auto;
+  }
+
+  .article-image-trigger--block {
+    display: block;
+    inline-size: 100%;
+    margin: 2.2em auto;
+  }
+
+  .article-image-trigger > img {
+    display: block;
+    max-inline-size: 100%;
+    block-size: auto;
+    margin: 0 auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--glass-radius-card);
+    box-shadow: 0 12px 30px rgb(15 23 42 / 0.08);
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
+  }
+
+  .article-image-trigger--thumbnail > img {
+    inline-size: 100%;
+  }
+
+  .article-image-trigger:hover > img {
+    border-color: var(--color-accent-border);
+    box-shadow: 0 18px 42px rgb(15 23 42 / 0.14);
+    transform: translateY(-2px);
+  }
+
+  .article-image-trigger:focus-visible {
+    outline: 3px solid var(--color-accent-border);
+    outline-offset: 4px;
+  }
+
+  .article-image-zoom-label {
+    position: absolute;
+    right: 0.65rem;
+    bottom: 0.65rem;
+    z-index: 1;
+    border: 1px solid rgb(255 255 255 / 0.3);
+    border-radius: 999px;
+    background: rgb(10 15 24 / 0.72);
+    padding: 0.28rem 0.58rem;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+    opacity: 0.9;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    transition: opacity 160ms ease;
+  }
+
+  .article-image-trigger:hover .article-image-zoom-label,
+  .article-image-trigger:focus-visible .article-image-zoom-label {
+    opacity: 1;
+  }
+
+  .article-image-lightbox {
+    inset: 0;
+    inline-size: 100vw;
+    max-inline-size: none;
+    block-size: 100dvh;
+    max-block-size: none;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: #fff;
+    overflow: auto;
+  }
+
+  .article-image-lightbox[open] {
+    display: grid;
+    place-items: center;
+  }
+
+  .article-image-lightbox::backdrop {
+    background: rgb(3 7 18 / 0.9);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+
+  .article-image-lightbox-panel {
+    display: grid;
+    place-items: center;
+    gap: 0.85rem;
+    max-inline-size: 100%;
+    padding: max(4.5rem, calc(env(safe-area-inset-top) + 3.5rem)) max(1rem, env(safe-area-inset-right)) max(4rem, calc(env(safe-area-inset-bottom) + 3rem)) max(1rem, env(safe-area-inset-left));
+  }
+
+  .article-image-lightbox-figure {
+    display: grid;
+    place-items: center;
+    gap: 0.8rem;
+    margin: 0;
+  }
+
+  .article-image-lightbox-figure img {
+    display: block;
+    max-inline-size: 92vw;
+    max-block-size: 84dvh;
+    inline-size: auto;
+    block-size: auto;
+    border-radius: clamp(0.45rem, 1vw, 0.8rem);
+    box-shadow: 0 28px 80px rgb(0 0 0 / 0.48);
+    object-fit: contain;
+    touch-action: pinch-zoom;
+    animation: article-lightbox-enter 190ms ease-out both;
+  }
+
+  .article-image-lightbox-figure figcaption {
+    max-inline-size: min(72ch, 86vw);
+    color: rgb(255 255 255 / 0.82);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.65;
+    text-align: center;
+  }
+
+  .article-image-lightbox-close {
+    position: fixed;
+    top: max(0.8rem, env(safe-area-inset-top));
+    right: max(0.8rem, env(safe-area-inset-right));
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    min-inline-size: 3rem;
+    min-block-size: 3rem;
+    border: 1px solid rgb(255 255 255 / 0.24);
+    border-radius: 999px;
+    background: rgb(12 18 28 / 0.72);
+    padding: 0;
+    color: #fff;
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transition:
+      border-color 160ms ease,
+      background-color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .article-image-lightbox-close:hover {
+    border-color: rgb(255 255 255 / 0.5);
+    background: rgb(24 34 48 / 0.88);
+    transform: scale(1.04);
+  }
+
+  .article-image-lightbox-close:focus-visible {
+    outline: 3px solid rgb(255 255 255 / 0.76);
+    outline-offset: 3px;
+  }
+
+  .article-image-lightbox-close svg {
+    inline-size: 1.35rem;
+    block-size: 1.35rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-width: 1.8;
+  }
+
+  .article-image-lightbox-hint {
+    position: fixed;
+    bottom: max(0.85rem, env(safe-area-inset-bottom));
+    left: 50%;
+    margin: 0;
+    color: rgb(255 255 255 / 0.58);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    transform: translateX(-50%);
+  }
+
+  @keyframes article-lightbox-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @media (max-width: 639px) {
+    .article-image-zoom-label {
+      right: 0.5rem;
+      bottom: 0.5rem;
+    }
+
+    .article-image-lightbox-hint {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .article-image-trigger > img,
+    .article-image-lightbox-close,
+    .article-image-zoom-label {
+      transition: none;
+    }
+
+    .article-image-trigger:hover > img,
+    .article-image-lightbox-close:hover {
+      transform: none;
+    }
+
+    .article-image-lightbox-figure img {
+      animation: none;
+    }
+  }
+</style>

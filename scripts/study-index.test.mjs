@@ -134,10 +134,13 @@ test("keeps status tags out of ordinary topic-tag lists", () => {
   assert.ok(html.includes("TypeScript"), "ordinary completed topic is missing");
 });
 
-test("includes complete and per-group empty states", () => {
+test("omits the overall empty state while keeping per-group empty states", () => {
   const sources = readFileSync(studyPage, "utf8")
     + (existsSync(studyComponent) ? readFileSync(studyComponent, "utf8") : "");
-  assert.ok(sources.includes("卷帙待启"), "overall study empty state is missing");
+  assert.ok(!sources.includes("STUDIUM"), "overall study empty-state kicker remains");
+  assert.ok(!sources.includes("卷帙待启"), "overall study empty-state title remains");
+  assert.ok(!sources.includes("案头尚静，待第一则求知札记落笔。"), "overall study empty-state copy remains");
+  assert.ok(!sources.includes("data-study-empty"), "overall study empty-state marker remains");
   assert.ok(sources.includes("data-study-ongoing-empty"), "ongoing group empty state is missing");
   assert.ok(sources.includes("data-study-completed-empty"), "completed group empty state is missing");
 });

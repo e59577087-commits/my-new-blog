@@ -2,6 +2,7 @@
 import { render } from "astro:content";
 import BaseLayout from "./BaseLayout.astro";
 import ArticleToc from "../components/ArticleToc.astro";
+import ArticleImageLightbox from "../components/ArticleImageLightbox.astro";
 import Comments from "../components/Comments.astro";
 import PrevNextNav from "../components/PrevNextNav.astro";
 import { formatArticleDate, getArticleSlug, getEntryUrl, coverOrDefault, type Article } from "../utils/articles";
@@ -36,7 +37,7 @@ const hasToc = tocHeadings.length >= 2;
     <header class="mt-8 border-b hairline pb-8">
       {category && <p class="kicker text-xs">{category}</p>}
       <time datetime={date.toISOString()} class="faint-text text-sm">{formatArticleDate(date)}</time>
-      <h1 class="heading-text mt-4 text-balance text-3xl font-semibold leading-tight sm:text-5xl">{title}</h1>
+      <h1 class="article-title heading-text mt-4 text-balance text-3xl leading-tight sm:text-5xl">{title}</h1>
       {description && <p class="text-body mt-4 text-lg leading-relaxed">{description}</p>}
       <div class="mt-5 flex flex-wrap gap-2">
         {tags.map((tag) => <span class="rounded border hairline bg-[var(--color-surface-solid)] px-2.5 py-1 text-xs muted">{tag}</span>)}
@@ -46,7 +47,7 @@ const hasToc = tocHeadings.length >= 2;
 
     {hasToc && <div class="mt-8 lg:hidden"><ArticleToc headings={tocHeadings} variant="mobile" /></div>}
 
-    <div class="prose-tech mt-10 max-w-3xl space-y-6">
+    <div class="prose-tech mt-10">
       <Content />
     </div>
 
@@ -73,6 +74,7 @@ const hasToc = tocHeadings.length >= 2;
     )
   }
   </div>
+  <ArticleImageLightbox />
 </BaseLayout>
 <script>
   const attachCopyButtons = () => {
