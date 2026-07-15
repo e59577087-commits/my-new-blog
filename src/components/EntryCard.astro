@@ -1,5 +1,6 @@
 ---
 import { getEntryUrl, getSectionLabel, coverOrDefault, type Article } from "../utils/articles";
+import { getResponsiveCover } from "../utils/responsiveImages";
 
 interface Props {
   entry: Article;
@@ -7,10 +8,12 @@ interface Props {
 
 const { entry } = Astro.props;
 const kicker = entry.data.category ?? getSectionLabel(entry);
+const cover = coverOrDefault(entry.data.cover);
+const responsiveCover = getResponsiveCover(cover);
 ---
 
 <a href={getEntryUrl(entry)} data-reveal class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${entry.data.title}`}>
-    <img src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-24 shrink-0 object-cover sm:w-32" />
+    <img src={cover} srcset={responsiveCover?.srcset} sizes={responsiveCover ? "(min-width: 640px) 8rem, 6rem" : undefined} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-24 shrink-0 object-cover sm:w-32" />
     <div class="min-w-0 flex flex-col justify-center p-4">
       <p class="kicker text-xs">{kicker}</p>
       <h2 class="heading-text mt-1 truncate text-xl font-semibold leading-7">{entry.data.title}</h2>

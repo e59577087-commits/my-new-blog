@@ -6,6 +6,7 @@ import BannerParticles from "../components/BannerParticles.astro";
 import HomepageBlackHole from "../components/HomepageBlackHole.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { formatArticleDate, getEntryUrl, getPublishedArticles, getSectionLabel, coverOrDefault } from "../utils/articles";
+import { getResponsiveCover } from "../utils/responsiveImages";
 
 const articles = await getPublishedArticles();
 const latestItems = articles
@@ -21,6 +22,7 @@ const latestItems = articles
   .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.date.getTime() - a.date.getTime());
 const latest = latestItems[0];
 const latestList = latestItems.slice(1, 5);
+const latestCover = latest ? getResponsiveCover(latest.image) : undefined;
 const previewTools = articles.filter((article) => article.data.section === "essay").slice(0, 3);
 const previewShares = articles.filter((article) => article.data.section === "share").slice(0, 3);
 const previewStudy = articles.filter((article) => article.data.section === "study").slice(0, 3);
@@ -98,7 +100,18 @@ const bannerTitleChars = Array.from(bannerTitle);
       <div class="latest-layout grid gap-5 lg:grid-cols-[minmax(0,2.5fr)_minmax(320px,1.6fr)]">
         <!-- Featured article (large card, left column) -->
         <a href={latest.href} data-reveal class="surface motion-card group block overflow-hidden rounded-lg">
-          <img src={latest.image} alt="" loading="eager" decoding="async" fetchpriority="high" width="960" height="621" class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]" />
+          <img
+            src={latest.image}
+            srcset={latestCover?.srcset}
+            sizes={latestCover ? "(min-width: 1024px) 43rem, calc(100vw - 2rem)" : undefined}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            fetchpriority="low"
+            width="960"
+            height="621"
+            class="aspect-[16/8] w-full object-cover lg:aspect-[16/7]"
+          />
           <div class="p-5 sm:p-6">
             <div class="flex flex-wrap items-center gap-2">
               <time datetime={latest.date.toISOString()} class="faint-text text-sm">{formatArticleDate(latest.date)}</time>
@@ -115,9 +128,21 @@ const bannerTitleChars = Array.from(bannerTitle);
         <!-- Article list (3 cards, right column) -->
         <div data-appearance-article-list="compact" data-reveal-stagger>
           {
-            latestList.map((item) => (
+            latestList.map((item) => {
+              const responsiveCover = getResponsiveCover(item.image);
+              return (
               <a href={item.href} data-reveal class="surface-soft motion-card flex rounded-lg overflow-hidden">
-                <img src={item.image} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-28 shrink-0 object-cover sm:w-40" />
+                <img
+                  src={item.image}
+                  srcset={responsiveCover?.srcset}
+                  sizes={responsiveCover ? "(min-width: 640px) 10rem, 7rem" : undefined}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  width="320"
+                  height="240"
+                  class="aspect-[4/3] w-28 shrink-0 object-cover sm:w-40"
+                />
                 <div class="min-w-0 flex flex-col justify-center p-4">
                   <div class="flex flex-wrap items-center gap-2">
                     <time datetime={item.date.toISOString()} class="faint-text text-xs">{formatArticleDate(item.date)}</time>
@@ -130,7 +155,8 @@ const bannerTitleChars = Array.from(bannerTitle);
                   </div>
                 </div>
               </a>
-            ))
+              );
+            })
           }
         </div>
       </div>

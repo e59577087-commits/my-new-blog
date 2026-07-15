@@ -22,7 +22,7 @@
   --theme-primary-text: hsl(var(--theme-hue) calc(62% * var(--theme-sat)) 42%);
   --theme-primary-soft: hsl(var(--theme-hue) calc(76% * var(--theme-sat)) 62% / 0.16);
  --theme-primary-border: hsl(var(--theme-hue) calc(72% * var(--theme-sat)) 58% / 0.34);
-  --appearance-wallpaper: url('/夏.jpeg');
+  --appearance-wallpaper: url('/media/wallpaper-summer-960-v1.webp');
  --color-page: hsl(var(--theme-hue) calc(48% * var(--theme-sat)) 94%);
   --color-page-soft: hsl(var(--theme-hue) calc(46% * var(--theme-sat)) 98%);
   --color-surface: rgba(255, 255, 255, 0.34);
@@ -323,6 +323,18 @@ body::after {
 
 :root[data-wallpaper-mode="transparent"] .home-hero-banner {
   background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.26) 100%);
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --appearance-wallpaper: url('/media/wallpaper-summer-1920-v1.webp');
+  }
+}
+
+@media (min-width: 90rem) {
+  :root {
+    --appearance-wallpaper: url('/media/wallpaper-summer-2560-v1.webp');
+  }
 }
 
 .home-hero-banner > * {

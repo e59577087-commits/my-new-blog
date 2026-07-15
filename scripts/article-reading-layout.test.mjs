@@ -42,12 +42,13 @@ test("keeps article display text in WenKai while body copy stays highly readable
   assert.match(display, /font-family:\s*var\(--font-wenkai\)\s*;/, "article headings and quotes do not share the WenKai voice");
 });
 
-test("loads the real WenKai weights used by article display text", () => {
+test("keeps the local WenKai stack without a failed render-blocking font request", () => {
   assert.match(
-    baseLayout,
-    /family=LXGW\+WenKai:wght@400;700&display=swap/,
-    "the requested WenKai display weights are not loaded explicitly",
+    css,
+    /--font-wenkai:\s*"LXGW WenKai"[^;]+;/,
+    "the display font stack no longer prefers an installed LXGW WenKai font",
   );
+  assert.doesNotMatch(baseLayout, /fonts\.googleapis\.com|fonts\.gstatic\.com/, "a failed remote font request still blocks rendering");
 });
 
 test("gives headings, paragraphs, and quotes distinct vertical rhythm", () => {
