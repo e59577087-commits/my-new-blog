@@ -3,6 +3,7 @@ import SiteFooter from "../components/SiteFooter.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 import ScrollTopButton from "../components/ScrollTopButton.astro";
 import CardTilt from "../components/CardTilt.astro";
+import OmikujiDraw from "../components/OmikujiDraw.astro";
 import { site } from "../data/site";
 import "../styles/global.css";
 
@@ -133,7 +134,6 @@ const socialImageUrl = new URL(image, site.url);
     <title>{pageTitle}</title>
   </head>
   <body>
-    <a href="#main-content" class="skip-link">跳过导航，直达内容</a>
     <div class="flex min-h-screen flex-col">
       <SiteHeader />
       <main id="main-content" class="flex-1">
@@ -142,6 +142,7 @@ const socialImageUrl = new URL(image, site.url);
       <SiteFooter />
       <ScrollTopButton />
       <CardTilt />
+      <OmikujiDraw />
     </div>
     <script>
       (function scrollReveal() {
