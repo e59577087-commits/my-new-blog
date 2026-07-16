@@ -105,8 +105,26 @@ test("keeps the viewer touch-friendly, viewport-bound, and motion-sensitive", ()
   assert.match(component, /max-inline-size:\s*92vw\s*;/, "enlarged images can overflow the viewport width");
   assert.match(component, /max-block-size:\s*84dvh\s*;/, "enlarged images can overflow the viewport height");
   assert.match(component, /min-inline-size:\s*3rem\s*;/, "close control is smaller than a comfortable touch target");
-  assert.match(component, /article-image-trigger--thumbnail[\s\S]*max-inline-size:\s*18rem\s*;/, "tutorial thumbnails do not use the compact 18rem preview size");
+  assert.match(
+    component,
+    /trigger\.style\.setProperty\(\s*"--article-image-thumbnail-width",\s*`\$\{width\}px`\s*\)/,
+    "thumbnail triggers do not receive the image's declared width",
+  );
+  assert.match(
+    component,
+    /inline-size:\s*min\(100%,\s*var\(--article-image-thumbnail-width,\s*18rem\)\)\s*;/,
+    "thumbnail triggers do not respect the declared width while staying responsive",
+  );
   assert.match(component, /@media\s*\(prefers-reduced-motion:\s*reduce\)/, "lightbox motion does not respect reduced-motion preferences");
+});
+
+test("keeps adjacent article thumbnails inline when space permits", () => {
+  const component = existsSync(componentPath) ? readFileSync(componentPath, "utf8") : "";
+  const rule = component.match(/\.article-image-trigger--thumbnail\s*\{([^}]*)\}/)?.[1];
+
+  assert.ok(rule, "thumbnail trigger rule is missing");
+  assert.match(rule, /display:\s*inline-block\s*;/, "thumbnail triggers still force their own rows");
+  assert.match(rule, /vertical-align:\s*middle\s*;/, "adjacent thumbnails are not aligned consistently");
 });
 
 test("does not issue an empty preview-image request before the viewer opens", () => {

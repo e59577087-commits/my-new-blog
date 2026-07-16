@@ -1,5 +1,5 @@
 // Obsidian 兼容 remark 插件:把 ![[图片]] 与 [[双链]] 转成标准 markdown。
-// - 图片:解析到 public/ 根(取 basename),忽略 Obsidian 的 |尺寸 后缀。
+// - 图片:解析到 public/ 根(取 basename),支持 Obsidian 的 |尺寸 后缀。
 // - 双链:模块加载时(配置阶段)直接读 src/content/articles 目录、解析 frontmatter,
 //   建「笔记名 → 真实 URL」表,按目标笔记的实际板块拼地址(essay→/tools/ 等);
 //   查不到时回退到 /articles/<slug>/。URL 规则与 utils/articles.ts 的 getEntryUrl 一致。
@@ -26,11 +26,13 @@ const basename = (p: string): string => p.split(/[\\/]/).pop() ?? p;
 // 图片目标可能是 文件夹/图片.png,统一取 basename 指向 public 根
 const toImgSrc = (target: string): string => `/${basename(target).trim()}`;
 
+const DEFAULT_IMAGE_WIDTH = "150";
+
 const parseImageSize = (meta?: string): Record<string, string> | undefined => {
   const value = meta?.trim();
-  if (!value) return undefined;
+  if (!value) return { width: DEFAULT_IMAGE_WIDTH };
   const m = /^(\d+)(?:x(\d+))?$/.exec(value);
-  if (!m) return undefined;
+  if (!m) return { width: DEFAULT_IMAGE_WIDTH };
   return m[2] ? { width: m[1], height: m[2] } : { width: m[1] };
 };
 

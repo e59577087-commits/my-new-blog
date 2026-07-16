@@ -2386,4 +2386,15 @@ button {
   ::view-transition-new(root) {
     animation-duration: 0.01ms !important;
   }
+
+  /* 关闭滚动入场动画，直接显示元素 */
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  [data-reveal-stagger] > [data-reveal] {
+    transition-delay: 0ms;
+  }
 }

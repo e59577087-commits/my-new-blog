@@ -66,6 +66,9 @@
       trigger.type = "button";
       trigger.className = `article-image-trigger article-image-trigger--${mode}`;
       trigger.dataset.articleImageTrigger = "";
+      if (mode === "thumbnail" && width) {
+        trigger.style.setProperty("--article-image-thumbnail-width", `${width}px`);
+      }
       const accessibleDescription = image.alt.trim() && !filenameLikeAlt.test(image.alt.trim()) ? `：${image.alt.trim()}` : "";
       trigger.setAttribute("aria-label", `查看大图${accessibleDescription}`);
 
@@ -120,10 +123,11 @@
   }
 
   .article-image-trigger--thumbnail {
-    display: block;
-    inline-size: min(100%, 18rem);
-    max-inline-size: 18rem;
-    margin: 1.8em auto;
+    display: inline-block;
+    inline-size: min(100%, var(--article-image-thumbnail-width, 18rem));
+    max-inline-size: var(--article-image-thumbnail-width, 18rem);
+    margin: 0.55em 0.35em;
+    vertical-align: middle;
   }
 
   .article-image-trigger--block {
