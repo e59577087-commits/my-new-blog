@@ -1,0 +1,223 @@
+<script>
+  const article = document.querySelector<HTMLElement>("[data-article-reading-root]");
+
+  if (article) {
+    const percentLabels = Array.from(document.querySelectorAll<HTMLElement>("[data-shiro-read-percent]"));
+    const progressCircles = Array.from(document.querySelectorAll<SVGCircleElement>("[data-shiro-read-circle]"));
+    const backTopButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-shiro-back-top]"));
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const circleCircumference = 2 * Math.PI * 6;
+    const railAccentSpan = 0.12;
+    const railLabelInset = 16;
+    let frame = 0;
+
+    type RailMotionState = {
+      center: number;
+      targetCenter: number;
+      pulse: number;
+      pulseVelocity: number;
+      previousTarget: number;
+      lastTime: number;
+      frame: number;
+      ratio: number;
+      articleTop: number;
+    };
+
+    const railMotionStates = new WeakMap<HTMLElement, RailMotionState>();
+
+    const lengthOnRailAtY = (path: SVGPathElement, targetY: number) => {
+      const length = path.getTotalLength();
+      let low = 0;
+      let high = length;
+
+      for (let index = 0; index < 14; index += 1) {
+        const middle = (low + high) / 2;
+        if (path.getPointAtLength(middle).y < targetY) low = middle;
+        else high = middle;
+      }
+
+      return (low + high) / 2;
+    };
+
+    const pointOnRailAtY = (path: SVGPathElement, targetY: number) => {
+      return path.getPointAtLength(lengthOnRailAtY(path, targetY));
+    };
+
+    const buildRailAccentPath = (path: SVGPathElement, start: number, end: number) => {
+      const samples = 18;
+      return Array.from({ length: samples + 1 }, (_, index) => {
+        const point = path.getPointAtLength(start + ((end - start) * index) / samples);
+        return `${index === 0 ? "M" : "L"}${point.x.toFixed(3)} ${point.y.toFixed(3)}`;
+      }).join(" ");
+    };
+
+    const drawReadingRail = (rail: HTMLElement, state: RailMotionState) => {
+      const height = rail.clientHeight;
+      if (height <= 0) return;
+
+      const curveRadius = 56 + 25 * state.pulse;
+      const constrainedRadius = Math.min(height / 3, Math.max(55.6, curveRadius));
+      const curveWidth = 11 + 11 * state.pulse;
+      const constrainedWidth = Math.max(10.5, Math.min(22, curveWidth));
+      const curveCenter = Math.min(height, Math.max(0, state.center));
+      const topRadius = Math.min(constrainedRadius, curveCenter);
+      const bottomRadius = Math.min(constrainedRadius, height - curveCenter);
+      const edgeCurveScale = Math.min(1, Math.min(curveCenter, height - curveCenter) / constrainedRadius);
+      const shoulderTop = curveCenter - topRadius;
+      const shoulderBottom = curveCenter + bottomRadius;
+      const curveX = 8 + constrainedWidth * edgeCurveScale;
+      const pathData = `M8 0 L8 ${shoulderTop} C8 ${curveCenter - topRadius * 0.45},${curveX} ${curveCenter - topRadius * 0.3},${curveX} ${curveCenter} C${curveX} ${curveCenter + bottomRadius * 0.3},8 ${curveCenter + bottomRadius * 0.45},8 ${shoulderBottom} L8 ${height}`;
+      const basePath = rail.querySelector<SVGPathElement>("[data-innei-rail-path='base']");
+      const accentPath = rail.querySelector<SVGPathElement>("[data-innei-rail-path='accent']");
+      if (!basePath || !accentPath) return;
+
+      basePath.setAttribute("d", pathData);
+      const pathLength = Math.max(1, basePath.getTotalLength());
+      const apexLength = lengthOnRailAtY(basePath, curveCenter);
+      const accentStart = Math.max(0, apexLength - pathLength * railAccentSpan / 2);
+      const accentEnd = Math.min(pathLength, apexLength + pathLength * railAccentSpan / 2);
+      accentPath.setAttribute("d", buildRailAccentPath(basePath, accentStart, accentEnd));
+
+      const labelCenter = Math.min(height - railLabelInset, Math.max(railLabelInset, curveCenter));
+      const label = rail.querySelector<HTMLElement>("[data-innei-rail-label]");
+      if (label) label.style.transform = `translateY(${labelCenter}px) translateY(-50%)`;
+
+      rail.querySelectorAll<SVGCircleElement>("[data-innei-rail-node]").forEach((node) => {
+        const headingId = node.dataset.headingId;
+        const heading = headingId ? document.getElementById(headingId) : null;
+        if (!heading) return;
+
+        const headingTop = heading.getBoundingClientRect().top + window.scrollY;
+        const nodeY = Math.min(height - 2, Math.max(2, ((headingTop - state.articleTop) / Math.max(1, article.offsetHeight)) * height));
+        const point = pointOnRailAtY(basePath, nodeY);
+        node.setAttribute("cx", point.x.toFixed(3));
+        node.setAttribute("cy", nodeY.toFixed(3));
+      });
+    };
+
+    const startRailMotion = (rail: HTMLElement, state: RailMotionState) => {
+      if (state.frame) return;
+      state.lastTime = performance.now();
+
+      const stepRailMotion = (time: number) => {
+        const deltaSeconds = Math.min(0.032, Math.max(0.001, (time - state.lastTime) / 1000));
+        state.lastTime = time;
+
+        const follow = 1 - Math.exp(-34 * deltaSeconds);
+        state.center += (state.targetCenter - state.center) * follow;
+        state.pulseVelocity += -165 * state.pulse * deltaSeconds;
+        state.pulseVelocity *= Math.exp(-15 * deltaSeconds);
+        state.pulse += state.pulseVelocity * deltaSeconds;
+        state.pulse = Math.min(1, Math.max(-0.05, state.pulse));
+
+        drawReadingRail(rail, state);
+
+        const centerSettled = Math.abs(state.targetCenter - state.center) < 0.08;
+        const pulseSettled = Math.abs(state.pulse) < 0.002 && Math.abs(state.pulseVelocity) < 0.02;
+        if (centerSettled && pulseSettled) {
+          state.center = state.targetCenter;
+          state.pulse = 0;
+          state.pulseVelocity = 0;
+          state.frame = 0;
+          drawReadingRail(rail, state);
+          return;
+        }
+
+        state.frame = requestAnimationFrame(stepRailMotion);
+      };
+
+      state.frame = requestAnimationFrame(stepRailMotion);
+    };
+
+    const renderReadingRails = (ratio: number, articleTop: number) => {
+      document.querySelectorAll<HTMLElement>("[data-innei-toc-rail]").forEach((rail) => {
+        const height = rail.clientHeight;
+        if (height <= 0) return;
+
+        const targetCenter = ratio * height;
+        let state = railMotionStates.get(rail);
+        if (!state) {
+          state = {
+            center: targetCenter,
+            targetCenter,
+            pulse: 0,
+            pulseVelocity: 0,
+            previousTarget: targetCenter,
+            lastTime: performance.now(),
+            frame: 0,
+            ratio,
+            articleTop,
+          };
+          railMotionStates.set(rail, state);
+          drawReadingRail(rail, state);
+          return;
+        }
+
+        const targetDelta = Math.abs(targetCenter - state.previousTarget);
+        const scrollImpact = Math.min(1, targetDelta / Math.max(1, height * 0.12));
+        state.targetCenter = targetCenter;
+        state.previousTarget = targetCenter;
+        state.ratio = ratio;
+        state.articleTop = articleTop;
+
+        if (reducedMotion.matches) {
+          if (state.frame) cancelAnimationFrame(state.frame);
+          state.frame = 0;
+          state.center = targetCenter;
+          state.pulse = 0;
+          state.pulseVelocity = 0;
+          drawReadingRail(rail, state);
+          return;
+        }
+
+        state.pulseVelocity = Math.min(26, Math.max(0, state.pulseVelocity) + scrollImpact * 26);
+        startRailMotion(rail, state);
+      });
+    };
+
+    const renderProgress = () => {
+      frame = 0;
+      const bounds = article.getBoundingClientRect();
+      const articleTop = bounds.top + window.scrollY;
+      const deltaHeight = Math.min(window.scrollY, window.innerHeight);
+      const ratio = Math.min(1, Math.max(0, (window.scrollY - articleTop + deltaHeight) / Math.max(1, article.offsetHeight)));
+
+      const readPercent = Math.floor(ratio * 100) || 0;
+      renderReadingRails(ratio, articleTop);
+
+      percentLabels.forEach((label) => {
+        label.textContent = `${readPercent}%`;
+      });
+      progressCircles.forEach((circle) => {
+        circle.style.strokeDashoffset = String(circleCircumference * (1 - ratio));
+      });
+      document.querySelectorAll<HTMLElement>("[data-shiro-read-indicator]").forEach((indicator) => {
+        indicator.setAttribute("aria-valuenow", String(readPercent));
+        indicator.setAttribute("aria-valuetext", `阅读进度 ${readPercent}%`);
+      });
+      backTopButtons.forEach((button) => {
+        button.dataset.visible = String(readPercent > 10);
+      });
+    };
+
+    const scheduleProgress = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(renderProgress);
+    };
+
+    backTopButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: reducedMotion.matches ? "auto" : "smooth" });
+      });
+    });
+
+    if ("ResizeObserver" in window) {
+      const articleResizeObserver = new ResizeObserver(scheduleProgress);
+      articleResizeObserver.observe(article);
+    }
+
+    window.addEventListener("scroll", scheduleProgress, { passive: true });
+    window.addEventListener("resize", scheduleProgress, { passive: true });
+    renderProgress();
+  }
+</script>

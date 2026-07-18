@@ -36,15 +36,15 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat("zh-CN", {
               const tags = topicTags(entry);
               return (
                 <li class="study-scroll-card" data-study-state="ongoing">
-                  <a href={getEntryUrl(entry)} aria-label={`继续研习：${entry.data.title}`}>
-                    <img src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="320" height="240" />
+                  <a href={getEntryUrl(entry)} data-article-transition aria-label={`继续研习：${entry.data.title}`}>
+                    <img data-article-transition-cover src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="320" height="240" />
                     <div class="study-scroll-copy">
                       <div class="study-card-meta">
                         <span class="study-status study-status-ongoing">研习中</span>
                         <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
                       </div>
                       <p class="study-category">{entry.data.category ?? "学习札记"}</p>
-                      <h3>{entry.data.title}</h3>
+                      <h3 data-article-transition-title>{entry.data.title}</h3>
                       {entry.data.description && <p class="study-description">{entry.data.description}</p>}
                       {tags.length > 0 && (
                         <ul class="study-topic-tags" data-study-topic-tags aria-label="主题标签">
@@ -77,14 +77,14 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat("zh-CN", {
               const tags = topicTags(entry);
               return (
                 <li class="study-archive-entry" data-study-state="completed">
-                  <a href={getEntryUrl(entry)} aria-label={`阅读已整理文章：${entry.data.title}`}>
+                  <a href={getEntryUrl(entry)} data-article-transition aria-label={`阅读已整理文章：${entry.data.title}`}>
                     <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
                     <div class="study-archive-copy">
                       <div class="study-card-meta">
                         <span class="study-status study-status-completed">已整理</span>
                         <span>{entry.data.category ?? "知识归档"}</span>
                       </div>
-                      <h3>{entry.data.title}</h3>
+                      <h3 data-article-transition-title>{entry.data.title}</h3>
                       {entry.data.description && <p class="study-description">{entry.data.description}</p>}
                       {tags.length > 0 && (
                         <ul class="study-topic-tags" data-study-topic-tags aria-label="主题标签">

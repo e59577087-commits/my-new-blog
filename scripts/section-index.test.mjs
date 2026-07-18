@@ -203,7 +203,7 @@ test("builds normalized share filters from published article tags", () => {
 test("uses 分享 as the default share card category", () => {
   assert.match(
     shareHtml,
-    /<div class="share-card-meta"><span>分享<\/span><time[^>]*>[\s\S]*?<\/time><\/div><h2>工具分享<\/h2>/,
+    /<div class="share-card-meta"><span>分享<\/span><time[^>]*>[\s\S]*?<\/time><\/div><h2[^>]*>工具分享<\/h2>/,
   );
 });
 

@@ -105,6 +105,7 @@ test("uses TOC-eligible section headings in the GKD article", () => {
     { depth: 2, text: "闲聊" },
     { depth: 2, text: "安装" },
     { depth: 2, text: "导入规则" },
+    { depth: 2, text: "小细节" },
   ]);
 });
 

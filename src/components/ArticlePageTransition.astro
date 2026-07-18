@@ -1,0 +1,43 @@
+<script>
+  const transitionStorageKey = "blog-article-transition-v1";
+  const root = document.documentElement;
+
+  const clearSourceNames = () => {
+    document.querySelectorAll<HTMLElement>("[data-article-transition-title], [data-article-transition-cover]").forEach((element) => {
+      element.style.removeProperty("view-transition-name");
+    });
+  };
+
+  const isPlainPrimaryClick = (event: MouseEvent) =>
+    event.button === 0 && !event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+
+  document.addEventListener("click", (event) => {
+    if (!(event instanceof MouseEvent) || !isPlainPrimaryClick(event)) return;
+
+    const target = event.target instanceof Element ? event.target : null;
+    const link = target?.closest<HTMLAnchorElement>("a[data-article-transition]");
+    if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+
+    const destination = new URL(link.href, window.location.href);
+    if (destination.origin !== window.location.origin) return;
+
+    clearSourceNames();
+    link.querySelector<HTMLElement>("[data-article-transition-title]")?.style.setProperty("view-transition-name", "article-title");
+    link.querySelector<HTMLElement>("[data-article-transition-cover]")?.style.setProperty("view-transition-name", "article-cover");
+
+    try {
+      window.sessionStorage.setItem(transitionStorageKey, JSON.stringify({
+        pathname: destination.pathname,
+        createdAt: Date.now(),
+      }));
+    } catch {
+      // The navigation still works when storage is unavailable; only the shared morph is skipped.
+    }
+  }, { capture: true });
+
+  window.addEventListener("pageshow", clearSourceNames);
+
+  if (root.dataset.articleTransition === "active") {
+    window.setTimeout(() => root.removeAttribute("data-article-transition"), 700);
+  }
+</script>

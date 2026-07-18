@@ -12,11 +12,11 @@ const cover = coverOrDefault(entry.data.cover);
 const responsiveCover = getResponsiveCover(cover);
 ---
 
-<a href={getEntryUrl(entry)} data-reveal class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${entry.data.title}`}>
-    <img src={cover} srcset={responsiveCover?.srcset} sizes={responsiveCover ? "(min-width: 640px) 8rem, 6rem" : undefined} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-24 shrink-0 object-cover sm:w-32" />
+<a href={getEntryUrl(entry)} data-reveal data-article-transition class="surface-soft motion-card flex rounded-lg overflow-hidden" aria-label={`打开${entry.data.title}`}>
+    <img data-article-transition-cover src={cover} srcset={responsiveCover?.srcset} sizes={responsiveCover ? "(min-width: 640px) 8rem, 6rem" : undefined} alt="" loading="lazy" decoding="async" width="320" height="240" class="aspect-[4/3] w-24 shrink-0 object-cover sm:w-32" />
     <div class="min-w-0 flex flex-col justify-center p-4">
       <p class="kicker text-xs">{kicker}</p>
-      <h2 class="heading-text mt-1 truncate text-xl font-semibold leading-7">{entry.data.title}</h2>
+      <h2 data-article-transition-title class="heading-text mt-1 truncate text-xl font-semibold leading-7">{entry.data.title}</h2>
       <div class="mt-2 flex flex-wrap gap-1.5">
         {entry.data.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2 py-0.5 text-xs muted">{tag}</span>)}
       </div>

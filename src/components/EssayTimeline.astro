@@ -29,11 +29,11 @@ const { groups } = Astro.props;
                 <time datetime={entry.data.date.toISOString()}>
                   {new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit" }).format(entry.data.date)}
                 </time>
-                <a href={getEntryUrl(entry)} class="essay-entry-card" aria-label={`阅读随笔：${entry.data.title}`}>
-                  <img src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="160" height="120" />
+                <a href={getEntryUrl(entry)} data-article-transition class="essay-entry-card" aria-label={`阅读随笔：${entry.data.title}`}>
+                  <img data-article-transition-cover src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="160" height="120" />
                   <div class="essay-entry-copy">
                     <p class="essay-entry-kicker">{groupIndex === 0 && entryIndex === 0 ? "最新记录" : "生活切片"}</p>
-                    <h3>{entry.data.title}</h3>
+                    <h3 data-article-transition-title>{entry.data.title}</h3>
                     {entry.data.description && <p class="essay-entry-description">{entry.data.description}</p>}
                     {entry.data.tags.length > 0 && (
                       <ul class="essay-entry-tags" aria-label="文章标签">

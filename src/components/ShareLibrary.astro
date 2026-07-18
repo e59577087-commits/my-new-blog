@@ -28,8 +28,8 @@ const encodedTags = (tags: string[]) => normalizeTags(tags).map(encodeURICompone
           const tags = normalizeTags(entry.data.tags);
           return (
             <article class="share-card" data-share-card data-share-tags={encodedTags(tags)}>
-              <a href={getEntryUrl(entry)} aria-label={`阅读分享：${entry.data.title}`}>
-                <img src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="480" height="300" />
+              <a href={getEntryUrl(entry)} data-article-transition aria-label={`阅读分享：${entry.data.title}`}>
+                <img data-article-transition-cover src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="480" height="300" />
                 <div class="share-card-body">
                   <div class="share-card-meta">
                     <span>{entry.data.category ?? "分享"}</span>
@@ -37,7 +37,7 @@ const encodedTags = (tags: string[]) => normalizeTags(tags).map(encodeURICompone
                       {new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "short", day: "numeric" }).format(entry.data.date)}
                     </time>
                   </div>
-                  <h2>{entry.data.title}</h2>
+                  <h2 data-article-transition-title>{entry.data.title}</h2>
                   {entry.data.description && <p class="share-card-description">{entry.data.description}</p>}
                   {tags.length > 0 && (
                     <ul class="share-card-tags" aria-label="文章标签">

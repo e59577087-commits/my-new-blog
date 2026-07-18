@@ -2,6 +2,7 @@
 import { render } from "astro:content";
 import BaseLayout from "./BaseLayout.astro";
 import ArticleToc from "../components/ArticleToc.astro";
+import ArticleReadingProgress from "../components/ArticleReadingProgress.astro";
 import ArticleImageLightbox from "../components/ArticleImageLightbox.astro";
 import Comments from "../components/Comments.astro";
 import PrevNextNav from "../components/PrevNextNav.astro";
@@ -25,29 +26,30 @@ const hasToc = tocHeadings.length >= 2;
 ---
 
 <BaseLayout title={title} description={description} type="article" publishedTime={date} image={cover}>
+  <ArticleReadingProgress />
   <div
     class:list={[
       "mx-auto px-4 py-10 sm:px-6 sm:py-14 lg:px-8",
       hasToc ? "max-w-6xl lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-12" : "max-w-4xl",
     ]}
   >
-  <article class="min-w-0">
+  <article class="min-w-0" data-article-reading-root>
     <a href={backHref} class="fine-link text-sm">{backLabel}</a>
 
     <header class="mt-8 border-b hairline pb-8">
       {category && <p class="kicker text-xs">{category}</p>}
-      <time datetime={date.toISOString()} class="faint-text text-sm">{formatArticleDate(date)}</time>
-      <h1 class="article-title heading-text mt-4 text-balance text-3xl leading-tight sm:text-5xl">{title}</h1>
+      <time datetime={date.toISOString()} class="article-meta faint-text text-sm">{formatArticleDate(date)}</time>
+      <h1 class="article-title heading-text mt-4 text-balance text-3xl leading-tight sm:text-5xl" data-article-transition-title>{title}</h1>
       {description && <p class="text-body mt-4 text-lg leading-relaxed">{description}</p>}
       <div class="mt-5 flex flex-wrap gap-2">
         {tags.map((tag) => <span class="rounded border hairline bg-[var(--color-surface-solid)] px-2.5 py-1 text-xs muted">{tag}</span>)}
       </div>
-      <img src={cover} alt="" loading="eager" decoding="async" width="960" height="621" class="mt-8 aspect-[16/8] w-full rounded-lg border hairline object-cover" />
+      <img data-article-transition-cover src={cover} alt="" loading="eager" decoding="async" width="960" height="621" class="mt-8 aspect-[16/8] w-full rounded-lg border hairline object-cover" />
     </header>
 
     {hasToc && <div class="mt-8 lg:hidden"><ArticleToc headings={tocHeadings} variant="mobile" /></div>}
 
-    <div class="prose-tech mt-10">
+    <div class="prose-tech mt-10" data-article-reading-body>
       <Content />
     </div>
 
@@ -67,7 +69,7 @@ const hasToc = tocHeadings.length >= 2;
   {
     hasToc && (
       <aside class="hidden lg:block">
-        <div class="sticky top-[calc(var(--site-header-height)+1.5rem)] max-h-[calc(100vh-var(--site-header-height)-3rem)] overflow-y-auto py-2">
+        <div class="sticky top-[calc(var(--site-header-height)+4.25rem)] max-h-[calc(100vh-var(--site-header-height)-5.75rem)] overflow-y-auto py-2">
           <ArticleToc headings={tocHeadings} variant="desktop" />
         </div>
       </aside>

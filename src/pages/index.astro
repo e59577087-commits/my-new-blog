@@ -99,8 +99,9 @@ const bannerTitleChars = Array.from(bannerTitle);
 
       <div class="latest-layout grid gap-5 lg:grid-cols-[minmax(0,2.5fr)_minmax(320px,1.6fr)]">
         <!-- Featured article (large card, left column) -->
-        <a href={latest.href} data-reveal class="surface motion-card group block overflow-hidden rounded-lg">
+        <a href={latest.href} data-reveal data-article-transition class="surface motion-card group block overflow-hidden rounded-lg">
           <img
+            data-article-transition-cover
             src={latest.image}
             srcset={latestCover?.srcset}
             sizes={latestCover ? "(min-width: 1024px) 43rem, calc(100vw - 2rem)" : undefined}
@@ -118,7 +119,7 @@ const bannerTitleChars = Array.from(bannerTitle);
               {latest.pinned && <span class="rounded bg-[var(--color-accent-soft)] px-2 py-0.5 text-xs kicker">置顶</span>}
               <span class="kicker text-xs">{latest.category}</span>
             </div>
-            <h2 class="heading-text mt-3 text-2xl font-semibold leading-8 transition-colors group-hover:text-[var(--color-accent-text)] sm:text-3xl">{latest.title}</h2>
+            <h2 data-article-transition-title class="heading-text mt-3 text-2xl font-semibold leading-8 transition-colors group-hover:text-[var(--color-accent-text)] sm:text-3xl">{latest.title}</h2>
             <div class="mt-4 flex flex-wrap gap-2">
               {latest.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2.5 py-1 text-xs muted">{tag}</span>)}
             </div>
@@ -131,8 +132,9 @@ const bannerTitleChars = Array.from(bannerTitle);
             latestList.map((item) => {
               const responsiveCover = getResponsiveCover(item.image);
               return (
-              <a href={item.href} data-reveal class="surface-soft motion-card flex rounded-lg overflow-hidden">
+              <a href={item.href} data-reveal data-article-transition class="surface-soft motion-card flex rounded-lg overflow-hidden">
                 <img
+                  data-article-transition-cover
                   src={item.image}
                   srcset={responsiveCover?.srcset}
                   sizes={responsiveCover ? "(min-width: 640px) 10rem, 7rem" : undefined}
@@ -149,7 +151,7 @@ const bannerTitleChars = Array.from(bannerTitle);
                     {item.pinned && <span class="rounded bg-[var(--color-accent-soft)] px-2 py-0.5 text-xs kicker">置顶</span>}
                     <span class="kicker text-xs">{item.category}</span>
                   </div>
-                  <h2 class="heading-text mt-1.5 text-lg font-semibold leading-7">{item.title}</h2>
+                  <h2 data-article-transition-title class="heading-text mt-1.5 text-lg font-semibold leading-7">{item.title}</h2>
                   <div class="mt-2.5 flex flex-wrap gap-1.5">
                     {item.tags.map((tag) => <span class="rounded bg-[var(--color-field)] px-2 py-0.5 text-xs muted">{tag}</span>)}
                   </div>

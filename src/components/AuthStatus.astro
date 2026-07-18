@@ -3,14 +3,10 @@
     登录
   </a>
 
-  <div data-auth-user hidden class="auth-control h-9 items-center gap-2 rounded-md border px-2">
-    <a href="/login/" data-auth-avatar-link class="block size-6 shrink-0 overflow-hidden rounded-full border hairline transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-border)]" title="账户设置 / 更换头像" aria-label="账户设置">
+  <div data-auth-user hidden class="items-center">
+    <a href="/login/" data-auth-avatar-link class="block size-9 shrink-0 overflow-hidden rounded-full border hairline shadow-[var(--shadow-control)] transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-border)]" title="账户设置" aria-label="账户设置">
       <img data-auth-avatar alt="用户头像" class="size-full object-cover" />
     </a>
-    <span data-auth-name class="hidden max-w-24 truncate text-sm sm:inline"></span>
-    <button type="button" data-auth-signout class="rounded px-2 py-1 text-sm transition-colors cursor-pointer hover:bg-[var(--color-surface-hover)]">
-      退出
-    </button>
   </div>
 </div>
 
@@ -21,8 +17,6 @@
     const loginLink = root?.querySelector("[data-auth-login]");
     const userBox = root?.querySelector("[data-auth-user]");
     const avatar = root?.querySelector("[data-auth-avatar]");
-    const name = root?.querySelector("[data-auth-name]");
-    const signOutButton = root?.querySelector("[data-auth-signout]");
     const supabase = createBrowserSupabaseClient();
 
     const getCurrentUser = async () => {
@@ -36,7 +30,7 @@
     };
 
     const renderAuthStatus = (user) => {
-      if (!loginLink || !userBox || !avatar || !name) return;
+      if (!loginLink || !userBox || !avatar) return;
 
       if (!user) {
         loginLink.hidden = false;
@@ -49,7 +43,6 @@
       loginLink.hidden = true;
       userBox.hidden = false;
       userBox.classList.add("flex");
-      name.textContent = displayName;
       avatar.src = getUserAvatar(user) || getFallbackAvatar(displayName);
     };
 
@@ -63,11 +56,6 @@
 
     window.addEventListener("auth-state-updated", async () => {
       renderAuthStatus(await getCurrentUser());
-    });
-
-    signOutButton?.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      renderAuthStatus(null);
     });
   };
 

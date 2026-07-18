@@ -4,6 +4,7 @@ import SiteHeader from "../components/SiteHeader.astro";
 import ScrollTopButton from "../components/ScrollTopButton.astro";
 import CardTilt from "../components/CardTilt.astro";
 import OmikujiDraw from "../components/OmikujiDraw.astro";
+import ArticlePageTransition from "../components/ArticlePageTransition.astro";
 import { site } from "../data/site";
 import "../styles/global.css";
 
@@ -53,6 +54,26 @@ const socialImageUrl = new URL(image, site.url);
     </script>
     <script is:inline>
       (() => {
+        const storageKey = "blog-article-transition-v1";
+        try {
+          const raw = window.sessionStorage.getItem(storageKey);
+          if (!raw) return;
+
+          const payload = JSON.parse(raw);
+          const isFresh = typeof payload?.createdAt === "number" && Date.now() - payload.createdAt < 8000;
+          if (isFresh && payload.pathname === window.location.pathname) {
+            document.documentElement.dataset.articleTransition = "active";
+          }
+          window.sessionStorage.removeItem(storageKey);
+        } catch {
+          try {
+            window.sessionStorage.removeItem(storageKey);
+          } catch {}
+        }
+      })();
+    </script>
+    <script is:inline>
+      (() => {
         const storageKey = "blog-appearance-settings-v1";
         const defaults = {
           hue: 150,
@@ -75,7 +96,7 @@ const socialImageUrl = new URL(image, site.url);
           const next = { ...defaults, ...(isObject(settings) ? settings : {}) };
           const hue = Number(next.hue);
           next.hue = Number.isFinite(hue) ? Math.min(360, Math.max(0, hue)) : defaults.hue;
-          next.accentMode = next.accentMode === "white" ? "white" : "color";
+          next.accentMode = ["white", "paper"].includes(next.accentMode) ? next.accentMode : "color";
           if (next.wallpaperMode === "fullscreen") next.wallpaperMode = "transparent";
           next.wallpaperMode = ["banner", "transparent", "solid"].includes(next.wallpaperMode) ? next.wallpaperMode : defaults.wallpaperMode;
           next.articleLayout = ["list", "grid"].includes(next.articleLayout) ? next.articleLayout : defaults.articleLayout;
@@ -89,7 +110,7 @@ const socialImageUrl = new URL(image, site.url);
         const read = () => {
           try {
             const raw = window.localStorage.getItem(storageKey);
-            if (raw === null) return { ...defaults, accentMode: "white" };
+            if (raw === null) return { ...defaults, accentMode: "paper" };
             return normalize(JSON.parse(raw));
           } catch {
             return { ...defaults };
@@ -140,9 +161,10 @@ const socialImageUrl = new URL(image, site.url);
         <slot />
       </main>
       <SiteFooter />
-      <ScrollTopButton />
+      {type !== "article" && <ScrollTopButton />}
       <CardTilt />
       <OmikujiDraw />
+      <ArticlePageTransition />
     </div>
     <script>
       (function scrollReveal() {

@@ -87,7 +87,40 @@
       </div>
       <div class="min-w-0 flex-1">
         <p class="kicker text-sm font-medium">已登录</p>
-        <h2 data-panel-name class="heading-text mt-1 truncate text-2xl font-semibold"></h2>
+        <div data-name-display class="mt-1 flex min-w-0 items-center gap-2">
+          <h2 data-panel-name class="heading-text min-w-0 truncate text-2xl font-semibold"></h2>
+          <button
+            type="button"
+            data-name-edit
+            aria-controls="auth-name-form"
+            aria-expanded="false"
+            class="faint-text shrink-0 rounded px-1.5 py-1 text-xs transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-border)]"
+          >
+            修改
+          </button>
+        </div>
+        <form id="auth-name-form" data-name-form hidden class="mt-3">
+          <label for="auth-display-name" class="sr-only">昵称</label>
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <input
+              id="auth-display-name"
+              data-name-input
+              type="text"
+              autocomplete="nickname"
+              maxlength="24"
+              required
+              class="input-control min-w-0 flex-1 rounded-md border px-3 py-2 text-sm outline-none transition focus:border-[var(--color-accent-border)]"
+            />
+            <div class="flex gap-2">
+              <button type="submit" data-name-save class="primary-button rounded-md border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-wait disabled:opacity-60">
+                保存
+              </button>
+              <button type="button" data-name-cancel class="secondary-button rounded-md border px-3 py-2 text-sm transition-colors disabled:opacity-60">
+                取消
+              </button>
+            </div>
+          </div>
+        </form>
         <p data-panel-email class="faint-text mt-1 truncate text-sm"></p>
       </div>
     </div>
@@ -118,6 +151,11 @@
   const avatar = panel?.querySelector("[data-panel-avatar]");
   const name = panel?.querySelector("[data-panel-name]");
   const email = panel?.querySelector("[data-panel-email]");
+  const nameEditButton = panel?.querySelector("[data-name-edit]") as HTMLButtonElement | null;
+  const nameForm = panel?.querySelector("[data-name-form]") as HTMLFormElement | null;
+  const nameInput = panel?.querySelector("[data-name-input]") as HTMLInputElement | null;
+  const nameSaveButton = panel?.querySelector("[data-name-save]") as HTMLButtonElement | null;
+  const nameCancelButton = panel?.querySelector("[data-name-cancel]") as HTMLButtonElement | null;
   const signOutButton = panel?.querySelector("[data-panel-signout]");
   const emailForm = panel?.querySelector("[data-email-form]");
   const emailInput = panel?.querySelector("[data-email-input]");
@@ -144,9 +182,32 @@
   };
 
   const normalizeEmail = (value) => value?.trim().toLowerCase() ?? "";
+  const normalizeDisplayName = (value) => value.trim().replace(/\s+/g, " ");
 
   const notifyAuthUpdated = () => {
     window.dispatchEvent(new CustomEvent("auth-state-updated"));
+  };
+
+  const setNameEditing = (isEditing) => {
+    if (!nameForm || !nameEditButton) return;
+    nameForm.hidden = !isEditing;
+    nameEditButton.setAttribute("aria-expanded", isEditing ? "true" : "false");
+
+    if (isEditing && nameInput && currentUser) {
+      nameInput.value = getUserDisplayName(currentUser);
+      window.requestAnimationFrame(() => {
+        nameInput.focus();
+        nameInput.select();
+      });
+    }
+  };
+
+  const setNameSaving = (isSaving) => {
+    if (nameInput) nameInput.disabled = isSaving;
+    if (nameCancelButton) nameCancelButton.disabled = isSaving;
+    if (!nameSaveButton) return;
+    nameSaveButton.disabled = isSaving;
+    nameSaveButton.textContent = isSaving ? "保存中..." : "保存";
   };
 
   const setSending = (isSending) => {
@@ -237,6 +298,8 @@
     if (!user) {
       signedOut.hidden = false;
       signedIn.hidden = true;
+      currentUser = null;
+      setNameEditing(false);
       return;
     }
 
@@ -246,8 +309,10 @@
     signedIn.hidden = false;
     currentUser = user;
     name.textContent = displayName;
+    if (nameInput) nameInput.value = displayName;
     email.textContent = user.email ?? "";
     avatar.src = avatarUrl || getFallbackAvatar(displayName);
+    setNameEditing(false);
 
     const hasCustomAvatar = Boolean(user.user_metadata?.custom_avatar);
     if (avatarResetButton) avatarResetButton.hidden = !hasCustomAvatar;
@@ -329,6 +394,57 @@
       }
 
       await sendEmailOtp(targetEmail);
+    });
+
+    nameEditButton?.addEventListener("click", () => {
+      setMessage("");
+      setNameEditing(true);
+    });
+
+    nameCancelButton?.addEventListener("click", () => {
+      setNameEditing(false);
+      setMessage("");
+    });
+
+    nameForm?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!supabase || !currentUser || !nameInput) return;
+
+      const nextName = normalizeDisplayName(nameInput.value);
+      if (!nextName) {
+        setMessage("昵称不能为空。");
+        nameInput.focus();
+        return;
+      }
+      if ([...nextName].length > 24) {
+        setMessage("昵称不能超过 24 个字符。");
+        nameInput.focus();
+        return;
+      }
+      if (nextName === getUserDisplayName(currentUser)) {
+        setNameEditing(false);
+        setMessage("");
+        return;
+      }
+
+      setNameSaving(true);
+      setMessage("正在保存昵称...");
+      try {
+        const { data, error } = await supabase.auth.updateUser({ data: { name: nextName } });
+        if (error) {
+          setMessage(`保存失败：${error.message}`);
+          return;
+        }
+
+        currentUser = data.user ?? (await getCurrentUser());
+        if (currentUser) setPanelState(currentUser);
+        notifyAuthUpdated();
+        setMessage("昵称已更新。");
+      } catch (err) {
+        setMessage(`保存失败：${err instanceof Error ? err.message : "未知错误"}`);
+      } finally {
+        setNameSaving(false);
+      }
     });
 
     signOutButton?.addEventListener("click", async () => {

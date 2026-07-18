@@ -22,13 +22,20 @@ const runAppearanceScript = (storedSettings) => {
   };
   const window = {
     localStorage: {
-      getItem: () => JSON.stringify(storedSettings),
+      getItem: () => storedSettings === null ? null : JSON.stringify(storedSettings),
     },
   };
 
   runInNewContext(script, { document: { documentElement }, window });
   return { appearance: window.__blogAppearance, documentElement };
 };
+
+test("uses the warm paper background for a visitor with no saved appearance", () => {
+  const { appearance, documentElement } = runAppearanceScript(null);
+
+  assert.equal(appearance.read().accentMode, "paper");
+  assert.equal(documentElement.dataset.accentMode, "paper");
+});
 
 test("offers one full-screen wallpaper option backed by the transparent mode", () => {
   const group = appearanceSettings.match(/<div class="appearance-options" data-appearance-wallpaper[^>]*>([\s\S]*?)<\/div>/)?.[1];
@@ -73,4 +80,19 @@ test("removes the old fullscreen styles while retaining the transparent wallpape
     /:root\[data-wallpaper-mode="transparent"\] \.surface,\s*:root\[data-wallpaper-mode="transparent"\] \.surface-soft\s*\{/,
     "transparent mode no longer applies its glass surface treatment",
   );
+});
+
+test("offers and persists an innei-inspired warm paper appearance preset", () => {
+  const lightRoot = globalCss.match(/:root\s*\{([\s\S]*?)\n\}/)?.[1];
+  assert.ok(lightRoot, "the default light theme tokens are missing");
+
+  assert.match(appearanceSettings, /appearance-swatch--paper[^>]*data-accent-mode="paper"[^>]*aria-label="纸白"/, "the theme hue row does not offer the paper preset");
+  assert.match(lightRoot, /--color-page:\s*hsl\(var\(--theme-hue\)/, "selecting a hue can no longer restore its colored page background");
+  assert.match(globalCss, /:root\[data-accent-mode="paper"\]\s*\{[\s\S]*?--color-page:\s*#fefefb\s*;[\s\S]*?--color-page-soft:\s*#f9f8f5\s*;[\s\S]*?--color-surface-fallback:\s*#fbfaf7\s*;[\s\S]*?--page-background:\s*var\(--color-page\)\s*;/, "the paper preset does not define the warm paper palette");
+  assert.match(globalCss, /:root\[data-theme="dark"\]\[data-accent-mode="paper"\]\s*\{/, "the paper preset has no dark-theme counterpart");
+
+  const { appearance, documentElement } = runAppearanceScript({ accentMode: "paper" });
+  assert.equal(appearance.normalize({ accentMode: "paper" }).accentMode, "paper");
+  assert.equal(appearance.apply({ accentMode: "paper" }).accentMode, "paper");
+  assert.equal(documentElement.dataset.accentMode, "paper");
 });

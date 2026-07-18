@@ -28,6 +28,7 @@
         <button type="button" class="appearance-swatch" data-hue="150" style="--swatch-hue:150" aria-label="绿色" aria-pressed="false"></button>
         <button type="button" class="appearance-swatch" data-hue="210" style="--swatch-hue:210" aria-label="蓝色" aria-pressed="false"></button>
         <button type="button" class="appearance-swatch" data-hue="270" style="--swatch-hue:270" aria-label="紫色" aria-pressed="false"></button>
+        <button type="button" class="appearance-swatch appearance-swatch--paper" data-accent-mode="paper" aria-label="纸白" aria-pressed="false"></button>
         <button type="button" class="appearance-swatch appearance-swatch--white" data-accent-mode="white" aria-label="纯白" aria-pressed="false"></button>
       </div>
     </div>
@@ -228,6 +229,11 @@
   .appearance-swatch--white {
     background: linear-gradient(135deg, #ffffff, #dbe4f0);
     border-color: hsl(0 0% 82%);
+  }
+
+  .appearance-swatch--paper {
+    background: linear-gradient(135deg, #fefefb 0 52%, #f9f8f5 52% 100%);
+    border-color: #d8d4ca;
   }
 
   .appearance-options,
@@ -454,8 +460,10 @@
 
       if (swatchGroup) {
         swatchGroup.querySelectorAll("button").forEach((button) => {
-          const isWhite = button.dataset.accentMode === "white";
-          const pressed = isWhite ? settings.accentMode === "white" : (settings.accentMode !== "white" && Number(button.dataset.hue) === settings.hue);
+          const accentMode = button.dataset.accentMode;
+          const pressed = accentMode
+            ? settings.accentMode === accentMode
+            : settings.accentMode === "color" && Number(button.dataset.hue) === settings.hue;
           button.setAttribute("aria-pressed", pressed ? "true" : "false");
         });
       }
@@ -530,8 +538,8 @@
     swatchGroup?.addEventListener("click", (event) => {
       const button = event.target instanceof HTMLElement ? event.target.closest("button[data-hue], button[data-accent-mode]") : null;
       if (!button) return;
-      if (button.dataset.accentMode === "white") {
-        update({ accentMode: "white" });
+      if (button.dataset.accentMode) {
+        update({ accentMode: button.dataset.accentMode });
       } else {
         update({ hue: Number(button.dataset.hue), accentMode: "color" });
       }
