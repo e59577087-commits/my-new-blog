@@ -1,0 +1,373 @@
+---
+import { SITE_PETS } from "../data/sitePets.mjs";
+
+type Props = {
+  reducedActivity?: boolean;
+};
+
+const { reducedActivity = false } = Astro.props;
+const initialPet = SITE_PETS[0];
+---
+
+<div
+  class="site-pet"
+  data-site-pet-root
+  data-reduced-activity={reducedActivity ? "true" : "false"}
+  data-rendering={initialPet.rendering}
+  hidden
+>
+  <button type="button" class="site-pet-action" data-site-pet-action aria-label={`和${initialPet.displayName}互动`}>
+    <canvas data-site-pet-canvas width="192" height="208" aria-hidden="true"></canvas>
+  </button>
+  <a class="site-pet-credit" data-site-pet-credit href={initialPet.sourceUrl} target="_blank" rel="noreferrer noopener">
+    <strong data-site-pet-name>{initialPet.displayName}</strong>
+    <small>作者 · <span data-site-pet-author>{initialPet.author}</span></small>
+  </a>
+</div>
+
+<style>
+  .site-pet {
+    --site-pet-x: 1rem;
+    position: fixed;
+    z-index: 44;
+    left: 0;
+    bottom: max(0.55rem, env(safe-area-inset-bottom));
+    width: 6rem;
+    height: 6.5rem;
+    pointer-events: none;
+    transform: translate3d(var(--site-pet-x), 0, 0);
+    transition: opacity 180ms ease;
+    contain: layout paint;
+  }
+
+  .site-pet[hidden],
+  :global(:root[data-site-pet="off"]) .site-pet {
+    display: none;
+  }
+
+  .site-pet-action {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+    pointer-events: auto;
+    transform-origin: 50% 100%;
+    transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), filter 180ms ease;
+  }
+
+  .site-pet-action:hover,
+  .site-pet-action:focus-visible {
+    transform: translateY(-0.18rem) scale(1.025);
+    filter: drop-shadow(0 0.45rem 0.55rem hsl(220 30% 10% / 0.18));
+    outline: none;
+  }
+
+  .site-pet canvas {
+    display: block;
+    width: 6rem;
+    height: 6.5rem;
+    object-fit: contain;
+    filter: drop-shadow(0 0.35rem 0.3rem hsl(220 30% 10% / 0.16));
+  }
+
+  .site-pet[data-rendering="pixelated"] canvas {
+    image-rendering: pixelated;
+  }
+
+  .site-pet-credit {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% - 0.1rem);
+    min-width: max-content;
+    border: 1px solid var(--color-border);
+    border-radius: 0.65rem;
+    background: var(--color-surface-elevated, var(--color-surface));
+    box-shadow: var(--shadow-soft);
+    padding: 0.35rem 0.5rem;
+    color: var(--color-text-soft);
+    font-size: 0.65rem;
+    line-height: 1.3;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(-50%, 0.25rem, 0) scale(0.96);
+    transition: opacity 160ms ease, transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .site-pet-credit strong,
+  .site-pet-credit small {
+    display: block;
+  }
+
+  .site-pet-credit strong {
+    color: var(--color-heading);
+    font-weight: 650;
+  }
+
+  .site-pet-credit small {
+    margin-top: 0.08rem;
+    color: var(--color-faint);
+    font-size: 0.56rem;
+  }
+
+  .site-pet:hover .site-pet-credit,
+  .site-pet:focus-within .site-pet-credit {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate3d(-50%, 0, 0) scale(1);
+  }
+
+  @media (max-width: 48rem) {
+    .site-pet {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-pet,
+    .site-pet-action,
+    .site-pet-credit {
+      transition-duration: 0.01ms;
+    }
+  }
+</style>
+
+<script>
+  import { PET_ANIMATIONS, frameRect, getPetById, idleBlinkHoldMs, lookFrameFromVector } from "../scripts/sitePetEngine.mjs";
+
+  let cleanupActivePet = () => {};
+
+  const mountSitePet = () => {
+    cleanupActivePet();
+
+    const root = document.querySelector("[data-site-pet-root]");
+    const action = root?.querySelector("[data-site-pet-action]");
+    const canvas = root?.querySelector("[data-site-pet-canvas]");
+    const credit = root?.querySelector("[data-site-pet-credit]");
+    const name = root?.querySelector("[data-site-pet-name]");
+    const author = root?.querySelector("[data-site-pet-author]");
+    const context = canvas instanceof HTMLCanvasElement ? canvas.getContext("2d", { alpha: true }) : null;
+
+    if (!(root instanceof HTMLElement) || !(action instanceof HTMLButtonElement) || !context || !(credit instanceof HTMLAnchorElement)) {
+      cleanupActivePet = () => {};
+      return;
+    }
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const reducedActivity = root.dataset.reducedActivity === "true";
+    let pet = getPetById(document.documentElement.dataset.sitePetId);
+    let image = new Image();
+    let imageRequest = 0;
+    let imageReady = false;
+    let stateName = "idle";
+    let frameIndex = 0;
+    let idleHoldDuration = idleBlinkHoldMs();
+    let frameStartedAt = performance.now();
+    let previousTickAt = frameStartedAt;
+    let behaviorEndsAt = 0;
+    let nextBehaviorAt = frameStartedAt + 5000;
+    let positionX = Math.min(24, Math.max(8, window.innerWidth - 120));
+    let walkDirection = 1;
+    let lookFrame = null;
+    let animationFrame = 0;
+    let lastDrawnFrame = "";
+    let stopped = false;
+
+    const isEnabled = () => document.documentElement.dataset.sitePet !== "off";
+    const maxPosition = () => Math.max(8, window.innerWidth - root.offsetWidth - 8);
+    const scheduleNextBehavior = (now) => {
+      nextBehaviorAt = now + (reducedActivity ? 24000 : 6500 + Math.random() * 6000);
+    };
+
+    const applyPosition = () => {
+      positionX = Math.min(maxPosition(), Math.max(8, positionX));
+      root.style.setProperty("--site-pet-x", `${Math.round(positionX)}px`);
+    };
+
+    const setState = (nextState, now = performance.now()) => {
+      stateName = nextState;
+      frameIndex = 0;
+      frameStartedAt = now;
+      if (nextState === "idle") idleHoldDuration = idleBlinkHoldMs();
+      lookFrame = null;
+      lastDrawnFrame = "";
+    };
+
+    const drawFrame = (row, column) => {
+      if (!imageReady) return;
+      const key = `${pet.id}:${row}:${column}`;
+      if (key === lastDrawnFrame) return;
+      const { sx, sy, sw, sh } = frameRect(row, column, pet.cellWidth, pet.cellHeight);
+      context.clearRect(0, 0, pet.cellWidth, pet.cellHeight);
+      context.drawImage(image, sx, sy, sw, sh, 0, 0, pet.cellWidth, pet.cellHeight);
+      lastDrawnFrame = key;
+    };
+
+    const renderAnimation = (now) => {
+      if (reducedMotion.matches) {
+        drawFrame(0, 0);
+        return;
+      }
+
+      if (pet.version === 2 && stateName === "idle" && lookFrame) {
+        drawFrame(lookFrame.row, lookFrame.column);
+        return;
+      }
+
+      let animation = PET_ANIMATIONS[stateName] ?? PET_ANIMATIONS.idle;
+      let frameDuration = stateName === "idle" && frameIndex === 0
+        ? idleHoldDuration
+        : animation.durations[frameIndex];
+      while (now - frameStartedAt >= frameDuration) {
+        frameStartedAt += frameDuration;
+        frameIndex += 1;
+        if (frameIndex >= animation.durations.length) {
+          if (animation.loop) {
+            frameIndex = 0;
+            if (stateName === "idle") idleHoldDuration = idleBlinkHoldMs();
+          } else {
+            setState("idle", now);
+            scheduleNextBehavior(now);
+            animation = PET_ANIMATIONS.idle;
+          }
+        }
+        frameDuration = stateName === "idle" && frameIndex === 0
+          ? idleHoldDuration
+          : animation.durations[frameIndex];
+      }
+      drawFrame(animation.row, frameIndex);
+    };
+
+    const beginWalk = (now) => {
+      const roomLeft = positionX - 8;
+      const roomRight = maxPosition() - positionX;
+      if (roomLeft < 60) walkDirection = 1;
+      else if (roomRight < 60) walkDirection = -1;
+      else walkDirection = Math.random() > 0.5 ? 1 : -1;
+      setState(walkDirection > 0 ? "runningRight" : "runningLeft", now);
+      behaviorEndsAt = now + 2600 + Math.random() * 2400;
+    };
+
+    const tick = (now) => {
+      if (stopped) return;
+      animationFrame = window.requestAnimationFrame(tick);
+      if (document.hidden || !imageReady || !isEnabled()) {
+        previousTickAt = now;
+        return;
+      }
+
+      const elapsed = Math.min(64, Math.max(0, now - previousTickAt));
+      previousTickAt = now;
+      const walking = stateName === "runningRight" || stateName === "runningLeft";
+
+      if (walking) {
+        positionX += walkDirection * elapsed * 0.034;
+        const nextMax = maxPosition();
+        if (positionX <= 8 || positionX >= nextMax || now >= behaviorEndsAt) {
+          positionX = Math.min(nextMax, Math.max(8, positionX));
+          setState("idle", now);
+          scheduleNextBehavior(now);
+        }
+        applyPosition();
+      } else if (!reducedActivity && stateName === "idle" && !lookFrame && now >= nextBehaviorAt) {
+        beginWalk(now);
+      }
+
+      renderAnimation(now);
+    };
+
+    const loadPet = (petId) => {
+      const nextPet = getPetById(petId);
+      const request = ++imageRequest;
+      pet = nextPet;
+      imageReady = false;
+      lastDrawnFrame = "";
+      root.dataset.rendering = pet.rendering;
+      action.setAttribute("aria-label", `和${pet.displayName}互动`);
+      credit.href = pet.sourceUrl;
+      if (name) name.textContent = pet.displayName;
+      if (author) author.textContent = pet.author;
+
+      const nextImage = new Image();
+      nextImage.decoding = "async";
+      nextImage.onload = () => {
+        if (request !== imageRequest || stopped) return;
+        image = nextImage;
+        imageReady = true;
+        setState("idle");
+        root.hidden = !isEnabled();
+        applyPosition();
+        drawFrame(0, 0);
+      };
+      nextImage.src = pet.spritesheetPath;
+    };
+
+    const handleAction = () => {
+      if (!imageReady || reducedMotion.matches) return;
+      setState("waving");
+    };
+
+    const handlePointerMove = (event) => {
+      if (pet.version !== 2 || stateName !== "idle" || reducedMotion.matches || !isEnabled()) return;
+      const bounds = action.getBoundingClientRect();
+      const dx = event.clientX - (bounds.left + bounds.width / 2);
+      const dy = event.clientY - (bounds.top + bounds.height / 2);
+      lookFrame = Math.hypot(dx, dy) <= 420 ? lookFrameFromVector(dx, dy, 30) : null;
+      lastDrawnFrame = "";
+    };
+
+    const clearPointerLook = () => {
+      lookFrame = null;
+      lastDrawnFrame = "";
+    };
+
+    const handleAppearanceChange = (event) => {
+      const settings = event.detail ?? window.__blogAppearance?.read?.();
+      root.hidden = !settings?.sitePetEnabled;
+      if (settings?.sitePetId && settings.sitePetId !== pet.id) loadPet(settings.sitePetId);
+    };
+
+    const handleVisibility = () => {
+      previousTickAt = performance.now();
+      if (!document.hidden && imageReady) lastDrawnFrame = "";
+    };
+
+    const handleResize = () => applyPosition();
+    const handleMotionChange = () => {
+      setState("idle");
+      if (imageReady) drawFrame(0, 0);
+    };
+
+    action.addEventListener("click", handleAction);
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    document.documentElement.addEventListener("pointerleave", clearPointerLook);
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("resize", handleResize, { passive: true });
+    window.addEventListener("blog:appearance-change", handleAppearanceChange);
+    reducedMotion.addEventListener("change", handleMotionChange);
+
+    applyPosition();
+    loadPet(document.documentElement.dataset.sitePetId);
+    animationFrame = window.requestAnimationFrame(tick);
+
+    cleanupActivePet = () => {
+      stopped = true;
+      window.cancelAnimationFrame(animationFrame);
+      action.removeEventListener("click", handleAction);
+      window.removeEventListener("pointermove", handlePointerMove);
+      document.documentElement.removeEventListener("pointerleave", clearPointerLook);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("blog:appearance-change", handleAppearanceChange);
+      reducedMotion.removeEventListener("change", handleMotionChange);
+    };
+  };
+
+  mountSitePet();
+  document.addEventListener("astro:page-load", mountSitePet);
+  document.addEventListener("astro:before-swap", () => cleanupActivePet());
+</script>

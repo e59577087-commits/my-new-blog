@@ -4,6 +4,7 @@
 
 @theme {
   --font-sans: "MiSans", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  --font-editorial: "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Source Han Serif", "Songti SC", "STSong", "SimSun", ui-serif, serif;
   --font-wenkai: "LXGW WenKai", "Klee", "Noto Serif SC", "STSong", "SimSun", ui-serif, serif;
   --font-mono: "JetBrains Mono", "SFMono-Regular", "Cascadia Code", Consolas, "Liberation Mono", monospace;
 }
@@ -1003,6 +1004,17 @@ button {
   transition-duration: var(--theme-transition-duration);
   transition-property: background-color, border-color, box-shadow, color, fill, opacity, stroke;
   transition-timing-function: var(--theme-transition-easing);
+}
+
+/* Article listings use the quieter serif face while long-form reading stays sans. */
+[data-editorial-card] {
+  font-family: var(--font-editorial);
+}
+
+[data-editorial-card] [data-article-transition-title] {
+  font-family: var(--font-editorial);
+  font-weight: 500;
+  letter-spacing: 0.015em;
 }
 
 @view-transition {

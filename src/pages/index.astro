@@ -4,6 +4,7 @@ import ProfileCard from "../components/ProfileCard.astro";
 import MiniCalendar from "../components/MiniCalendar.astro";
 import BannerParticles from "../components/BannerParticles.astro";
 import HomepageBlackHole from "../components/HomepageBlackHole.astro";
+import AnnualWritingTrail from "../components/AnnualWritingTrail.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { formatArticleDate, getEntryUrl, getPublishedArticles, getSectionLabel, coverOrDefault } from "../utils/articles";
 import { getResponsiveCover } from "../utils/responsiveImages";
@@ -84,7 +85,7 @@ const bannerTitleChars = Array.from(bannerTitle);
     <!-- 最新 -->
     {
       latest && (
-    <section class="latest-region">
+    <section id="latest-writing" class="latest-region">
       <div class="latest-profile-sidecar">
         <ProfileCard />
         <div class="mt-4">
@@ -99,7 +100,7 @@ const bannerTitleChars = Array.from(bannerTitle);
 
       <div class="latest-layout grid gap-5 lg:grid-cols-[minmax(0,2.5fr)_minmax(320px,1.6fr)]">
         <!-- Featured article (large card, left column) -->
-        <a href={latest.href} data-reveal data-article-transition class="surface motion-card group block overflow-hidden rounded-lg">
+        <a href={latest.href} data-reveal data-article-transition data-editorial-card class="surface motion-card group block overflow-hidden rounded-lg">
           <img
             data-article-transition-cover
             src={latest.image}
@@ -132,7 +133,7 @@ const bannerTitleChars = Array.from(bannerTitle);
             latestList.map((item) => {
               const responsiveCover = getResponsiveCover(item.image);
               return (
-              <a href={item.href} data-reveal data-article-transition class="surface-soft motion-card flex rounded-lg overflow-hidden">
+              <a href={item.href} data-reveal data-article-transition data-editorial-card class="surface-soft motion-card flex rounded-lg overflow-hidden">
                 <img
                   data-article-transition-cover
                   src={item.image}
@@ -269,4 +270,5 @@ const bannerTitleChars = Array.from(bannerTitle);
 
     </section>
   </div>
+  <AnnualWritingTrail articles={articles} />
 </BaseLayout>

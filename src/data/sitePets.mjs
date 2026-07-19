@@ -1,0 +1,51 @@
+export const DEFAULT_SITE_PET_ID = "ikun";
+
+export const SITE_PETS = Object.freeze([
+  Object.freeze({
+    id: "ikun",
+    displayName: "鸡哥 ikun",
+    author: "ikun",
+    kind: "animal",
+    version: 1,
+    atlasWidth: 1536,
+    atlasHeight: 1872,
+    cellWidth: 192,
+    cellHeight: 208,
+    rendering: "pixelated",
+    posterPath: "/pets/ikun/poster.webp",
+    spritesheetPath: "/pets/ikun/spritesheet.webp",
+    sourceUrl: "https://codex-pets.net/#/pets/ikun",
+  }),
+  Object.freeze({
+    id: "yukino-swimsuit",
+    displayName: "雪之下雪乃",
+    author: "Joexxl",
+    kind: "person",
+    version: 2,
+    atlasWidth: 1536,
+    atlasHeight: 2288,
+    cellWidth: 192,
+    cellHeight: 208,
+    rendering: "smooth",
+    posterPath: "/pets/yukino-swimsuit/poster.webp",
+    spritesheetPath: "/pets/yukino-swimsuit/spritesheet.webp",
+    sourceUrl: "https://codex-pets.net/#/pets/yukino-swimsuit",
+  }),
+  Object.freeze({
+    id: "xilian",
+    displayName: "昔涟",
+    author: "lincat",
+    kind: "person",
+    version: 1,
+    atlasWidth: 1536,
+    atlasHeight: 1872,
+    cellWidth: 192,
+    cellHeight: 208,
+    rendering: "pixelated",
+    posterPath: "/pets/xilian/poster.webp",
+    spritesheetPath: "/pets/xilian/spritesheet.webp",
+    sourceUrl: "https://codex-pets.net/#/pets/xilian",
+  }),
+]);
+
+export const SITE_PET_IDS = Object.freeze(SITE_PETS.map((pet) => pet.id));

@@ -36,7 +36,7 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat("zh-CN", {
               const tags = topicTags(entry);
               return (
                 <li class="study-scroll-card" data-study-state="ongoing">
-                  <a href={getEntryUrl(entry)} data-article-transition aria-label={`继续研习：${entry.data.title}`}>
+                  <a href={getEntryUrl(entry)} data-article-transition data-editorial-card aria-label={`继续研习：${entry.data.title}`}>
                     <img data-article-transition-cover src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="320" height="240" />
                     <div class="study-scroll-copy">
                       <div class="study-card-meta">
@@ -77,7 +77,7 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat("zh-CN", {
               const tags = topicTags(entry);
               return (
                 <li class="study-archive-entry" data-study-state="completed">
-                  <a href={getEntryUrl(entry)} data-article-transition aria-label={`阅读已整理文章：${entry.data.title}`}>
+                  <a href={getEntryUrl(entry)} data-article-transition data-editorial-card aria-label={`阅读已整理文章：${entry.data.title}`}>
                     <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
                     <div class="study-archive-copy">
                       <div class="study-card-meta">

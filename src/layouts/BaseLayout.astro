@@ -5,6 +5,7 @@ import ScrollTopButton from "../components/ScrollTopButton.astro";
 import CardTilt from "../components/CardTilt.astro";
 import OmikujiDraw from "../components/OmikujiDraw.astro";
 import ArticlePageTransition from "../components/ArticlePageTransition.astro";
+import SitePet from "../components/SitePet.astro";
 import { site } from "../data/site";
 import "../styles/global.css";
 
@@ -75,6 +76,7 @@ const socialImageUrl = new URL(image, site.url);
     <script is:inline>
       (() => {
         const storageKey = "blog-appearance-settings-v1";
+        const sitePetIds = ["ikun", "yukino-swimsuit", "xilian"];
         const defaults = {
           hue: 150,
           accentMode: "color",
@@ -84,6 +86,8 @@ const socialImageUrl = new URL(image, site.url);
           homeBlackHole: true,
           particleHue: 42,
           articleLayout: "list",
+          sitePetEnabled: true,
+          sitePetId: "ikun",
         };
         const isObject = (value) => value && typeof value === "object" && !Array.isArray(value);
         const normalizeBoolean = (value, fallback) => {
@@ -100,9 +104,11 @@ const socialImageUrl = new URL(image, site.url);
           if (next.wallpaperMode === "fullscreen") next.wallpaperMode = "transparent";
           next.wallpaperMode = ["banner", "transparent", "solid"].includes(next.wallpaperMode) ? next.wallpaperMode : defaults.wallpaperMode;
           next.articleLayout = ["list", "grid"].includes(next.articleLayout) ? next.articleLayout : defaults.articleLayout;
+          next.sitePetId = sitePetIds.includes(next.sitePetId) ? next.sitePetId : defaults.sitePetId;
           next.bannerTitle = normalizeBoolean(next.bannerTitle, defaults.bannerTitle);
           next.particles = normalizeBoolean(next.particles, defaults.particles);
           next.homeBlackHole = normalizeBoolean(next.homeBlackHole, defaults.homeBlackHole);
+          next.sitePetEnabled = normalizeBoolean(next.sitePetEnabled, defaults.sitePetEnabled);
           const particleHue = Number(next.particleHue);
           next.particleHue = Number.isFinite(particleHue) ? Math.min(360, Math.max(0, particleHue)) : defaults.particleHue;
           return next;
@@ -128,6 +134,8 @@ const socialImageUrl = new URL(image, site.url);
           root.dataset.homeBlackHole = next.homeBlackHole ? "on" : "off";
           root.dataset.particleHue = String(next.particleHue);
           root.dataset.articleLayout = next.articleLayout;
+          root.dataset.sitePet = next.sitePetEnabled ? "on" : "off";
+          root.dataset.sitePetId = next.sitePetId;
           return next;
         };
 
@@ -165,6 +173,7 @@ const socialImageUrl = new URL(image, site.url);
       <CardTilt />
       <OmikujiDraw />
       <ArticlePageTransition />
+      <SitePet reducedActivity={type === "article"} />
     </div>
     <script>
       (function scrollReveal() {

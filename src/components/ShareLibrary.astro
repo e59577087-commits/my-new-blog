@@ -27,7 +27,7 @@ const encodedTags = (tags: string[]) => normalizeTags(tags).map(encodeURICompone
         {articles.map((entry) => {
           const tags = normalizeTags(entry.data.tags);
           return (
-            <article class="share-card" data-share-card data-share-tags={encodedTags(tags)}>
+            <article class="share-card" data-share-card data-editorial-card data-share-tags={encodedTags(tags)}>
               <a href={getEntryUrl(entry)} data-article-transition aria-label={`阅读分享：${entry.data.title}`}>
                 <img data-article-transition-cover src={coverOrDefault(entry.data.cover)} alt="" loading="lazy" decoding="async" width="480" height="300" />
                 <div class="share-card-body">

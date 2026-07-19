@@ -25,6 +25,9 @@
     "test:article-layout": "node --test scripts/article-reading-layout.test.mjs",
     "test:article-lightbox": "node --test scripts/article-image-lightbox.test.mjs",
     "test:first-load": "node --test scripts/homepage-first-load-performance.test.mjs",
+    "test:writing-trail": "node --test scripts/homepage-writing-trail.test.mjs",
+    "test:editorial-cards": "node --test scripts/editorial-card-font.test.mjs",
+    "test:site-pet": "node --test scripts/site-pet.test.mjs",
     "test:omikuji": "node --test scripts/omikuji-draw.test.mjs"
   },
   "dependencies": {

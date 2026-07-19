@@ -1,3 +1,7 @@
+---
+import { SITE_PETS } from "../data/sitePets.mjs";
+---
+
 <div class="appearance-settings" data-appearance-root>
   <div class="appearance-toolbar" role="toolbar" aria-label="外观快捷设置">
     <button type="button" class="appearance-icon-button" data-appearance-toggle aria-label="打开外观设置" aria-expanded="false" aria-controls="appearance-panel">
@@ -83,6 +87,30 @@
       <div class="appearance-segmented" data-appearance-layout role="group" aria-label="文章布局">
         <button type="button" data-value="list">列表</button>
         <button type="button" data-value="grid">网格</button>
+      </div>
+    </div>
+
+    <div class="appearance-section">
+      <div class="appearance-section-title">
+        <span></span>
+        <h2>桌面宠物</h2>
+      </div>
+      <div class="appearance-switches">
+        <label>
+          <span>显示桌宠</span>
+          <input type="checkbox" data-appearance-switch="sitePetEnabled" />
+        </label>
+      </div>
+      <div class="appearance-pet-picker" data-appearance-pet role="group" aria-label="选择桌面宠物">
+        {SITE_PETS.map((pet) => (
+          <button type="button" data-value={pet.id} aria-pressed="false" title={`作者：${pet.author}`}>
+            <img src={pet.posterPath} alt="" width="48" height="48" loading="lazy" decoding="async" />
+            <span>
+              <strong>{pet.displayName}</strong>
+              <small>{pet.version === 2 ? "V2 · 鼠标观察" : "V1 · 动作集"}</small>
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   </section>
@@ -298,6 +326,69 @@
     grid-template-columns: 1fr 1fr;
   }
 
+  .appearance-pet-picker {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.3rem;
+    margin-top: 0.35rem;
+  }
+
+  .appearance-pet-picker button {
+    display: grid;
+    min-width: 0;
+    justify-items: center;
+    gap: 0.2rem;
+    border: 1px solid transparent;
+    border-radius: 0.55rem;
+    background: hsl(var(--theme-hue, 335) calc(100% * var(--theme-sat)) 96% / 0.56);
+    padding: 0.32rem 0.2rem 0.3rem;
+    color: var(--color-text-soft);
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+  }
+
+  .appearance-pet-picker button:hover {
+    transform: translateY(-1px);
+    background: hsl(var(--theme-hue, 335) calc(100% * var(--theme-sat)) 94% / 0.74);
+  }
+
+  .appearance-pet-picker button[aria-pressed="true"] {
+    border-color: var(--color-accent-border);
+    background: hsl(var(--theme-hue, 335) calc(78% * var(--theme-sat)) 84% / 0.58);
+    color: var(--color-heading);
+  }
+
+  .appearance-pet-picker img {
+    width: 2.55rem;
+    height: 2.55rem;
+    object-fit: contain;
+  }
+
+  .appearance-pet-picker span,
+  .appearance-pet-picker strong,
+  .appearance-pet-picker small {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .appearance-pet-picker strong {
+    overflow: hidden;
+    font-size: 0.64rem;
+    font-weight: 650;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .appearance-pet-picker small {
+    margin-top: 0.08rem;
+    color: var(--color-faint);
+    font-size: 0.52rem;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
   :root[data-theme="dark"] .appearance-panel {
     border-color: hsl(var(--theme-hue, 335) calc(72% * var(--theme-sat)) 64% / 0.24);
     background:
@@ -308,18 +399,21 @@
 
   :root[data-theme="dark"] .appearance-options button,
   :root[data-theme="dark"] .appearance-segmented button,
-  :root[data-theme="dark"] .appearance-switches label {
+  :root[data-theme="dark"] .appearance-switches label,
+  :root[data-theme="dark"] .appearance-pet-picker button {
     background: hsl(var(--theme-hue, 335) calc(42% * var(--theme-sat)) 18% / 0.52);
     color: hsl(var(--theme-hue, 335) calc(72% * var(--theme-sat)) 84%);
   }
 
   :root[data-theme="dark"] .appearance-options button:hover,
-  :root[data-theme="dark"] .appearance-segmented button:hover {
+  :root[data-theme="dark"] .appearance-segmented button:hover,
+  :root[data-theme="dark"] .appearance-pet-picker button:hover {
     background: hsl(var(--theme-hue, 335) calc(42% * var(--theme-sat)) 24% / 0.68);
   }
 
   :root[data-theme="dark"] .appearance-options button[aria-pressed="true"],
-  :root[data-theme="dark"] .appearance-segmented button[aria-pressed="true"] {
+  :root[data-theme="dark"] .appearance-segmented button[aria-pressed="true"],
+  :root[data-theme="dark"] .appearance-pet-picker button[aria-pressed="true"] {
     border-color: hsl(var(--theme-hue, 335) calc(72% * var(--theme-sat)) 64% / 0.38);
     background: hsl(var(--theme-hue, 335) calc(58% * var(--theme-sat)) 32% / 0.62);
     color: hsl(var(--theme-hue, 335) calc(88% * var(--theme-sat)) 90%);
@@ -365,7 +459,8 @@
 
     .appearance-options,
     .appearance-switches,
-    .appearance-segmented {
+    .appearance-segmented,
+    .appearance-pet-picker {
       gap: 0.24rem;
     }
 
@@ -408,7 +503,8 @@
     .appearance-icon-button,
     .appearance-panel,
     .appearance-options button,
-    .appearance-segmented button {
+    .appearance-segmented button,
+    .appearance-pet-picker button {
       transition-duration: 0.01ms;
     }
   }
@@ -425,6 +521,7 @@
   const particleHueOutput = root?.querySelector("[data-appearance-particle-hue-output]");
   const wallpaperGroup = root?.querySelector("[data-appearance-wallpaper]");
   const layoutGroup = root?.querySelector("[data-appearance-layout]");
+  const petGroup = root?.querySelector("[data-appearance-pet]");
   const swatchGroup = root?.querySelector("[data-appearance-swatches]");
   const switches = root?.querySelectorAll("[data-appearance-switch]");
 
@@ -454,6 +551,10 @@
         button.setAttribute("aria-pressed", button.dataset.value === settings.articleLayout ? "true" : "false");
       });
 
+      petGroup?.querySelectorAll("button").forEach((button) => {
+        button.setAttribute("aria-pressed", button.dataset.value === settings.sitePetId ? "true" : "false");
+      });
+
       switches.forEach((input) => {
         input.checked = Boolean(settings[input.dataset.appearanceSwitch]);
       });
@@ -473,6 +574,7 @@
       settings = appearance.apply({ ...settings, ...next });
       save();
       syncControls();
+      window.dispatchEvent(new CustomEvent("blog:appearance-change", { detail: settings }));
     };
 
     const openPanel = () => {
@@ -533,6 +635,12 @@
       const button = event.target instanceof HTMLElement ? event.target.closest("button[data-value]") : null;
       if (!button) return;
       update({ articleLayout: button.dataset.value });
+    });
+
+    petGroup?.addEventListener("click", (event) => {
+      const button = event.target instanceof HTMLElement ? event.target.closest("button[data-value]") : null;
+      if (!button) return;
+      update({ sitePetId: button.dataset.value, sitePetEnabled: true });
     });
 
     swatchGroup?.addEventListener("click", (event) => {
