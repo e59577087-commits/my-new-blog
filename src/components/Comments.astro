@@ -55,9 +55,10 @@ const { slug } = Astro.props;
 </section>
 
 <script>
-  import { createBrowserSupabaseClient, getFallbackAvatar, getUserAvatar, getUserDisplayName, isSupabaseConfigured } from "../lib/supabaseClient";
+  const initializeComments = async () => {
+    const { createBrowserSupabaseClient, getFallbackAvatar, getUserAvatar, getUserDisplayName, isSupabaseConfigured } = await import("../lib/supabaseClient");
 
-  const createCommentElement = (comment, currentUser) => {
+    const createCommentElement = (comment, currentUser) => {
     const article = document.createElement("article");
     article.className = "surface-soft rounded-lg p-4";
 
@@ -111,17 +112,17 @@ const { slug } = Astro.props;
     header.append(avatar, body);
     article.append(header);
     return article;
-  };
+    };
 
-  const getCurrentUser = async (supabase) => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData.session?.user) return sessionData.session.user;
+    const getCurrentUser = async (supabase) => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session?.user) return sessionData.session.user;
 
-    const { data: userData } = await supabase.auth.getUser();
-    return userData.user ?? null;
-  };
+      const { data: userData } = await supabase.auth.getUser();
+      return userData.user ?? null;
+    };
 
-  document.querySelectorAll("[data-comments]").forEach((root) => {
+    document.querySelectorAll("[data-comments]").forEach((root) => {
     const supabase = createBrowserSupabaseClient();
     const postSlug = root.getAttribute("data-post-slug");
     const configMissing = root.querySelector("[data-comment-config-missing]");
@@ -258,5 +259,21 @@ const { slug } = Astro.props;
       setMessage("评论已删除。");
       await loadComments();
     });
-  });
+    });
+  };
+
+  const scheduleComments = () => {
+    const run = () => void initializeComments();
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(run, { timeout: 1400 });
+    } else {
+      window.setTimeout(run, 250);
+    }
+  };
+
+  if (document.readyState === "complete") {
+    scheduleComments();
+  } else {
+    window.addEventListener("load", scheduleComments, { once: true });
+  }
 </script>

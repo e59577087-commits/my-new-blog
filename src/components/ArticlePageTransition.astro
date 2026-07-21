@@ -1,3 +1,20 @@
+<script type="speculationrules" is:inline>
+  {
+    "prefetch": [
+      {
+        "where": { "selector_matches": "a[data-article-transition]" },
+        "eagerness": "eager"
+      }
+    ],
+    "prerender": [
+      {
+        "where": { "selector_matches": "a[data-article-transition]" },
+        "eagerness": "moderate"
+      }
+    ]
+  }
+</script>
+
 <script>
   const transitionStorageKey = "blog-article-transition-v1";
   const root = document.documentElement;

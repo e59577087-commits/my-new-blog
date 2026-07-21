@@ -47,6 +47,26 @@ test("connects article cards and article details with named shared elements", ()
   assert.doesNotMatch(css, /page-fade-(?:in|out)/, "whole-page fading can cause a brightness flash during the shared morph");
 });
 
+test("warms article destinations before the cross-document transition timeout", () => {
+  const transitionComponent = readSource("src", "components", "ArticlePageTransition.astro");
+
+  assert.match(transitionComponent, /type="speculationrules"/, "article navigation does not publish speculation rules");
+  assert.match(transitionComponent, /"prefetch"/, "article HTML is not prefetched before navigation");
+  assert.match(transitionComponent, /"prerender"/, "likely article destinations are not prerendered");
+  assert.match(transitionComponent, /selector_matches[^\n]+a\[data-article-transition\]/, "speculation is not limited to article transition links");
+  assert.match(transitionComponent, /"eagerness"\s*:\s*"eager"/, "article prefetching starts too late");
+  assert.match(transitionComponent, /"eagerness"\s*:\s*"moderate"/, "article prerendering is not balanced against resource cost");
+});
+
+test("defers comments and Supabase until after the destination can render", () => {
+  const comments = readSource("src", "components", "Comments.astro");
+
+  assert.doesNotMatch(comments, /^\s*import\s+\{[^\n]+\}\s+from\s+["']\.\.\/lib\/supabaseClient["'];/m);
+  assert.match(comments, /await import\(["']\.\.\/lib\/supabaseClient["']\)/);
+  assert.match(comments, /requestIdleCallback/);
+  assert.match(comments, /window\.addEventListener\(["']load["']/);
+});
+
 test("renders the innei.in sidebar read indicator", () => {
   const baseLayout = readSource("src", "layouts", "BaseLayout.astro");
   const articleLayout = readSource("src", "layouts", "ArticleLayout.astro");
