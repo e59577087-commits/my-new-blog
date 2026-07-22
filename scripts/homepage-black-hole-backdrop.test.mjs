@@ -35,3 +35,37 @@ test("composites the body backdrop into the cloned black-hole capture scope", ()
   assert.match(cloneHook, /clonedScope\.style\.setProperty\(property, value, "important"\);/);
   assert.doesNotMatch(capture, /\bscope\.style\.setProperty\(property, value/);
 });
+
+test("hard clips the black-hole overlay at the banner edges", () => {
+  assert.match(
+    blackHole,
+    /float bandMask = step\(uBannerBand\.x, uv\.y\)\s*\* \(1\.0 - step\(uBannerBand\.y, uv\.y\)\);/,
+  );
+  assert.doesNotMatch(blackHole, /float bandF/);
+  assert.doesNotMatch(blackHole, /smoothstep\(uBannerBand\./);
+});
+
+test("invalidates stale textures and discards captures from before an appearance change", () => {
+  assert.match(blackHole, /let textureGeneration = 0;/);
+  assert.match(
+    blackHole,
+    /function invalidatePageTexture\(\) \{\s*textureGeneration \+= 1;\s*textureReady = false;\s*\}/,
+  );
+  assert.match(capture, /const captureGeneration = textureGeneration;/);
+  assert.match(capture, /if \(captureGeneration !== textureGeneration\) return;/);
+  assert.ok(
+    capture.indexOf("if (captureGeneration !== textureGeneration) return;")
+      < capture.indexOf("gl.texImage2D"),
+    "an obsolete capture is uploaded before its generation is checked",
+  );
+  assert.match(
+    blackHole,
+    /const appearanceObserver = new MutationObserver\(\(\) => \{\s*invalidatePageTexture\(\);\s*requestAppearanceCapture\(400\);\s*\}\);/,
+  );
+});
+
+test("hides every sampled page color while the replacement texture is unavailable", () => {
+  assert.match(blackHole, /term\[i\] = pageAt\(suv\)\[i\] \* uTextureReady;/);
+  assert.match(blackHole, /bg \+= pageAt\(suv\) \* toward \* uTextureReady;/);
+  assert.match(blackHole, /ring = pageAt\(suv2\) \* toward2 \* uTextureReady;/);
+});

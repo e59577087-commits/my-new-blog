@@ -246,11 +246,9 @@ float dil = mix(1.0, DILATION_MIN, I);
   vec2 pr = rot(vec2(p.x, p.y), L.roll) * W;
   float b = length(pr);
   float window = exp(-pow(plen / (3.0 * rh), 2.0));
-  // Banner clip mask: fade to 0 outside the banner's screen band so nothing —
-  // not the lensing, not the shadow — ever spills onto content below/above it.
-  float bandF = 1.5 * rh;
-  float bandMask = smoothstep(uBannerBand.x - bandF, uBannerBand.x + bandF, uv.y)
-                 * (1.0 - smoothstep(uBannerBand.y - bandF, uBannerBand.y + bandF, uv.y));
+  // Hard clip to the banner bounds; every fragment outside stays transparent.
+  float bandMask = step(uBannerBand.x, uv.y)
+                 * (1.0 - step(uBannerBand.y, uv.y));
   float rin = max(L.inner, 1.6);
   float rout = max(L.outer, rin + 0.5);
   float bmax = rout + 3.0;
@@ -276,7 +274,7 @@ float dil = mix(1.0, DILATION_MIN, I);
       float k = 1.0 + (float(i) - 1.0) * ab;
       vec2 sp = p - dir * defl * k;
       vec2 suv = center + sp / vec2(aspect, 1.0);
-     term[i] = pageAt(suv)[i];
+     term[i] = pageAt(suv)[i] * uTextureReady;
    }
     // lensed starfield through the weak-field bend (color only; alpha stays
     // displacement-driven so stars never paint a new opaque area)
@@ -369,7 +367,7 @@ float dil = mix(1.0, DILATION_MIN, I);
      vec2 disp = (sp - p) * window;
      vec2 suv = center + (p + disp) / vec2(aspect, 1.0);
      float toward = smoothstep(0.05, 0.35, -d.z);
-      bg += pageAt(suv) * toward;
+      bg += pageAt(suv) * toward * uTextureReady;
      float bendPx = length(disp) * res.y;
      pageA = uTextureReady * toward * smoothstep(1.5, 12.0, bendPx);
     }
@@ -404,7 +402,7 @@ float dil = mix(1.0, DILATION_MIN, I);
       vec2 disp2 = (sp2 - p) * window;
       vec2 suv2 = center + (p + disp2) / vec2(aspect, 1.0);
       float toward2 = smoothstep(0.05, 0.35, -d2.z);
-      ring = pageAt(suv2) * toward2;
+      ring = pageAt(suv2) * toward2 * uTextureReady;
       float bendPx2 = length(disp2) * res.y;
       ringA = uTextureReady * toward2 * smoothstep(0.5, 8.0, bendPx2);
     }
@@ -484,6 +482,7 @@ float dil = mix(1.0, DILATION_MIN, I);
     let width = 0, height = 0, renderScale = 1, pageWidth = 0, pageHeight = 0, frame = 0, animId = 0, targets = [], textTargets = [], targetEntries = [], textEntries = [];
     let needsTargetRefresh = true;
     let textureReady = false, textureBusy = false, textureScheduled = false, lastTextureAt = 0;
+    let textureGeneration = 0;
     let textureRect = { x: 0, y: 0, w: 1, h: 1 };
 
     let bhX = 0, bhY = 0;
@@ -518,8 +517,7 @@ float dil = mix(1.0, DILATION_MIN, I);
      speed: 62,                // page px / second
      reach: 3.0,
      // Bounce wall margin, independent of reach. Smaller = ball gets closer to
-     // the banner edge before reflecting. Lensing may briefly cross the edge at
-     // the turning point, but the shader's bandMask soft-clips it smoothly.
+     // the banner edge before reflecting; the shader hard-clips any overshoot.
      bounceReach: 2.0,
      textureRefreshMs: 3000,
      textureMaxSide: 2560,
@@ -643,10 +641,16 @@ float dil = mix(1.0, DILATION_MIN, I);
       }
     }
 
+    function invalidatePageTexture() {
+      textureGeneration += 1;
+      textureReady = false;
+    }
+
     async function captureWholePageTexture(force = false) {
       if (textureBusy || !pageWidth || !pageHeight || !isEnabled()) return;
       const now = performance.now();
       if (!force && now - lastTextureAt < CONFIG.textureRefreshMs) return;
+      const captureGeneration = textureGeneration;
 
       const sourceRect = scope.getBoundingClientRect();
       // Capture only the banner band (+ lensing padding) instead of the whole
@@ -687,7 +691,7 @@ float dil = mix(1.0, DILATION_MIN, I);
           height: capH,
           scrollX: -sourceRect.left,
           scrollY: -sourceRect.top,
-          ignoreElements: (element) => element === container,
+          ignoreElements: (element) => element === container || element.hasAttribute("data-html2canvas-ignore"),
           onclone: (clonedDocument) => {
             const clonedScope = clonedDocument.querySelector("[data-home-black-hole-scope]");
             if (clonedScope) {
@@ -704,6 +708,8 @@ float dil = mix(1.0, DILATION_MIN, I);
             });
           },
         });
+
+        if (captureGeneration !== textureGeneration) return;
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, pageTexture);
@@ -812,7 +818,7 @@ float dil = mix(1.0, DILATION_MIN, I);
 
       // Bounce only while growing. The ball's influence circle is bounceReach*rh
       // (independent of the shader lensing reach); it reflects when that circle
-      // touches a banner edge, and the shader's bandMask soft-clips any overshoot.
+      // touches a banner edge, and the shader's bandMask hard-clips at it.
       if (moving) {
         const influ = CONFIG.bounceReach * bhRadius;
         const loX = influ, hiX = pageWidth - influ;
@@ -918,21 +924,33 @@ float dil = mix(1.0, DILATION_MIN, I);
      // banner's page-space content is static during scroll, so no scroll capture
      // is needed for correctness.
      let appearanceRefreshTimer = 0;
-     const appearanceObserver = new MutationObserver(() => {
+     let appearanceCapturePending = false;
+     const requestAppearanceCapture = (delay = 400) => {
+       appearanceCapturePending = true;
        if (appearanceRefreshTimer) clearTimeout(appearanceRefreshTimer);
        appearanceRefreshTimer = window.setTimeout(() => {
          appearanceRefreshTimer = 0;
-         if (animId && isEnabled()) {
-           scheduleTextureCapture({ x: bhX, y: bhY, radius: bhRadius }, true);
+         if (!appearanceCapturePending || !animId || !isEnabled()) return;
+         if (textureBusy || textureScheduled) {
+           requestAppearanceCapture(160);
+           return;
          }
-       }, 400);
+         appearanceCapturePending = false;
+         scheduleTextureCapture({ x: bhX, y: bhY, radius: bhRadius }, true);
+       }, delay);
+     };
+     const appearanceObserver = new MutationObserver(() => {
+       invalidatePageTexture();
+       requestAppearanceCapture(400);
      });
-     appearanceObserver.observe(root, { attributes: true, attributeFilter: ["data-wallpaper-mode", "data-theme", "data-banner-title", "style"] });
+     appearanceObserver.observe(root, { attributes: true, attributeFilter: ["data-wallpaper-mode", "data-wallpaper-id", "data-theme", "data-banner-title", "style"] });
+     window.addEventListener("blog:wallpaper-change", () => requestAppearanceCapture(120));
 
      // Click the hole's body (only while it's maxed and frozen) to trigger the
      // shrink-back -> regrow cycle. Canvas is pointer-events:none, so listen on
      // document and hit-test against the published screen position/radius.
      document.addEventListener("click", (e) => {
+       if (e.target instanceof Element && e.target.closest("[data-black-hole-click-exempt]")) return;
        if (bhState !== "maxed") return;
        const st = window.__blackHoleState;
        if (!st || !st.active) return;

@@ -77,10 +77,12 @@ const socialImageUrl = new URL(image, site.url);
       (() => {
         const storageKey = "blog-appearance-settings-v1";
         const sitePetIds = ["ikun", "yukino-swimsuit", "xilian"];
+        const wallpaperIds = ["summer", "salvation"];
         const defaults = {
           hue: 150,
           accentMode: "color",
           wallpaperMode: "banner",
+          wallpaperId: "summer",
           bannerTitle: true,
           particles: true,
           homeBlackHole: true,
@@ -103,6 +105,7 @@ const socialImageUrl = new URL(image, site.url);
           next.accentMode = ["white", "paper"].includes(next.accentMode) ? next.accentMode : "color";
           if (next.wallpaperMode === "fullscreen") next.wallpaperMode = "transparent";
           next.wallpaperMode = ["banner", "transparent", "solid"].includes(next.wallpaperMode) ? next.wallpaperMode : defaults.wallpaperMode;
+          next.wallpaperId = wallpaperIds.includes(next.wallpaperId) ? next.wallpaperId : defaults.wallpaperId;
           next.articleLayout = ["list", "grid"].includes(next.articleLayout) ? next.articleLayout : defaults.articleLayout;
           next.sitePetId = sitePetIds.includes(next.sitePetId) ? next.sitePetId : defaults.sitePetId;
           next.bannerTitle = normalizeBoolean(next.bannerTitle, defaults.bannerTitle);
@@ -129,6 +132,12 @@ const socialImageUrl = new URL(image, site.url);
           root.style.setProperty("--theme-hue", hue);
           root.dataset.accentMode = next.accentMode;
           root.dataset.wallpaperMode = next.wallpaperMode;
+          root.dataset.wallpaperId = next.wallpaperId;
+          if (next.wallpaperId === "salvation") {
+            root.style.setProperty("--appearance-wallpaper", "url('/media/wallpaper-salvation-4k-v1.webp')");
+          } else if (typeof root.style.removeProperty === "function") {
+            root.style.removeProperty("--appearance-wallpaper");
+          }
           root.dataset.bannerTitle = next.bannerTitle ? "show" : "hide";
           root.dataset.bannerParticles = next.particles ? "on" : "off";
           root.dataset.homeBlackHole = next.homeBlackHole ? "on" : "off";

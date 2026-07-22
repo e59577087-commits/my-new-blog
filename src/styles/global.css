@@ -287,6 +287,10 @@ body::after {
   margin-top: 0;
 }
 
+.home-hero-stage {
+  position: relative;
+}
+
 :root[data-theme="dark"] body::after {
   opacity: 0.04;
 }
@@ -864,6 +868,13 @@ button {
     -webkit-backdrop-filter var(--motion-duration-base) var(--motion-ease-standard),
     backdrop-filter var(--motion-duration-base) var(--motion-ease-standard),
     box-shadow var(--motion-duration-base) var(--motion-ease-standard);
+}
+
+:root[data-wallpaper-id="salvation"] .home-banner-title.heading-text {
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.68),
+    0 6px 18px rgba(0, 0, 0, 0.52);
 }
 
 .site-header {

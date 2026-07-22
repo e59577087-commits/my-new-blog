@@ -577,6 +577,12 @@ import { SITE_PETS } from "../data/sitePets.mjs";
       window.dispatchEvent(new CustomEvent("blog:appearance-change", { detail: settings }));
     };
 
+    window.addEventListener("blog:appearance-change", (event) => {
+      if (!(event instanceof CustomEvent) || !event.detail) return;
+      settings = appearance.normalize(event.detail);
+      syncControls();
+    });
+
     const openPanel = () => {
       panel.hidden = false;
       requestAnimationFrame(() => {

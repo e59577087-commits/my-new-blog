@@ -3,6 +3,7 @@ import EntryCard from "../components/EntryCard.astro";
 import ProfileCard from "../components/ProfileCard.astro";
 import MiniCalendar from "../components/MiniCalendar.astro";
 import BannerParticles from "../components/BannerParticles.astro";
+import BannerWallpaperSwitcher from "../components/BannerWallpaperSwitcher.astro";
 import HomepageBlackHole from "../components/HomepageBlackHole.astro";
 import AnnualWritingTrail from "../components/AnnualWritingTrail.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
@@ -39,9 +40,10 @@ const bannerTitleChars = Array.from(bannerTitle);
 <BaseLayout title="首页">
   <div class="home-black-hole-scope" data-home-black-hole-scope>
     <HomepageBlackHole />
-    <section class="home-hero-banner flex items-end">
-    <BannerParticles />
-    <div class="home-banner-copy">
+    <div class="home-hero-stage">
+      <section class="home-hero-banner flex items-end">
+      <BannerParticles />
+      <div class="home-banner-copy">
       <h1 class="home-banner-title heading-text" aria-label={bannerTitle}>
         {bannerTitleChars.map((char, index) => (
           <span class="home-banner-title-char" style={`--char-delay: ${280 + index * 170}ms`} aria-hidden="true">{char}</span>
@@ -78,8 +80,10 @@ const bannerTitleChars = Array.from(bannerTitle);
           h1.insertBefore(frag, cursor || null);
         })();
       </script>
+      </div>
+      </section>
+      <BannerWallpaperSwitcher />
     </div>
-  </section>
 
     <section class="mx-auto max-w-6xl px-4 pt-10 pb-10 sm:px-6 sm:pt-14 sm:pb-14 lg:px-8">
     <!-- 最新 -->
