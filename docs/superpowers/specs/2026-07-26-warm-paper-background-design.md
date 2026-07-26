@@ -34,8 +34,8 @@ The light paper palette will use:
 - Page highlight: `#faf5e9`
 - Opaque surface fallback: `#fbf6e9`
 - Translucent header reference: `rgb(248 241 226 / 0.78)`
-- Muted text: `#6f6b62`
-- Faint text: `#817b70`
+- Muted text: `#69655d`
+- Faint text: `#6d675d`
 
 The page background will combine two very low-contrast radial highlights with
 a vertical gradient from the pale highlight into the warmer base. This creates
@@ -43,8 +43,8 @@ slight tonal variation across a large page without producing visible bands or
 decorative blobs.
 
 The paper-specific muted and faint text values are slightly darker, warm grays.
-This prevents the warmer background from reducing secondary-text contrast. Main
-body and heading colors remain unchanged.
+They retain at least 4.5:1 contrast even over the darkest blended part of the
+paper gradient. Main body and heading colors remain unchanged.
 
 The existing fixed SVG grain will remain the single texture layer. Its opacity
 will become a semantic token:
