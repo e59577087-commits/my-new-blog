@@ -116,7 +116,9 @@ const socialImageUrl = new URL(image, site.url);
           next.particleHue = Number.isFinite(particleHue) ? Math.min(360, Math.max(0, particleHue)) : defaults.particleHue;
           return next;
         };
+        let currentSettings;
         const read = () => {
+          if (currentSettings) return { ...currentSettings };
           try {
             const raw = window.localStorage.getItem(storageKey);
             if (raw === null) return { ...defaults, accentMode: "paper" };
@@ -127,6 +129,7 @@ const socialImageUrl = new URL(image, site.url);
         };
         const apply = (settings) => {
           const next = normalize(settings);
+          currentSettings = { ...next };
           const root = document.documentElement;
           const hue = String(next.hue);
           root.style.setProperty("--theme-hue", hue);

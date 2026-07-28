@@ -112,6 +112,7 @@ import { SITE_PETS } from "../data/sitePets.mjs";
           </button>
         ))}
       </div>
+      <p class="appearance-pet-status" data-appearance-pet-status role="status" aria-live="polite"></p>
     </div>
   </section>
 </div>
@@ -358,6 +359,21 @@ import { SITE_PETS } from "../data/sitePets.mjs";
     color: var(--color-heading);
   }
 
+  .appearance-pet-picker button[aria-busy="true"] {
+    border-color: var(--color-accent-border);
+    cursor: progress;
+    opacity: 0.72;
+  }
+
+  .appearance-pet-status {
+    margin: 0.3rem 0 0;
+    min-height: 0.95rem;
+    color: var(--color-text);
+    font-size: 0.68rem;
+    line-height: 1.35;
+    text-align: center;
+  }
+
   .appearance-pet-picker img {
     width: 2.55rem;
     height: 2.55rem;
@@ -522,6 +538,7 @@ import { SITE_PETS } from "../data/sitePets.mjs";
   const wallpaperGroup = root?.querySelector("[data-appearance-wallpaper]");
   const layoutGroup = root?.querySelector("[data-appearance-layout]");
   const petGroup = root?.querySelector("[data-appearance-pet]");
+  const petStatus = root?.querySelector("[data-appearance-pet-status]");
   const swatchGroup = root?.querySelector("[data-appearance-swatches]");
   const switches = root?.querySelectorAll("[data-appearance-switch]");
 
@@ -577,10 +594,33 @@ import { SITE_PETS } from "../data/sitePets.mjs";
       window.dispatchEvent(new CustomEvent("blog:appearance-change", { detail: settings }));
     };
 
+    const commitPetSelection = (sitePetId) => {
+      settings = appearance.apply({ ...settings, sitePetId });
+      save();
+      syncControls();
+      window.dispatchEvent(new CustomEvent("blog:appearance-change", { detail: settings }));
+    };
+
     window.addEventListener("blog:appearance-change", (event) => {
       if (!(event instanceof CustomEvent) || !event.detail) return;
       settings = appearance.normalize(event.detail);
       syncControls();
+    });
+
+    window.addEventListener("blog:site-pet-status", (event) => {
+      if (!(event instanceof CustomEvent) || !event.detail) return;
+      const { status, sitePetId, displayName, message, persistSelection } = event.detail;
+
+      petGroup?.querySelectorAll("button").forEach((button) => {
+        const isLoading = status === "loading" && button.dataset.value === sitePetId;
+        button.setAttribute("aria-busy", isLoading ? "true" : "false");
+      });
+
+      if (status === "ready" && persistSelection) commitPetSelection(sitePetId);
+      if (!petStatus) return;
+      if (status === "loading") petStatus.textContent = `正在加载${displayName}…`;
+      else if (status === "error") petStatus.textContent = message || `${displayName}加载失败，请重试`;
+      else if (status === "ready") petStatus.textContent = `已切换为${displayName}`;
     });
 
     const openPanel = () => {
@@ -646,7 +686,11 @@ import { SITE_PETS } from "../data/sitePets.mjs";
     petGroup?.addEventListener("click", (event) => {
       const button = event.target instanceof HTMLElement ? event.target.closest("button[data-value]") : null;
       if (!button) return;
-      update({ sitePetId: button.dataset.value, sitePetEnabled: true });
+      if (!settings.sitePetEnabled) update({ sitePetEnabled: true });
+      document.documentElement.dataset.pendingSitePetId = button.dataset.value;
+      window.dispatchEvent(new CustomEvent("blog:site-pet-request", {
+        detail: { sitePetId: button.dataset.value },
+      }));
     });
 
     swatchGroup?.addEventListener("click", (event) => {

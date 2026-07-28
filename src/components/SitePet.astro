@@ -137,7 +137,15 @@ const initialPet = SITE_PETS[0];
 </style>
 
 <script>
-  import { PET_ANIMATIONS, frameRect, getPetById, idleBlinkHoldMs, lookFrameFromVector } from "../scripts/sitePetEngine.mjs";
+  import {
+    PET_ANIMATIONS,
+    createPetImageCoordinator,
+    frameRect,
+    getPetById,
+    idleBlinkHoldMs,
+    loadPetSpritesheet,
+    lookFrameFromVector,
+  } from "../scripts/sitePetEngine.mjs";
 
   let cleanupActivePet = () => {};
 
@@ -161,8 +169,8 @@ const initialPet = SITE_PETS[0];
     const reducedActivity = root.dataset.reducedActivity === "true";
     let pet = getPetById(document.documentElement.dataset.sitePetId);
     let image = new Image();
-    let imageRequest = 0;
     let imageReady = false;
+    let pendingPetId = "";
     let stateName = "idle";
     let frameIndex = 0;
     let idleHoldDuration = idleBlinkHoldMs();
@@ -280,30 +288,116 @@ const initialPet = SITE_PETS[0];
       renderAnimation(now);
     };
 
-    const loadPet = (petId) => {
-      const nextPet = getPetById(petId);
-      const request = ++imageRequest;
-      pet = nextPet;
-      imageReady = false;
-      lastDrawnFrame = "";
-      root.dataset.rendering = pet.rendering;
-      action.setAttribute("aria-label", `和${pet.displayName}互动`);
-      credit.href = pet.sourceUrl;
-      if (name) name.textContent = pet.displayName;
-      if (author) author.textContent = pet.author;
+    const announcePetStatus = (status, nextPet, message = "", detail = {}) => {
+      window.dispatchEvent(new CustomEvent("blog:site-pet-status", {
+        detail: {
+          status,
+          sitePetId: nextPet.id,
+          displayName: nextPet.displayName,
+          message,
+          ...detail,
+        },
+      }));
+    };
 
-      const nextImage = new Image();
-      nextImage.decoding = "async";
-      nextImage.onload = () => {
-        if (request !== imageRequest || stopped) return;
+    const stagePetFrame = (nextPet, nextImage) => {
+      const stagedCanvas = document.createElement("canvas");
+      stagedCanvas.width = nextPet.cellWidth;
+      stagedCanvas.height = nextPet.cellHeight;
+      const stagedContext = stagedCanvas.getContext("2d", { alpha: true });
+      if (!stagedContext) throw new Error("Unable to prepare the next pet frame");
+
+      const { sx, sy, sw, sh } = frameRect(0, 0, nextPet.cellWidth, nextPet.cellHeight);
+      stagedContext.drawImage(
+        nextImage,
+        sx,
+        sy,
+        sw,
+        sh,
+        0,
+        0,
+        nextPet.cellWidth,
+        nextPet.cellHeight,
+      );
+      return stagedCanvas;
+    };
+
+    const imageCoordinator = createPetImageCoordinator({
+      loadImage: loadPetSpritesheet,
+      maxAttempts: 2,
+      retryDelayMs: 220,
+      onReady: ({ pet: nextPet, image: nextImage, context: requestContext }) => {
+        const stagedFrame = stagePetFrame(nextPet, nextImage);
+        context.clearRect(0, 0, nextPet.cellWidth, nextPet.cellHeight);
+        context.drawImage(stagedFrame, 0, 0);
+
+        pendingPetId = "";
+        delete root.dataset.loading;
+        delete root.dataset.loadError;
+        action.removeAttribute("aria-busy");
+
+        pet = nextPet;
         image = nextImage;
         imageReady = true;
+        root.dataset.rendering = pet.rendering;
+        action.setAttribute("aria-label", `和${pet.displayName}互动`);
+        credit.href = pet.sourceUrl;
+        if (name) name.textContent = pet.displayName;
+        if (author) author.textContent = pet.author;
         setState("idle");
-        root.hidden = !isEnabled();
         applyPosition();
-        drawFrame(0, 0);
-      };
-      nextImage.src = pet.spritesheetPath;
+        lastDrawnFrame = `${pet.id}:0:0`;
+
+        root.hidden = !isEnabled();
+        if (requestContext.reportStatus) announcePetStatus("ready", pet, "", {
+          persistSelection: requestContext.persistSelection,
+        });
+      },
+      onError: ({ pet: failedPet, error, context: requestContext }) => {
+        pendingPetId = "";
+        delete root.dataset.loading;
+        root.dataset.loadError = "true";
+        action.removeAttribute("aria-busy");
+        announcePetStatus("error", failedPet, "精灵图加载失败，请重试", {
+          persistSelection: false,
+          requested: Boolean(requestContext?.reportStatus),
+        });
+        console.warn("Site pet spritesheet failed to load", error);
+      },
+    });
+
+    const loadPet = (petId, { persistSelection = false } = {}) => {
+      const nextPet = getPetById(petId);
+      const reportStatus = persistSelection;
+
+      if (imageReady && nextPet.id === pet.id) {
+        if (pendingPetId) {
+          imageCoordinator.cancel();
+          pendingPetId = "";
+          delete root.dataset.loading;
+          delete root.dataset.loadError;
+          action.removeAttribute("aria-busy");
+        }
+        if (persistSelection) {
+          delete root.dataset.loadError;
+          action.removeAttribute("aria-busy");
+          root.hidden = !isEnabled();
+          announcePetStatus("ready", pet, "", { persistSelection: true });
+        }
+        return;
+      }
+      if (pendingPetId === nextPet.id) {
+        if (!persistSelection) return;
+        imageCoordinator.cancel();
+        pendingPetId = "";
+      }
+
+      pendingPetId = nextPet.id;
+      root.dataset.loading = "true";
+      delete root.dataset.loadError;
+      action.setAttribute("aria-busy", "true");
+      if (reportStatus) announcePetStatus("loading", nextPet);
+      void imageCoordinator.select(nextPet, { persistSelection, reportStatus });
     };
 
     const handleAction = () => {
@@ -328,7 +422,21 @@ const initialPet = SITE_PETS[0];
     const handleAppearanceChange = (event) => {
       const settings = event.detail ?? window.__blogAppearance?.read?.();
       root.hidden = !settings?.sitePetEnabled;
-      if (settings?.sitePetId && settings.sitePetId !== pet.id) loadPet(settings.sitePetId);
+      if (
+        settings?.sitePetId
+        && (!imageReady || settings.sitePetId !== pet.id)
+        && settings.sitePetId !== pendingPetId
+      ) {
+        loadPet(settings.sitePetId);
+      }
+    };
+
+    const handlePetRequest = (event) => {
+      if (!(event instanceof CustomEvent) || !event.detail?.sitePetId) return;
+      if (document.documentElement.dataset.pendingSitePetId === event.detail.sitePetId) {
+        delete document.documentElement.dataset.pendingSitePetId;
+      }
+      loadPet(event.detail.sitePetId, { persistSelection: true });
     };
 
     const handleVisibility = () => {
@@ -348,14 +456,22 @@ const initialPet = SITE_PETS[0];
     document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("resize", handleResize, { passive: true });
     window.addEventListener("blog:appearance-change", handleAppearanceChange);
+    window.addEventListener("blog:site-pet-request", handlePetRequest);
     reducedMotion.addEventListener("change", handleMotionChange);
 
     applyPosition();
-    loadPet(document.documentElement.dataset.sitePetId);
+    const queuedPetId = document.documentElement.dataset.pendingSitePetId;
+    if (queuedPetId) {
+      delete document.documentElement.dataset.pendingSitePetId;
+      loadPet(queuedPetId, { persistSelection: true });
+    } else {
+      loadPet(document.documentElement.dataset.sitePetId);
+    }
     animationFrame = window.requestAnimationFrame(tick);
 
     cleanupActivePet = () => {
       stopped = true;
+      imageCoordinator.dispose();
       window.cancelAnimationFrame(animationFrame);
       action.removeEventListener("click", handleAction);
       window.removeEventListener("pointermove", handlePointerMove);
@@ -363,6 +479,7 @@ const initialPet = SITE_PETS[0];
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("blog:appearance-change", handleAppearanceChange);
+      window.removeEventListener("blog:site-pet-request", handlePetRequest);
       reducedMotion.removeEventListener("change", handleMotionChange);
     };
   };
