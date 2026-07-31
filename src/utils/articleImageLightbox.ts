@@ -21,18 +21,34 @@ export const getArticleImageLightboxMode = ({
   preference,
 }: CandidateInput): ArticleImageLightboxMode => {
   if (preference === "off") return "off";
-  if (preference === "on") return width && width <= 160 ? "thumbnail" : "block";
+  const declaredWidth = Number(width);
+  if (preference === "on") {
+    return Number.isFinite(declaredWidth) && declaredWidth > 0 ? "thumbnail" : "block";
+  }
 
   const extension = imageExtension(src);
   if (extension === "gif" || extension === "svg") return "off";
   if (!String(alt).trim() || !supportedBlockFormats.has(extension)) return "off";
 
-  const declaredWidth = Number(width);
   if (Number.isFinite(declaredWidth) && declaredWidth > 0 && declaredWidth <= 160) {
     return extension === "png" ? "off" : "thumbnail";
   }
 
+  if (Number.isFinite(declaredWidth) && declaredWidth > 0) return "thumbnail";
+
   return "block";
+};
+
+type ClosestTarget = EventTarget & {
+  closest?: (selectors: string) => Element | null;
+};
+
+const LIGHTBOX_CONTENT_SELECTOR = "[data-lightbox-image], [data-lightbox-caption], [data-lightbox-close]";
+
+export const shouldCloseArticleImageLightboxFromTarget = (target: EventTarget | null): boolean => {
+  const elementLike = target as ClosestTarget | null;
+  if (!elementLike || typeof elementLike.closest !== "function") return false;
+  return elementLike.closest(LIGHTBOX_CONTENT_SELECTOR) === null;
 };
 
 type DialogLike = EventTarget & {

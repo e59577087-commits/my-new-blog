@@ -82,19 +82,25 @@ Windows 用户可以在发布页选择安装版、绿色版：
 5. 如果剪贴板里经常出现密码或隐私信息，设置应用过滤，并谨慎开启同步。
 6. 关于同步与文件传输，有条件的可以用自己的服务器，也可以用坚果云（有免费额度，完全够用）
 7. 可以参考一下我的配置(有些没放图的保持默认即可,当然根据自己的需求来)
- 常规设置：
- ![[QuickClipboard-90b5432cc26a1a49.png|250]]![[QuickClipboard-68356382664f09e5.png|254]]
+
+常规设置：
+
+![[QuickClipboard-90b5432cc26a1a49.png|250]]![[QuickClipboard-68356382664f09e5.png|254]]
 
 个性化(喜欢这个功能)：
+
 ![[QuickClipboard-babceb65314eba68.png|258]]![[QuickClipboard-42d33d432f69802c.png|255]]
 
 快捷键：使用shift+空格可以呼出剪切板
+
 ![[QuickClipboard-5042c02773aa0675.png|257]]![[QuickClipboard-ed1d5cd3f05bb8ec.png|114]]
 
 音效设置(不喜欢这个音效的可以自己设置或者关闭)：
+
 ![[QuickClipboard-b047af9f78a3a713.png|258]]
 
 应用过滤(保护自己的隐私，博主只是个穷大学生没啥好保护的，就没设置了)：
+
 ![[QuickClipboard-7aefc7510a471157.png|262]]
 
 
