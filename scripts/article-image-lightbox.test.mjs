@@ -28,6 +28,47 @@ test("selects informative article images without turning inline reactions into l
   assert.equal(getArticleImageLightboxMode({ src: "/photo.jpg", alt: "海边", preference: "off" }), "off", "explicit opt-out should win");
 });
 
+test("keeps explicitly sized tutorial screenshots inline when adding a lightbox", () => {
+  assert.ok(controllerModule, "article image lightbox controller is missing");
+  const { getArticleImageLightboxMode } = controllerModule;
+
+  assert.equal(
+    getArticleImageLightboxMode({
+      src: "/QuickClipboard-90b5432cc26a1a49.png",
+      alt: "QuickClipboard 常规设置",
+      width: 250,
+    }),
+    "thumbnail",
+  );
+});
+
+test("preserves a declared width when the lightbox is explicitly enabled", () => {
+  assert.ok(controllerModule, "article image lightbox controller is missing");
+  const { getArticleImageLightboxMode } = controllerModule;
+
+  assert.equal(
+    getArticleImageLightboxMode({ src: "/diagram.png", alt: "流程图", width: 250, preference: "on" }),
+    "thumbnail",
+  );
+});
+
+test("treats every non-content area as a dismissible lightbox backdrop", () => {
+  assert.ok(controllerModule, "article image lightbox controller is missing");
+  const { shouldCloseArticleImageLightboxFromTarget } = controllerModule;
+  assert.equal(typeof shouldCloseArticleImageLightboxFromTarget, "function", "backdrop target detection is missing");
+
+  const targetMatching = (matchedSelector) => ({
+    closest(selectors) {
+      return matchedSelector && selectors.split(", ").includes(matchedSelector) ? {} : null;
+    },
+  });
+
+  assert.equal(shouldCloseArticleImageLightboxFromTarget(targetMatching(null)), true, "panel whitespace should close the viewer");
+  assert.equal(shouldCloseArticleImageLightboxFromTarget(targetMatching("[data-lightbox-image]")), false, "clicking the image should keep the viewer open");
+  assert.equal(shouldCloseArticleImageLightboxFromTarget(targetMatching("[data-lightbox-caption]")), false, "clicking the caption should keep the viewer open");
+  assert.equal(shouldCloseArticleImageLightboxFromTarget(targetMatching("[data-lightbox-close]")), false, "the close button should handle its own click");
+});
+
 test("opens the native dialog with the selected image and restores focus after close", () => {
   assert.ok(controllerModule, "article image lightbox controller is missing");
   const { createArticleImageLightboxController } = controllerModule;
@@ -95,8 +136,27 @@ test("mounts one accessible lightbox on every article page", () => {
   assert.match(component, /<dialog[^>]*data-article-image-lightbox/);
   assert.match(component, /aria-label="关闭大图"/);
   assert.match(component, /showModal|controller\.open/);
-  assert.match(component, /event\.target\s*===\s*dialog/, "clicking the backdrop should close the viewer");
+  assert.match(component, /shouldCloseArticleImageLightboxFromTarget\(event\.target\)/, "all visual backdrop areas should close the viewer");
   assert.match(component, /astro:after-swap/, "view transitions should re-enhance article images");
+});
+
+test("keeps image triggers accessible without a visible zoom label", () => {
+  const component = existsSync(componentPath) ? readFileSync(componentPath, "utf8") : "";
+
+  assert.match(component, /trigger\.setAttribute\("aria-label",\s*`查看大图/, "image triggers lost their accessible label");
+  assert.doesNotMatch(component, /article-image-zoom-label/, "the visible zoom label still covers article images");
+});
+
+test("uses the compact 8px reference radius for article images", () => {
+  const component = existsSync(componentPath) ? readFileSync(componentPath, "utf8") : "";
+  const triggerRule = component.match(/\.article-image-trigger\s*\{([^}]*)\}/)?.[1];
+  const imageRule = component.match(/\.article-image-trigger\s*>\s*img\s*\{([^}]*)\}/)?.[1];
+
+  assert.ok(triggerRule, "article image trigger rule is missing");
+  assert.ok(imageRule, "article image rule is missing");
+  assert.match(triggerRule, /--article-image-radius:\s*8px\s*;/, "the compact article image radius token is missing");
+  assert.match(triggerRule, /border-radius:\s*var\(--article-image-radius\)\s*;/, "article image trigger does not use the compact radius");
+  assert.match(imageRule, /border-radius:\s*var\(--article-image-radius\)\s*;/, "article images do not use the compact radius");
 });
 
 test("keeps the viewer touch-friendly, viewport-bound, and motion-sensitive", () => {
