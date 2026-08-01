@@ -46,6 +46,9 @@ test("connects article cards and article details with named shared elements", ()
   assert.match(transitionComponent, /addEventListener\("pagereveal"/, "prerender activation cannot restore destination names");
   assert.match(css, /::view-transition-new\(root\)[\s\S]*?article-page-enter/, "navigation lacks a smooth whole-page fallback");
   assert.match(css, /@keyframes article-page-enter/, "the whole-page entrance animation is missing");
+  assert.match(css, /:root\[data-article-transition="active"\]::view-transition-old\(root\)[\s\S]*?article-page-exit/, "article navigation does not hold the old page above the destination");
+  assert.match(css, /:root\[data-article-transition="active"\]::view-transition-new\(root\)[\s\S]*?animation:\s*none/, "article navigation still fades the destination root over an empty page");
+  assert.match(css, /@keyframes article-page-exit/, "the delayed article page exit animation is missing");
   assert.match(css, /data-article-transition-pending="true"/, "clicked cards do not expose immediate loading feedback");
 });
 
