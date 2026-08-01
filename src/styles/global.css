@@ -1061,6 +1061,11 @@ button {
   navigation: auto;
 }
 
+::view-transition,
+::view-transition-group(root) {
+  background: var(--color-page);
+}
+
 ::view-transition-old(root) {
   animation: none;
   mix-blend-mode: normal;
