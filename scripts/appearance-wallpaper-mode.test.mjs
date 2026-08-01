@@ -117,7 +117,7 @@ test("offers and persists an innei-inspired warm paper appearance preset", () =>
   assert.match(lightRoot, /--color-page:\s*hsl\(var\(--theme-hue\)/, "selecting a hue can no longer restore its colored page background");
   assert.match(
     paperRoot,
-    /--color-page:\s*#f4eddd\s*;[\s\S]*?--color-page-soft:\s*#faf5e9\s*;[\s\S]*?--color-surface-fallback:\s*#fbf6e9\s*;[\s\S]*?--color-muted:\s*#69655d\s*;[\s\S]*?--color-faint:\s*#6d675d\s*;[\s\S]*?radial-gradient\(circle at 18% 0%,\s*rgb\(255 255 255 \/ 0\.52\),\s*transparent 34%\)[\s\S]*?radial-gradient\(circle at 88% 100%,\s*rgb\(164 116 55 \/ 0\.06\),\s*transparent 38%\)[\s\S]*?linear-gradient\(180deg,\s*var\(--color-page-soft\) 0%,\s*var\(--color-page\) 100%\)/,
+    /--color-page:\s*#f9f6ec\s*;[\s\S]*?--color-page-soft:\s*#fcfaf5\s*;[\s\S]*?--color-surface-fallback:\s*#fdfaf4\s*;[\s\S]*?--color-muted:\s*#69655d\s*;[\s\S]*?--color-faint:\s*#6d675d\s*;[\s\S]*?radial-gradient\(circle at 18% 0%,\s*rgb\(255 255 255 \/ 0\.58\),\s*transparent 34%\)[\s\S]*?radial-gradient\(circle at 88% 100%,\s*rgb\(164 116 55 \/ 0\.025\),\s*transparent 38%\)[\s\S]*?linear-gradient\(180deg,\s*var\(--color-page-soft\) 0%,\s*var\(--color-page\) 100%\)/,
     "the paper preset does not define the approved warm, readable paper palette",
   );
   const paperBackgrounds = [
@@ -133,7 +133,7 @@ test("offers and persists an innei-inspired warm paper appearance preset", () =>
   });
   assert.match(
     appearanceSettings,
-    /\.appearance-swatch--paper\s*\{[^}]*background:\s*linear-gradient\(135deg,\s*#faf5e9 0 52%,\s*#f4eddd 52% 100%\)/s,
+    /\.appearance-swatch--paper\s*\{[^}]*background:\s*linear-gradient\(135deg,\s*#fcfaf5 0 52%,\s*#f9f6ec 52% 100%\)/s,
     "the paper swatch does not preview the warmer paper palette",
   );
   assert.match(globalCss, /:root\[data-theme="dark"\]\[data-accent-mode="paper"\]\s*\{/, "the paper preset has no dark-theme counterpart");
@@ -164,7 +164,7 @@ test("gives warm paper a scoped tactile grain without changing pure white or ful
   );
   assert.match(
     paperRoot,
-    /--page-grain-opacity:\s*0\.035\s*;[\s\S]*?--page-grain-filter:\s*sepia\(0\.2\) contrast\(0\.92\)\s*;/,
+    /--page-grain-opacity:\s*0\.035\s*;[\s\S]*?--page-grain-filter:\s*sepia\(0\.1\) contrast\(0\.94\)\s*;/,
     "the light paper preset does not receive its restrained tactile grain",
   );
   assert.match(

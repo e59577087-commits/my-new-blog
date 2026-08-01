@@ -15,7 +15,8 @@
   --motion-duration-instant: 120ms;
   --motion-duration-fast: 180ms;
   --motion-duration-base: 280ms;
-  --motion-duration-page: 460ms;
+  --motion-duration-page: 420ms;
+  --motion-duration-article: 600ms;
   --motion-duration-reveal: 540ms;
   --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
@@ -187,18 +188,18 @@
 }
 
 :root[data-accent-mode="paper"] {
-  --color-page: #f4eddd;
-  --color-page-soft: #faf5e9;
-  --color-surface-fallback: #fbf6e9;
+  --color-page: #f9f6ec;
+  --color-page-soft: #fcfaf5;
+  --color-surface-fallback: #fdfaf4;
   --color-muted: #69655d;
   --color-faint: #6d675d;
   --page-grain-opacity: 0.035;
-  --page-grain-filter: sepia(0.2) contrast(0.92);
+  --page-grain-filter: sepia(0.1) contrast(0.94);
   --page-background:
-    radial-gradient(circle at 18% 0%, rgb(255 255 255 / 0.52), transparent 34%),
-    radial-gradient(circle at 88% 100%, rgb(164 116 55 / 0.06), transparent 38%),
+    radial-gradient(circle at 18% 0%, rgb(255 255 255 / 0.58), transparent 34%),
+    radial-gradient(circle at 88% 100%, rgb(164 116 55 / 0.025), transparent 38%),
     linear-gradient(180deg, var(--color-page-soft) 0%, var(--color-page) 100%);
-  --color-header: rgb(248 241 226 / 0.78);
+  --color-header: rgb(252 249 241 / 0.8);
 }
 
 :root[data-theme="dark"][data-accent-mode="paper"] {
@@ -1066,7 +1067,7 @@ button {
 }
 
 ::view-transition-new(root) {
-  animation: article-page-enter var(--motion-duration-base) var(--motion-ease-enter) both;
+  animation: article-page-enter var(--motion-duration-page) var(--motion-ease-enter) both;
   mix-blend-mode: normal;
 }
 
@@ -1120,7 +1121,7 @@ button {
 
 ::view-transition-group(article-title),
 ::view-transition-group(article-cover) {
-  animation-duration: var(--motion-duration-page);
+  animation-duration: var(--motion-duration-article);
   animation-timing-function: var(--motion-ease-enter);
 }
 
@@ -1145,7 +1146,7 @@ button {
 ::view-transition-new(article-title) {
   height: 100%;
   mix-blend-mode: normal;
-  animation: article-title-enter var(--motion-duration-page) var(--motion-ease-enter) both;
+  animation: article-title-enter var(--motion-duration-article) var(--motion-ease-enter) both;
 }
 
 @keyframes article-page-enter {
@@ -1168,7 +1169,7 @@ button {
 
 @keyframes article-title-enter {
   0%,
-  28% {
+  20% {
     opacity: 0;
   }
 
