@@ -53,26 +53,7 @@ const socialImageUrl = new URL(image, site.url);
         applyTheme(getStoredTheme() ?? getSystemTheme());
       })();
     </script>
-    <script is:inline>
-      (() => {
-        const storageKey = "blog-article-transition-v1";
-        try {
-          const raw = window.sessionStorage.getItem(storageKey);
-          if (!raw) return;
-
-          const payload = JSON.parse(raw);
-          const isFresh = typeof payload?.createdAt === "number" && Date.now() - payload.createdAt < 8000;
-          if (isFresh && payload.pathname === window.location.pathname) {
-            document.documentElement.dataset.articleTransition = "active";
-          }
-          window.sessionStorage.removeItem(storageKey);
-        } catch {
-          try {
-            window.sessionStorage.removeItem(storageKey);
-          } catch {}
-        }
-      })();
-    </script>
+    <ArticlePageTransition />
     <script is:inline>
       (() => {
         const storageKey = "blog-appearance-settings-v1";
@@ -184,7 +165,6 @@ const socialImageUrl = new URL(image, site.url);
       {type !== "article" && <ScrollTopButton />}
       <CardTilt />
       <OmikujiDraw />
-      <ArticlePageTransition />
       <SitePet reducedActivity={type === "article"} />
     </div>
     <script>

@@ -109,7 +109,7 @@ test("renders the study dossier title, subtitle, and statistics", () => {
   assert.ok(html.includes("data-study-dossier"), "study dossier is missing");
   assert.match(
     html,
-    /<h1[^>]*>学习<\/h1>\s*<p class="section-subtitle">仙人抚我顶（<span class="study-subtitle-strike">并非挠自己头<\/span>）<\/p>/,
+    /<h1[^>]*>学习<\/h1>\s*<p class="section-subtitle">静下心来，咬好每一口<\/p>/,
   );
   assert.ok(html.includes("5 则札记 · 3 项研习中"), "study statistics are incorrect");
   assert.ok(!html.includes('data-appearance-article-list="catalog"'), "generic catalog remains on study page");

@@ -1060,15 +1060,39 @@ button {
   navigation: auto;
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
+::view-transition-old(root) {
   animation: none;
   mix-blend-mode: normal;
 }
 
-:root[data-article-transition="active"]::view-transition-old(root),
-:root[data-article-transition="active"]::view-transition-new(root) {
-  animation: none;
+::view-transition-new(root) {
+  animation: article-page-enter var(--motion-duration-base) var(--motion-ease-enter) both;
+  mix-blend-mode: normal;
+}
+
+:root[data-article-navigation="pending"]::before {
+  position: fixed;
+  z-index: 2147483647;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, transparent, var(--color-accent), var(--color-accent-text));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent) 65%, transparent);
+  content: "";
+  pointer-events: none;
+  animation: article-navigation-progress 1.25s var(--motion-ease-enter) 80ms infinite;
+}
+
+[data-article-transition-pending="true"] {
+  cursor: progress;
+  filter: saturate(0.88);
+  opacity: 0.82;
+  transition:
+    filter var(--motion-duration-fast) var(--motion-ease-standard),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 :root.theme-transitioning::view-transition-old(root),
@@ -1108,11 +1132,70 @@ button {
 }
 
 ::view-transition-old(article-title),
-::view-transition-new(article-title),
 ::view-transition-old(article-cover),
 ::view-transition-new(article-cover) {
   height: 100%;
   mix-blend-mode: normal;
+}
+
+::view-transition-old(article-title) {
+  animation: article-title-exit var(--motion-duration-fast) var(--motion-ease-exit) both;
+}
+
+::view-transition-new(article-title) {
+  height: 100%;
+  mix-blend-mode: normal;
+  animation: article-title-enter var(--motion-duration-page) var(--motion-ease-enter) both;
+}
+
+@keyframes article-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes article-title-exit {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes article-title-enter {
+  0%,
+  28% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes article-navigation-progress {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+
+  14% {
+    opacity: 1;
+  }
+
+  72% {
+    transform: scaleX(0.82);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scaleX(0.96);
+    opacity: 0.45;
+  }
 }
 
 @keyframes theme-reveal {
@@ -2512,6 +2595,12 @@ button {
   ::view-transition-group(article-title),
   ::view-transition-group(article-cover) {
     animation-duration: 0.01ms !important;
+  }
+
+  :root[data-article-navigation="pending"]::before {
+    animation: none !important;
+    transform: scaleX(0.72);
+    opacity: 1;
   }
 
   /* 关闭滚动入场动画，直接显示元素 */

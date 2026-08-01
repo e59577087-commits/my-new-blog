@@ -5,6 +5,7 @@ import { unified } from '@astrojs/markdown-remark';
 import tailwindcss from '@tailwindcss/vite';
 import { remarkObsidian } from './src/utils/remark-obsidian';
 import { remarkExternalLinks } from './src/utils/remark-external-links';
+import { rehypeLazyImages } from './src/utils/rehype-lazy-images';
 
 const siteUrl = (process.env.PUBLIC_SITE_URL ?? 'https://example.com').replace(/\/$/, '');
 
@@ -14,6 +15,7 @@ export default defineConfig({
   markdown: {
     processor: unified({
       remarkPlugins: [remarkObsidian, remarkExternalLinks],
+      rehypePlugins: [rehypeLazyImages],
     }),
     shikiConfig: {
       theme: 'github-dark',

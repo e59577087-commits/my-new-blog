@@ -7,6 +7,7 @@ import ArticleImageLightbox from "../components/ArticleImageLightbox.astro";
 import Comments from "../components/Comments.astro";
 import PrevNextNav from "../components/PrevNextNav.astro";
 import { formatArticleDate, getArticleSlug, getEntryUrl, coverOrDefault, type Article } from "../utils/articles";
+import { getResponsiveCover } from "../utils/responsiveImages";
 
 interface Props {
   article: Article;
@@ -21,6 +22,7 @@ const { Content, headings } = await render(article);
 const slug = getArticleSlug(article);
 const { title, description, date, tags, category, links } = article.data;
 const cover = coverOrDefault(article.data.cover);
+const responsiveCover = getResponsiveCover(cover);
 const tocHeadings = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
 const hasToc = tocHeadings.length >= 2;
 ---
@@ -44,7 +46,19 @@ const hasToc = tocHeadings.length >= 2;
       <div class="mt-5 flex flex-wrap gap-2">
         {tags.map((tag) => <span class="rounded border hairline bg-[var(--color-surface-solid)] px-2.5 py-1 text-xs muted">{tag}</span>)}
       </div>
-      <img data-article-transition-cover src={cover} alt="" loading="eager" decoding="async" width="960" height="621" class="mt-8 aspect-[16/8] w-full rounded-lg border hairline object-cover" />
+      <img
+        data-article-transition-cover
+        src={cover}
+        srcset={responsiveCover?.srcset}
+        sizes={responsiveCover ? "(min-width: 1024px) 55rem, calc(100vw - 2rem)" : undefined}
+        alt=""
+        loading="eager"
+        decoding="async"
+        fetchpriority="high"
+        width="960"
+        height="480"
+        class="mt-8 aspect-[16/8] w-full rounded-lg border hairline object-cover"
+      />
     </header>
 
     {hasToc && <div class="mt-8 lg:hidden"><ArticleToc headings={tocHeadings} variant="mobile" /></div>}
