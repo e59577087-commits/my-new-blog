@@ -1071,7 +1071,8 @@ button {
   mix-blend-mode: normal;
 }
 
-:root[data-article-navigation="pending"]::before {
+:root[data-article-navigation="pending"]::before,
+:root[data-article-navigation="fallback"]::before {
   position: fixed;
   z-index: 2147483647;
   top: 0;
@@ -1094,6 +1095,35 @@ button {
   transition:
     filter var(--motion-duration-fast) var(--motion-ease-standard),
     opacity var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+:root[data-article-navigation="fallback"] body::before {
+  position: fixed;
+  z-index: 2147483646;
+  inset: 0;
+  background: var(--color-page);
+  clip-path: circle(0 at var(--article-navigation-x, 50vw) var(--article-navigation-y, 50vh));
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  animation: article-fallback-veil var(--motion-duration-article) var(--motion-ease-enter) forwards;
+}
+
+:root[data-article-navigation="fallback"] [data-article-transition-pending="true"] {
+  filter: saturate(0.68) brightness(0.94);
+  opacity: 0.62;
+}
+
+:root[data-article-transition="fallback"] [data-article-transition-content] {
+  animation: article-fallback-page-enter var(--motion-duration-page) var(--motion-ease-enter) both;
+}
+
+:root[data-article-transition="fallback"] [data-article-reading-root] [data-article-transition-title] {
+  animation: article-fallback-title-enter var(--motion-duration-page) var(--motion-ease-enter) 45ms both;
+}
+
+:root[data-article-transition="fallback"] [data-article-reading-root] [data-article-transition-cover] {
+  animation: article-fallback-cover-enter var(--motion-duration-article) var(--motion-ease-enter) 70ms both;
 }
 
 :root.theme-transitioning::view-transition-old(root),
@@ -1175,6 +1205,58 @@ button {
 
   100% {
     opacity: 1;
+  }
+}
+
+@keyframes article-fallback-veil {
+  0% {
+    clip-path: circle(0 at var(--article-navigation-x, 50vw) var(--article-navigation-y, 50vh));
+    opacity: 0;
+  }
+
+  38% {
+    opacity: 0.46;
+  }
+
+  100% {
+    clip-path: circle(150vmax at var(--article-navigation-x, 50vw) var(--article-navigation-y, 50vh));
+    opacity: 0.68;
+  }
+}
+
+@keyframes article-fallback-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes article-fallback-title-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes article-fallback-cover-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -2602,6 +2684,11 @@ button {
     animation: none !important;
     transform: scaleX(0.72);
     opacity: 1;
+  }
+
+  :root[data-article-navigation="fallback"] body::before {
+    animation: none !important;
+    content: none;
   }
 
   /* 关闭滚动入场动画，直接显示元素 */
