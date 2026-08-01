@@ -1076,6 +1076,16 @@ button {
   mix-blend-mode: normal;
 }
 
+:root[data-article-transition="active"]::view-transition-old(root) {
+  z-index: 1;
+  animation: article-page-exit var(--motion-duration-page) var(--motion-ease-exit) 120ms both;
+}
+
+:root[data-article-transition="active"]::view-transition-new(root) {
+  z-index: 0;
+  animation: none;
+}
+
 :root[data-article-navigation="pending"]::before,
 :root[data-article-navigation="fallback"]::before {
   position: fixed;
@@ -1156,6 +1166,7 @@ button {
 
 ::view-transition-group(article-title),
 ::view-transition-group(article-cover) {
+  z-index: 2;
   animation-duration: var(--motion-duration-article);
   animation-timing-function: var(--motion-ease-enter);
 }
@@ -1182,6 +1193,16 @@ button {
   height: 100%;
   mix-blend-mode: normal;
   animation: article-title-enter var(--motion-duration-article) var(--motion-ease-enter) both;
+}
+
+@keyframes article-page-exit {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes article-page-enter {
@@ -2677,6 +2698,7 @@ button {
 
   ::view-transition-old(root),
   ::view-transition-new(root) {
+    animation-delay: 0ms !important;
     animation-duration: 0.01ms !important;
   }
 
