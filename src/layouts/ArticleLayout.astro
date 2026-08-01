@@ -30,6 +30,7 @@ const hasToc = tocHeadings.length >= 2;
 <BaseLayout title={title} description={description} type="article" publishedTime={date} image={cover}>
   <ArticleReadingProgress />
   <div
+    data-article-transition-content
     class:list={[
       "mx-auto px-4 py-10 sm:px-6 sm:py-14 lg:px-8",
       hasToc ? "max-w-6xl lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:gap-12" : "max-w-4xl",

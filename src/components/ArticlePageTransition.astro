@@ -11,10 +11,18 @@
 
 <script is:inline>
   (() => {
-    const transitionStorageKey = "blog-article-transition-v2";
-    const transitionMaxAge = 8000;
+    const transitionStorageKey = "blog-article-transition-v3";
+    const transitionMaxAge = 18000;
+    const pendingStateMaxAge = 6000;
     const root = document.documentElement;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const supportsNativeTransition =
+      "onpageswap" in window &&
+      "onpagereveal" in window &&
+      typeof document.startViewTransition === "function";
     let pendingLink = null;
+    let pendingTransitionId = null;
+    let pendingStateTimer = 0;
 
     const clearSourceNames = () => {
       document.querySelectorAll("[data-article-transition-title], [data-article-transition-cover]").forEach((element) => {
@@ -23,12 +31,17 @@
     };
 
     const clearPendingState = () => {
+      window.clearTimeout(pendingStateTimer);
+      pendingStateTimer = 0;
       root.removeAttribute("data-article-navigation");
+      root.style.removeProperty("--article-navigation-x");
+      root.style.removeProperty("--article-navigation-y");
       document.querySelectorAll('[data-article-transition-pending="true"]').forEach((link) => {
         link.removeAttribute("data-article-transition-pending");
         link.removeAttribute("aria-busy");
       });
       pendingLink = null;
+      pendingTransitionId = null;
     };
 
     const clearDestinationState = () => {
@@ -41,8 +54,15 @@
       link.querySelector("[data-article-transition-cover]")?.style.setProperty("view-transition-name", "article-cover");
     };
 
-    const removeStoredTransition = () => {
+    const removeStoredTransition = (expectedId = null) => {
       try {
+        if (expectedId) {
+          const raw = window.sessionStorage.getItem(transitionStorageKey);
+          if (!raw) return;
+          try {
+            if (JSON.parse(raw)?.id !== expectedId) return;
+          } catch {}
+        }
         window.sessionStorage.removeItem(transitionStorageKey);
       } catch {}
     };
@@ -50,30 +70,84 @@
     const activateStoredDestination = () => {
       try {
         const raw = window.sessionStorage.getItem(transitionStorageKey);
-        if (!raw) return false;
+        if (!raw) return null;
 
         const payload = JSON.parse(raw);
         const isFresh = typeof payload?.createdAt === "number" && Date.now() - payload.createdAt < transitionMaxAge;
-        const matchesDestination = payload?.pathname === window.location.pathname;
+        const currentDestination = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        const matchesDestination = payload?.destination === currentDestination;
         window.sessionStorage.removeItem(transitionStorageKey);
 
-        if (!isFresh || !matchesDestination) return false;
-        root.dataset.articleTransition = "active";
-        return true;
+        if (!isFresh || !matchesDestination || payload?.mode === "none") return null;
+        const mode = payload?.mode === "fallback" ? "fallback" : "active";
+        root.dataset.articleTransition = mode;
+        return mode;
       } catch {
         removeStoredTransition();
-        return false;
+        return null;
       }
     };
 
-    const storeDestination = (destination) => {
+    const storeDestination = (destination, mode, id) => {
       try {
         window.sessionStorage.setItem(transitionStorageKey, JSON.stringify({
-          pathname: destination.pathname,
+          id,
+          destination: `${destination.pathname}${destination.search}${destination.hash}`,
           createdAt: Date.now(),
+          mode,
         }));
       } catch {
         // Navigation remains functional when storage is unavailable.
+      }
+    };
+
+    const navigationMode = () => {
+      if (reducedMotion.matches) return "none";
+      return supportsNativeTransition ? "native" : "fallback";
+    };
+
+    const setFallbackOrigin = (event, link) => {
+      const rect = link.getBoundingClientRect();
+      const x = event.clientX > 0 ? event.clientX : rect.left + rect.width / 2;
+      const y = event.clientY > 0 ? event.clientY : rect.top + rect.height / 2;
+      root.style.setProperty("--article-navigation-x", `${Math.round(x)}px`);
+      root.style.setProperty("--article-navigation-y", `${Math.round(y)}px`);
+    };
+
+    const scheduleFallbackCleanup = () => {
+      const attach = () => {
+        const cover = document.querySelector("[data-article-reading-root] [data-article-transition-cover]");
+        const title = document.querySelector("[data-article-reading-root] [data-article-transition-title]");
+        const target = cover ?? title ?? document.querySelector("[data-article-transition-content]");
+        if (!(target instanceof Element)) {
+          clearDestinationState();
+          return;
+        }
+        const expectedAnimation = cover
+          ? "article-fallback-cover-enter"
+          : title
+            ? "article-fallback-title-enter"
+            : "article-fallback-page-enter";
+
+        let cleanupTimer = 0;
+        const finish = (event) => {
+          if (
+            event &&
+            (event.target !== target || event.animationName !== expectedAnimation)
+          ) return;
+          target.removeEventListener("animationend", finish);
+          window.clearTimeout(cleanupTimer);
+          clearDestinationState();
+        };
+
+        target.addEventListener("animationend", finish);
+        cleanupTimer = window.setTimeout(() => finish(), 900);
+      };
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", attach, { once: true });
+      } else {
+        requestAnimationFrame(attach);
       }
     };
 
@@ -95,16 +169,19 @@
 
     // Normal navigations consume the hand-off while the destination is parsed.
     // Prerendered documents consume it again at activation in `pagereveal`.
-    activateStoredDestination();
+    const initialDestinationMode = activateStoredDestination();
+    if (initialDestinationMode === "fallback") scheduleFallbackCleanup();
 
     window.addEventListener("pagereveal", (event) => {
-      const isArticleTransition = activateStoredDestination() || root.dataset.articleTransition === "active";
+      const storedMode = activateStoredDestination();
+      const isArticleTransition = storedMode || root.hasAttribute("data-article-transition");
       if (!isArticleTransition) return;
 
       if (event.viewTransition) {
         event.viewTransition.finished.then(clearDestinationState, clearDestinationState);
       } else {
-        requestAnimationFrame(() => requestAnimationFrame(clearDestinationState));
+        root.dataset.articleTransition = "fallback";
+        scheduleFallbackCleanup();
       }
     });
 
@@ -137,16 +214,37 @@
       const destination = new URL(link.href, window.location.href);
       if (destination.origin !== window.location.origin) return;
 
+      const mode = navigationMode();
       pendingLink = link;
-      setSourceNames(link);
+      if (mode === "native") setSourceNames(link);
+      else clearSourceNames();
       warmCover(link);
-      root.dataset.articleNavigation = "pending";
+      if (mode === "fallback") {
+        setFallbackOrigin(event, link);
+      }
+      root.dataset.articleNavigation = mode === "fallback" ? "fallback" : "pending";
       link.dataset.articleTransitionPending = "true";
       link.setAttribute("aria-busy", "true");
-      storeDestination(destination);
+      const transitionId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      pendingTransitionId = transitionId;
+      storeDestination(destination, mode, transitionId);
+      window.setTimeout(() => {
+        if (!event.defaultPrevented || pendingTransitionId !== transitionId) return;
+        removeStoredTransition(transitionId);
+        clearSourceNames();
+        clearPendingState();
+      }, 0);
+      window.clearTimeout(pendingStateTimer);
+      pendingStateTimer = window.setTimeout(() => {
+        if (pendingTransitionId !== transitionId) return;
+        clearSourceNames();
+        clearPendingState();
+      }, pendingStateMaxAge);
+      window.setTimeout(() => removeStoredTransition(transitionId), transitionMaxAge);
     }, { capture: true });
 
     window.addEventListener("pageshow", () => {
+      if (pendingTransitionId) removeStoredTransition(pendingTransitionId);
       clearSourceNames();
       clearPendingState();
     });
