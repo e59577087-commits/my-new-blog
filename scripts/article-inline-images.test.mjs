@@ -10,6 +10,8 @@ const globalCss = readFileSync(resolve(root, "src", "styles", "global.css"), "ut
 const quickClipboardArticle = readFileSync(resolve(root, "src", "content", "articles", "QuickClipboard.md"), "utf8");
 const remarkObsidianPath = resolve(root, "src", "utils", "remark-obsidian.ts");
 const remarkObsidianModule = existsSync(remarkObsidianPath) ? await import(pathToFileURL(remarkObsidianPath)) : null;
+const rehypeLazyImagesPath = resolve(root, "src", "utils", "rehype-lazy-images.ts");
+const rehypeLazyImagesModule = existsSync(rehypeLazyImagesPath) ? await import(pathToFileURL(rehypeLazyImagesPath)) : null;
 
 const transformText = (value) => {
   assert.ok(remarkObsidianModule, "Obsidian remark plugin is missing");
@@ -40,8 +42,10 @@ test("renders sized article images inline with surrounding text", () => {
 
 test("keeps QuickClipboard configuration labels above their image rows", async () => {
   assert.ok(remarkObsidianModule, "Obsidian remark plugin is missing");
+  assert.ok(rehypeLazyImagesModule, "article image loading plugin is missing");
   const processor = await createMarkdownProcessor({
     remarkPlugins: [remarkObsidianModule.remarkObsidian],
+    rehypePlugins: [rehypeLazyImagesModule.rehypeLazyImages],
     smartypants: false,
     syntaxHighlight: false,
   });
@@ -53,4 +57,11 @@ test("keeps QuickClipboard configuration labels above their image rows", async (
     /<\/ol>\s*<p>常规设置：<\/p>\s*<p>\s*<img[^>]*QuickClipboard-90b5432cc26a1a49\.png[^>]*width="250"[^>]*>\s*<img[^>]*QuickClipboard-68356382664f09e5\.png[^>]*width="254"[^>]*>\s*<\/p>/,
     "the first configuration label and its screenshot row do not render as separate blocks",
   );
+
+  const imageTags = [...code.matchAll(/<img\b[^>]*>/g)].map((match) => match[0]);
+  assert.equal(imageTags.length, 10, "the article image count changed unexpectedly");
+  for (const imageTag of imageTags) {
+    assert.match(imageTag, /loading="lazy"/, "a body image is still loading eagerly");
+    assert.match(imageTag, /decoding="async"/, "a body image is still decoding synchronously");
+  }
 });

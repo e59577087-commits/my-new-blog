@@ -5,56 +5,150 @@
         "where": { "selector_matches": "a[data-article-transition]" },
         "eagerness": "eager"
       }
-    ],
-    "prerender": [
-      {
-        "where": { "selector_matches": "a[data-article-transition]" },
-        "eagerness": "moderate"
-      }
     ]
   }
 </script>
 
-<script>
-  const transitionStorageKey = "blog-article-transition-v1";
-  const root = document.documentElement;
+<script is:inline>
+  (() => {
+    const transitionStorageKey = "blog-article-transition-v2";
+    const transitionMaxAge = 8000;
+    const root = document.documentElement;
+    let pendingLink = null;
 
-  const clearSourceNames = () => {
-    document.querySelectorAll<HTMLElement>("[data-article-transition-title], [data-article-transition-cover]").forEach((element) => {
-      element.style.removeProperty("view-transition-name");
+    const clearSourceNames = () => {
+      document.querySelectorAll("[data-article-transition-title], [data-article-transition-cover]").forEach((element) => {
+        element.style.removeProperty("view-transition-name");
+      });
+    };
+
+    const clearPendingState = () => {
+      root.removeAttribute("data-article-navigation");
+      document.querySelectorAll('[data-article-transition-pending="true"]').forEach((link) => {
+        link.removeAttribute("data-article-transition-pending");
+        link.removeAttribute("aria-busy");
+      });
+      pendingLink = null;
+    };
+
+    const clearDestinationState = () => {
+      root.removeAttribute("data-article-transition");
+    };
+
+    const setSourceNames = (link) => {
+      clearSourceNames();
+      link.querySelector("[data-article-transition-title]")?.style.setProperty("view-transition-name", "article-title");
+      link.querySelector("[data-article-transition-cover]")?.style.setProperty("view-transition-name", "article-cover");
+    };
+
+    const removeStoredTransition = () => {
+      try {
+        window.sessionStorage.removeItem(transitionStorageKey);
+      } catch {}
+    };
+
+    const activateStoredDestination = () => {
+      try {
+        const raw = window.sessionStorage.getItem(transitionStorageKey);
+        if (!raw) return false;
+
+        const payload = JSON.parse(raw);
+        const isFresh = typeof payload?.createdAt === "number" && Date.now() - payload.createdAt < transitionMaxAge;
+        const matchesDestination = payload?.pathname === window.location.pathname;
+        window.sessionStorage.removeItem(transitionStorageKey);
+
+        if (!isFresh || !matchesDestination) return false;
+        root.dataset.articleTransition = "active";
+        return true;
+      } catch {
+        removeStoredTransition();
+        return false;
+      }
+    };
+
+    const storeDestination = (destination) => {
+      try {
+        window.sessionStorage.setItem(transitionStorageKey, JSON.stringify({
+          pathname: destination.pathname,
+          createdAt: Date.now(),
+        }));
+      } catch {
+        // Navigation remains functional when storage is unavailable.
+      }
+    };
+
+    const warmCover = (link) => {
+      const cover = link.querySelector("img[data-article-transition-cover]");
+      if (!cover) return;
+      cover.loading = "eager";
+      cover.fetchPriority = "high";
+      void cover.decode?.().catch(() => {});
+    };
+
+    const getArticleLink = (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      return target?.closest("a[data-article-transition]") ?? null;
+    };
+
+    const isPlainPrimaryClick = (event) =>
+      event.button === 0 && !event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+
+    // Normal navigations consume the hand-off while the destination is parsed.
+    // Prerendered documents consume it again at activation in `pagereveal`.
+    activateStoredDestination();
+
+    window.addEventListener("pagereveal", (event) => {
+      const isArticleTransition = activateStoredDestination() || root.dataset.articleTransition === "active";
+      if (!isArticleTransition) return;
+
+      if (event.viewTransition) {
+        event.viewTransition.finished.then(clearDestinationState, clearDestinationState);
+      } else {
+        requestAnimationFrame(() => requestAnimationFrame(clearDestinationState));
+      }
     });
-  };
 
-  const isPlainPrimaryClick = (event: MouseEvent) =>
-    event.button === 0 && !event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+    window.addEventListener("pageswap", (event) => {
+      if (!event.viewTransition || !pendingLink) return;
+      setSourceNames(pendingLink);
+      const cleanupSource = () => {
+        clearSourceNames();
+        clearPendingState();
+      };
+      event.viewTransition.finished.then(cleanupSource, cleanupSource);
+    });
 
-  document.addEventListener("click", (event) => {
-    if (!(event instanceof MouseEvent) || !isPlainPrimaryClick(event)) return;
+    document.addEventListener("pointerover", (event) => {
+      const link = getArticleLink(event);
+      if (link) warmCover(link);
+    }, { passive: true });
 
-    const target = event.target instanceof Element ? event.target : null;
-    const link = target?.closest<HTMLAnchorElement>("a[data-article-transition]");
-    if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+    document.addEventListener("focusin", (event) => {
+      const link = getArticleLink(event);
+      if (link) warmCover(link);
+    });
 
-    const destination = new URL(link.href, window.location.href);
-    if (destination.origin !== window.location.origin) return;
+    document.addEventListener("click", (event) => {
+      if (!(event instanceof MouseEvent) || !isPlainPrimaryClick(event)) return;
 
-    clearSourceNames();
-    link.querySelector<HTMLElement>("[data-article-transition-title]")?.style.setProperty("view-transition-name", "article-title");
-    link.querySelector<HTMLElement>("[data-article-transition-cover]")?.style.setProperty("view-transition-name", "article-cover");
+      const link = getArticleLink(event);
+      if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
 
-    try {
-      window.sessionStorage.setItem(transitionStorageKey, JSON.stringify({
-        pathname: destination.pathname,
-        createdAt: Date.now(),
-      }));
-    } catch {
-      // The navigation still works when storage is unavailable; only the shared morph is skipped.
-    }
-  }, { capture: true });
+      const destination = new URL(link.href, window.location.href);
+      if (destination.origin !== window.location.origin) return;
 
-  window.addEventListener("pageshow", clearSourceNames);
+      pendingLink = link;
+      setSourceNames(link);
+      warmCover(link);
+      root.dataset.articleNavigation = "pending";
+      link.dataset.articleTransitionPending = "true";
+      link.setAttribute("aria-busy", "true");
+      storeDestination(destination);
+    }, { capture: true });
 
-  if (root.dataset.articleTransition === "active") {
-    window.setTimeout(() => root.removeAttribute("data-article-transition"), 700);
-  }
+    window.addEventListener("pageshow", () => {
+      clearSourceNames();
+      clearPendingState();
+    });
+  })();
 </script>

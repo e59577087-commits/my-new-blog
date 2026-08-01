@@ -42,20 +42,22 @@ test("connects article cards and article details with named shared elements", ()
   assert.match(cardSources, /data-article-transition-title/, "article title sources are not marked");
   assert.match(articleLayout, /data-article-transition-cover/, "article cover destination is not marked");
   assert.match(articleLayout, /data-article-transition-title/, "article title destination is not marked");
-  assert.match(css, /data-article-transition="active"[^}]*::view-transition-old\(root\)[\s\S]*?animation:\s*none/, "article navigation still animates the old page snapshot");
-  assert.match(css, /data-article-transition="active"[^}]*::view-transition-new\(root\)[\s\S]*?animation:\s*none/, "article navigation still fades in the new page snapshot");
-  assert.doesNotMatch(css, /page-fade-(?:in|out)/, "whole-page fading can cause a brightness flash during the shared morph");
+  assert.match(transitionComponent, /addEventListener\("pageswap"/, "the source snapshot is not finalized at pageswap");
+  assert.match(transitionComponent, /addEventListener\("pagereveal"/, "prerender activation cannot restore destination names");
+  assert.match(css, /::view-transition-new\(root\)[\s\S]*?article-page-enter/, "navigation lacks a smooth whole-page fallback");
+  assert.match(css, /@keyframes article-page-enter/, "the whole-page entrance animation is missing");
+  assert.match(css, /data-article-transition-pending="true"/, "clicked cards do not expose immediate loading feedback");
 });
 
-test("warms article destinations before the cross-document transition timeout", () => {
+test("prefetches article HTML without prerendering heavy destinations", () => {
   const transitionComponent = readSource("src", "components", "ArticlePageTransition.astro");
 
   assert.match(transitionComponent, /type="speculationrules"/, "article navigation does not publish speculation rules");
   assert.match(transitionComponent, /"prefetch"/, "article HTML is not prefetched before navigation");
-  assert.match(transitionComponent, /"prerender"/, "likely article destinations are not prerendered");
+  assert.doesNotMatch(transitionComponent, /"prerender"/, "article prerendering can race the click hand-off and load every body image");
   assert.match(transitionComponent, /selector_matches[^\n]+a\[data-article-transition\]/, "speculation is not limited to article transition links");
   assert.match(transitionComponent, /"eagerness"\s*:\s*"eager"/, "article prefetching starts too late");
-  assert.match(transitionComponent, /"eagerness"\s*:\s*"moderate"/, "article prerendering is not balanced against resource cost");
+  assert.match(transitionComponent, /cover\.decode/, "the clicked card cover is not decoded before its snapshot");
 });
 
 test("defers comments and Supabase until after the destination can render", () => {
