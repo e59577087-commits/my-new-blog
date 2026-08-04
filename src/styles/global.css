@@ -1086,6 +1086,16 @@ button {
   animation: none;
 }
 
+:root[data-article-transition="reverse"]::view-transition-old(root) {
+  z-index: 1;
+  animation: article-page-exit var(--motion-duration-page) var(--motion-ease-exit) 120ms both;
+}
+
+:root[data-article-transition="reverse"]::view-transition-new(root) {
+  z-index: 0;
+  animation: none;
+}
+
 :root[data-article-navigation="pending"]::before,
 :root[data-article-navigation="fallback"]::before {
   position: fixed;

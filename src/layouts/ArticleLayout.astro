@@ -37,7 +37,7 @@ const hasToc = tocHeadings.length >= 2;
     ]}
   >
   <article class="min-w-0" data-article-reading-root>
-    <a href={backHref} class="fine-link text-sm">{backLabel}</a>
+    <a href={backHref} data-article-transition-back class="fine-link text-sm">{backLabel}</a>
 
     <header class="mt-8 border-b hairline pb-8">
       {category && <p class="kicker text-xs">{category}</p>}

@@ -1,3 +1,18 @@
+<meta name="astro-view-transitions-enabled" content="true" />
+<meta name="astro-view-transitions-fallback" content="animate" />
+
+<style is:global>
+  .astro-route-announcer {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>
+
 <script type="speculationrules" is:inline>
   {
     "prefetch": [
@@ -14,15 +29,26 @@
     const transitionStorageKey = "blog-article-transition-v3";
     const transitionMaxAge = 18000;
     const pendingStateMaxAge = 6000;
+    const returnStorageKey = "blog-article-return-v3";
+    const returnMaxAge = 1800000;
+    const returnTripMaxAge = 4000;
     const root = document.documentElement;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const supportsNativeTransition =
       "onpageswap" in window &&
       "onpagereveal" in window &&
       typeof document.startViewTransition === "function";
+    const supportsClientTransition =
+      !supportsNativeTransition && typeof document.startViewTransition === "function";
+    const controller = new AbortController();
+    const previousController = window.__blogArticleTransitionController;
+    previousController?.dispose?.();
     let pendingLink = null;
+    let pendingBackLink = null;
     let pendingTransitionId = null;
+    let pendingClientViewTransition = null;
     let pendingStateTimer = 0;
+    let pendingReturnScroll = null;
 
     const clearSourceNames = () => {
       document.querySelectorAll("[data-article-transition-title], [data-article-transition-cover]").forEach((element) => {
@@ -101,9 +127,215 @@
       }
     };
 
+    const normalizePath = (href) => {
+      try {
+        const url = new URL(href, window.location.href);
+        return (url.pathname.replace(/\/$/, "") || "/") + url.search;
+      } catch {
+        return "";
+      }
+    };
+
+    const herePath = () =>
+      window.location.pathname + window.location.search + window.location.hash;
+
+    const setArticleSourceNames = () => {
+      clearSourceNames();
+      const scope = document.querySelector("[data-article-reading-root]") ?? document;
+      scope.querySelector("[data-article-transition-title]")?.style.setProperty("view-transition-name", "article-title");
+      scope.querySelector("[data-article-transition-cover]")?.style.setProperty("view-transition-name", "article-cover");
+    };
+
+    const findCardByOrigin = (origin, scopeDoc) => {
+      const doc = scopeDoc ?? document;
+      const target = normalizePath(origin);
+      if (!target) return null;
+      for (const link of doc.querySelectorAll("a[data-article-transition]")) {
+        if (normalizePath(link.href) === target) return link;
+      }
+      return null;
+    };
+
+    const setDestinationCardNames = (link) => {
+      if (!link) return;
+      link.querySelector("[data-article-transition-title]")?.style.setProperty("view-transition-name", "article-title");
+      link.querySelector("[data-article-transition-cover]")?.style.setProperty("view-transition-name", "article-cover");
+    };
+
+    const storeReturnTrip = (trip) => {
+      try {
+        const now = Date.now();
+        window.sessionStorage.setItem(returnStorageKey, JSON.stringify({
+          id: trip.id,
+          origin: trip.origin,
+          destination: trip.destination,
+          homeScroll: trip.homeScroll,
+          mode: trip.mode,
+          createdAt: now,
+          refreshedAt: now,
+        }));
+      } catch {
+        // Return transitions are best-effort; navigation still works without them.
+      }
+    };
+
+    const readReturnTrip = () => {
+      try {
+        const raw = window.sessionStorage.getItem(returnStorageKey);
+        if (!raw) return null;
+        const payload = JSON.parse(raw);
+        if (typeof payload?.createdAt !== "number" || Date.now() - payload.createdAt > returnMaxAge) {
+          window.sessionStorage.removeItem(returnStorageKey);
+          return null;
+        }
+        return payload;
+      } catch {
+        try {
+          window.sessionStorage.removeItem(returnStorageKey);
+        } catch {}
+        return null;
+      }
+    };
+
+    const refreshReturnTrip = (payload) => {
+      try {
+        window.sessionStorage.setItem(returnStorageKey, JSON.stringify({ ...payload, refreshedAt: Date.now() }));
+      } catch {}
+    };
+
+    const consumeReturnTrip = (hereHref) => {
+      const payload = readReturnTrip();
+      if (!payload) return null;
+      if (normalizePath(payload.destination) !== normalizePath(hereHref)) return null;
+      if (typeof payload.refreshedAt !== "number" || Date.now() - payload.refreshedAt > returnTripMaxAge) {
+        try {
+          window.sessionStorage.removeItem(returnStorageKey);
+        } catch {}
+        return null;
+      }
+      try {
+        window.sessionStorage.removeItem(returnStorageKey);
+      } catch {}
+      if (payload.mode === "none") return null;
+      return payload;
+    };
+
+    // Re-apply a saved scroll position, retrying on animation frames until the
+    // document is tall enough to honour it (covers lazy-loaded cover images).
+    const restoreScrollTo = (x, y) => {
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      let tries = 0;
+      const apply = () => {
+        window.scrollTo(x, y);
+        tries += 1;
+        if (Math.abs((window.scrollY ?? 0) - y) <= 1) return;
+        if (tries > 60) return;
+        requestAnimationFrame(apply);
+      };
+      window.scrollTo(x, y);
+      requestAnimationFrame(apply);
+    };
+
+    // Prefer history.back() for the return trip: the browser (native path) and
+    // Astro's client router (Firefox path) both restore the scroll position
+    // captured before the article was opened. Fall back to a direct navigation
+    // when there is no session history to pop (e.g. article opened by URL).
+    const goBackWithFallback = (fallback) => {
+      if (window.history.length <= 1) { fallback(); return; }
+      let popped = false;
+      const onPop = () => { popped = true; };
+      window.addEventListener("popstate", onPop, { once: true, signal: controller.signal });
+      try {
+        window.history.back();
+      } catch {
+        window.removeEventListener("popstate", onPop);
+        fallback();
+        return;
+      }
+      window.setTimeout(() => {
+        if (!popped) {
+          window.removeEventListener("popstate", onPop);
+          fallback();
+        }
+      }, 400);
+    };
+
     const navigationMode = () => {
       if (reducedMotion.matches) return "none";
-      return supportsNativeTransition ? "native" : "fallback";
+      if (supportsNativeTransition) return "native";
+      return supportsClientTransition ? "client" : "fallback";
+    };
+
+    const waitForClientNavigate = () => {
+      const ready = window.__blogArticleClientNavigation;
+      if (ready?.then) return ready;
+
+      return new Promise((resolve, reject) => {
+        let timeout = 0;
+        const finish = () => {
+          window.clearTimeout(timeout);
+          const pending = window.__blogArticleClientNavigation;
+          if (pending?.then) pending.then(resolve, reject);
+          else reject(new Error("Article client navigation is unavailable"));
+        };
+        window.addEventListener("blog:article-client-navigation-ready", finish, {
+          once: true,
+          signal: controller.signal,
+        });
+        timeout = window.setTimeout(finish, 1500);
+      });
+    };
+
+    const navigateWithClientTransition = async (destination, link, transitionId) => {
+      try {
+        const navigate = await waitForClientNavigate();
+        if (pendingTransitionId !== transitionId) return;
+        await navigate(destination.href, {
+          history: "auto",
+          sourceElement: link,
+        });
+        removeStoredTransition(transitionId);
+        const activeTransition = pendingClientViewTransition ?? document.activeViewTransition;
+        if (activeTransition) {
+          await activeTransition.finished.catch(() => {});
+        }
+        pendingClientViewTransition = null;
+        clearDestinationState();
+        clearSourceNames();
+        clearPendingState();
+      } catch {
+        pendingClientViewTransition = null;
+        removeStoredTransition(transitionId);
+        clearSourceNames();
+        clearPendingState();
+        window.location.assign(destination.href);
+      }
+    };
+
+    const navigateWithClientReturnTransition = async (destination, backLink, transitionId) => {
+      try {
+        const navigate = await waitForClientNavigate();
+        if (pendingTransitionId !== transitionId) return;
+        await navigate(destination.href, {
+          history: "auto",
+          sourceElement: backLink,
+        });
+        removeStoredTransition(transitionId);
+        const activeTransition = pendingClientViewTransition ?? document.activeViewTransition;
+        if (activeTransition) {
+          await activeTransition.finished.catch(() => {});
+        }
+        pendingClientViewTransition = null;
+        clearDestinationState();
+        clearSourceNames();
+        clearPendingState();
+      } catch {
+        pendingClientViewTransition = null;
+        removeStoredTransition(transitionId);
+        clearSourceNames();
+        clearPendingState();
+        window.location.assign(destination.href);
+      }
     };
 
     const setFallbackOrigin = (event, link) => {
@@ -145,7 +377,7 @@
       };
 
       if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", attach, { once: true });
+        document.addEventListener("DOMContentLoaded", attach, { once: true, signal: controller.signal });
       } else {
         requestAnimationFrame(attach);
       }
@@ -171,52 +403,180 @@
     // Prerendered documents consume it again at activation in `pagereveal`.
     const initialDestinationMode = activateStoredDestination();
     if (initialDestinationMode === "fallback") scheduleFallbackCleanup();
+    if (initialDestinationMode === "active" && document.activeViewTransition) {
+      document.activeViewTransition.finished.then(clearDestinationState, clearDestinationState);
+    }
 
     window.addEventListener("pagereveal", (event) => {
       const storedMode = activateStoredDestination();
-      const isArticleTransition = storedMode || root.hasAttribute("data-article-transition");
-      if (!isArticleTransition) return;
+      const isForward = storedMode || root.hasAttribute("data-article-transition");
+      let returnPayload = null;
+      if (!isForward) {
+        returnPayload = consumeReturnTrip(window.location.href);
+        if (returnPayload) {
+          root.dataset.articleTransition = "reverse";
+          setDestinationCardNames(findCardByOrigin(returnPayload.origin));
+          const scroll = returnPayload.homeScroll;
+          if (scroll) {
+            restoreScrollTo(scroll.x ?? 0, scroll.y ?? 0);
+          }
+        }
+      }
+      if (!isForward && !returnPayload) return;
 
+      const cleanupReveal = () => {
+        clearDestinationState();
+        if (returnPayload) {
+          clearSourceNames();
+          const returnScroll = returnPayload.homeScroll;
+          if (returnScroll) restoreScrollTo(returnScroll.x ?? 0, returnScroll.y ?? 0);
+        }
+      };
       if (event.viewTransition) {
-        event.viewTransition.finished.then(clearDestinationState, clearDestinationState);
+        event.viewTransition.finished.then(cleanupReveal, cleanupReveal);
       } else {
         root.dataset.articleTransition = "fallback";
         scheduleFallbackCleanup();
       }
-    });
+    }, { signal: controller.signal });
 
     window.addEventListener("pageswap", (event) => {
-      if (!event.viewTransition || !pendingLink) return;
-      setSourceNames(pendingLink);
+      if (!event.viewTransition) return;
+      if (pendingLink) {
+        setSourceNames(pendingLink);
+      } else {
+        const payload = readReturnTrip();
+        if (!payload || payload.origin !== herePath()) return;
+        setArticleSourceNames();
+        refreshReturnTrip(payload);
+      }
       const cleanupSource = () => {
         clearSourceNames();
         clearPendingState();
       };
       event.viewTransition.finished.then(cleanupSource, cleanupSource);
-    });
+    }, { signal: controller.signal });
+
+    document.addEventListener("astro:before-swap", (event) => {
+      if (!supportsClientTransition) return;
+      const newDocument = event.newDocument;
+      if (!(newDocument instanceof Document)) return;
+
+      const copyRootAttributes = (target) => {
+        for (const attribute of root.attributes) {
+          if (attribute.name === "data-article-navigation" || attribute.name === "data-article-transition") continue;
+          target.setAttribute(attribute.name, attribute.value);
+        }
+      };
+
+      if (pendingLink) {
+        pendingClientViewTransition = event.viewTransition;
+        copyRootAttributes(newDocument.documentElement);
+        newDocument.documentElement.dataset.articleTransition = "active";
+        return;
+      }
+
+      const payload = readReturnTrip();
+      if (!payload || payload.origin !== herePath()) return;
+      pendingClientViewTransition = event.viewTransition;
+      setArticleSourceNames();
+      refreshReturnTrip(payload);
+      copyRootAttributes(newDocument.documentElement);
+      if (normalizePath(payload.destination) === normalizePath(newDocument.URL)) {
+        newDocument.documentElement.dataset.articleTransition = "reverse";
+        setDestinationCardNames(findCardByOrigin(payload.origin, newDocument));
+        pendingReturnScroll = payload.homeScroll ?? null;
+      }
+    }, { signal: controller.signal });
+
+    document.addEventListener("astro:after-swap", () => {
+      if (pendingReturnScroll) {
+        restoreScrollTo(pendingReturnScroll.x ?? 0, pendingReturnScroll.y ?? 0);
+      }
+      if (pendingLink) return;
+      const active = pendingClientViewTransition ?? document.activeViewTransition;
+      if (!active) return;
+      const cleanupReturn = () => {
+        clearDestinationState();
+        clearSourceNames();
+        clearPendingState();
+        pendingClientViewTransition = null;
+        if (pendingReturnScroll) {
+          restoreScrollTo(pendingReturnScroll.x ?? 0, pendingReturnScroll.y ?? 0);
+          pendingReturnScroll = null;
+        }
+      };
+      active.finished.then(cleanupReturn, cleanupReturn);
+    }, { signal: controller.signal });
 
     document.addEventListener("pointerover", (event) => {
       const link = getArticleLink(event);
       if (link) warmCover(link);
-    }, { passive: true });
+    }, { passive: true, signal: controller.signal });
 
     document.addEventListener("focusin", (event) => {
       const link = getArticleLink(event);
       if (link) warmCover(link);
-    });
+    }, { signal: controller.signal });
 
     document.addEventListener("click", (event) => {
       if (!(event instanceof MouseEvent) || !isPlainPrimaryClick(event)) return;
 
       const link = getArticleLink(event);
-      if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+      const clickTarget = event.target instanceof Element ? event.target : null;
+      const backLink = clickTarget?.closest("a[data-article-transition-back]") ?? null;
+
+      if (!link && !backLink) return;
+
+      // Reverse: the in-article back link returns to the list page with the same transition.
+      if (!link && backLink) {
+        if (backLink.target === "_blank" || backLink.hasAttribute("download")) return;
+        const backDestination = new URL(backLink.href, window.location.href);
+        if (backDestination.origin !== window.location.origin) return;
+        // Prefer the page the user actually came from (captured when the card was
+        // clicked) so a card opened from the home page returns to the home page,
+        // even when the article's static back link points at its section index.
+        const returnPayload = readReturnTrip();
+        const cameFromHere = returnPayload && returnPayload.origin === herePath();
+        if (!cameFromHere) return; // No return trip: let the static back link navigate.
+        refreshReturnTrip(returnPayload);
+        const returnTarget = new URL(returnPayload.destination, window.location.href);
+        event.preventDefault();
+        const backMode = navigationMode();
+        if (backMode === "client") {
+          pendingBackLink = backLink;
+          const transitionId = Date.now() + "-" + Math.random().toString(36).slice(2);
+          pendingTransitionId = transitionId;
+          setArticleSourceNames();
+          root.dataset.articleNavigation = "pending";
+          backLink.dataset.articleTransitionPending = "true";
+          backLink.setAttribute("aria-busy", "true");
+          // history.back() lets Astro restore the home scroll it saved before the
+          // article opened; fall back to a same-document navigate push when there
+          // is no session history to pop (e.g. the article was opened by URL).
+          goBackWithFallback(() => void navigateWithClientReturnTransition(returnTarget, backLink, transitionId));
+          window.clearTimeout(pendingStateTimer);
+          pendingStateTimer = window.setTimeout(() => {
+            if (pendingTransitionId !== transitionId) return;
+            clearSourceNames();
+            clearPendingState();
+          }, pendingStateMaxAge);
+          return;
+        }
+        // Native and fallback: navigate back through history so the browser
+        // restores the saved scroll position; fall back to a direct navigation.
+        goBackWithFallback(() => window.location.assign(returnTarget.href));
+        return;
+      }
+
+      if (link.target === "_blank" || link.hasAttribute("download")) return;
 
       const destination = new URL(link.href, window.location.href);
       if (destination.origin !== window.location.origin) return;
 
       const mode = navigationMode();
       pendingLink = link;
-      if (mode === "native") setSourceNames(link);
+      if (mode === "native" || mode === "client") setSourceNames(link);
       else clearSourceNames();
       warmCover(link);
       if (mode === "fallback") {
@@ -227,13 +587,28 @@
       link.setAttribute("aria-busy", "true");
       const transitionId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       pendingTransitionId = transitionId;
-      storeDestination(destination, mode, transitionId);
-      window.setTimeout(() => {
-        if (!event.defaultPrevented || pendingTransitionId !== transitionId) return;
-        removeStoredTransition(transitionId);
-        clearSourceNames();
-        clearPendingState();
-      }, 0);
+      storeDestination(destination, mode === "client" ? "active" : mode, transitionId);
+      // Remember how to morph back to this list page when the article is left.
+      if (mode === "native" || mode === "client") {
+        storeReturnTrip({
+          id: transitionId,
+          origin: destination.pathname + destination.search + destination.hash,
+          destination: herePath(),
+          homeScroll: { x: window.scrollX, y: window.scrollY },
+          mode: "active",
+        });
+      }
+      if (mode === "client") {
+        event.preventDefault();
+        void navigateWithClientTransition(destination, link, transitionId);
+      } else {
+        window.setTimeout(() => {
+          if (!event.defaultPrevented || pendingTransitionId !== transitionId) return;
+          removeStoredTransition(transitionId);
+          clearSourceNames();
+          clearPendingState();
+        }, 0);
+      }
       window.clearTimeout(pendingStateTimer);
       pendingStateTimer = window.setTimeout(() => {
         if (pendingTransitionId !== transitionId) return;
@@ -241,12 +616,54 @@
         clearPendingState();
       }, pendingStateMaxAge);
       window.setTimeout(() => removeStoredTransition(transitionId), transitionMaxAge);
-    }, { capture: true });
+    }, { capture: true, signal: controller.signal });
 
     window.addEventListener("pageshow", () => {
       if (pendingTransitionId) removeStoredTransition(pendingTransitionId);
       clearSourceNames();
+      clearDestinationState();
       clearPendingState();
-    });
+    }, { signal: controller.signal });
+
+    const relabelBackLink = () => {
+      const backLinkEl = document.querySelector("a[data-article-transition-back]");
+      if (!backLinkEl) return;
+      const payload = readReturnTrip();
+      if (!payload || payload.origin !== herePath()) return;
+      if (normalizePath(payload.destination) === "/") {
+        backLinkEl.textContent = "返回首页";
+      }
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", relabelBackLink, { once: true, signal: controller.signal });
+    } else {
+      relabelBackLink();
+    }
+
+    window.__blogArticleTransitionController = {
+      dispose() {
+        controller.abort();
+        clearSourceNames();
+        clearPendingState();
+      },
+    };
   })();
+</script>
+
+<script>
+  const supportsNativeArticleTransition =
+    "onpageswap" in window &&
+    "onpagereveal" in window &&
+    typeof document.startViewTransition === "function";
+
+  if (
+    !supportsNativeArticleTransition &&
+    typeof document.startViewTransition === "function" &&
+    !window.__blogArticleClientNavigation
+  ) {
+    const ready = import("astro:transitions/client").then(({ navigate }) => navigate);
+    ready.catch(() => {});
+    window.__blogArticleClientNavigation = ready;
+    window.dispatchEvent(new Event("blog:article-client-navigation-ready"));
+  }
 </script>
