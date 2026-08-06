@@ -38,8 +38,10 @@
       "onpageswap" in window &&
       "onpagereveal" in window &&
       typeof document.startViewTransition === "function";
-    const supportsClientTransition =
-      !supportsNativeTransition && typeof document.startViewTransition === "function";
+    // Firefox currently exposes same-document View Transitions but not the
+    // cross-document lifecycle events this controller relies on. Let it use a
+    // normal document navigation so every homepage feature is initialized anew.
+    const supportsClientTransition = false;
     const controller = new AbortController();
     const previousController = window.__blogArticleTransitionController;
     previousController?.dispose?.();
@@ -203,6 +205,12 @@
       } catch {}
     };
 
+    function clearReturnTrip() {
+      try {
+        window.sessionStorage.removeItem(returnStorageKey);
+      } catch {}
+    }
+
     const consumeReturnTrip = (hereHref) => {
       const payload = readReturnTrip();
       if (!payload) return null;
@@ -243,19 +251,40 @@
     const goBackWithFallback = (fallback) => {
       if (window.history.length <= 1) { fallback(); return; }
       let popped = false;
-      const onPop = () => { popped = true; };
+      let settled = false;
+      let completionTimer = 0;
+      const cleanup = () => {
+        window.clearTimeout(completionTimer);
+        window.removeEventListener("popstate", onPop);
+        document.removeEventListener("astro:page-load", completeClientReturn);
+      };
+      const useFallback = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        fallback();
+      };
+      const completeClientReturn = () => {
+        settled = true;
+        cleanup();
+      };
+      const onPop = () => {
+        popped = true;
+        // Firefox receives popstate before Astro has finished replacing the
+        // document. A pop alone is therefore not proof that the return worked.
+        completionTimer = window.setTimeout(useFallback, 1600);
+      };
       window.addEventListener("popstate", onPop, { once: true, signal: controller.signal });
+      document.addEventListener("astro:page-load", completeClientReturn, { once: true, signal: controller.signal });
       try {
         window.history.back();
       } catch {
-        window.removeEventListener("popstate", onPop);
-        fallback();
+        useFallback();
         return;
       }
       window.setTimeout(() => {
         if (!popped) {
-          window.removeEventListener("popstate", onPop);
-          fallback();
+          useFallback();
         }
       }, 400);
     };
@@ -495,7 +524,6 @@
       }
       if (pendingLink) return;
       const active = pendingClientViewTransition ?? document.activeViewTransition;
-      if (!active) return;
       const cleanupReturn = () => {
         clearDestinationState();
         clearSourceNames();
@@ -504,8 +532,13 @@
         if (pendingReturnScroll) {
           restoreScrollTo(pendingReturnScroll.x ?? 0, pendingReturnScroll.y ?? 0);
           pendingReturnScroll = null;
+          clearReturnTrip();
         }
       };
+      if (!active) {
+        cleanupReturn();
+        return;
+      }
       active.finished.then(cleanupReturn, cleanupReturn);
     }, { signal: controller.signal });
 
@@ -563,8 +596,12 @@
           }, pendingStateMaxAge);
           return;
         }
-        // Native and fallback: navigate back through history so the browser
-        // restores the saved scroll position; fall back to a direct navigation.
+        if (backMode === "fallback") {
+          window.location.assign(returnTarget.href);
+          return;
+        }
+        // Native transitions can return through history and preserve the
+        // browser-managed scroll position.
         goBackWithFallback(() => window.location.assign(returnTarget.href));
         return;
       }
@@ -589,7 +626,7 @@
       pendingTransitionId = transitionId;
       storeDestination(destination, mode === "client" ? "active" : mode, transitionId);
       // Remember how to morph back to this list page when the article is left.
-      if (mode === "native" || mode === "client") {
+      if (mode !== "none") {
         storeReturnTrip({
           id: transitionId,
           origin: destination.pathname + destination.search + destination.hash,
@@ -639,6 +676,7 @@
     } else {
       relabelBackLink();
     }
+    document.addEventListener("astro:after-swap", relabelBackLink, { signal: controller.signal });
 
     window.__blogArticleTransitionController = {
       dispose() {
@@ -648,22 +686,4 @@
       },
     };
   })();
-</script>
-
-<script>
-  const supportsNativeArticleTransition =
-    "onpageswap" in window &&
-    "onpagereveal" in window &&
-    typeof document.startViewTransition === "function";
-
-  if (
-    !supportsNativeArticleTransition &&
-    typeof document.startViewTransition === "function" &&
-    !window.__blogArticleClientNavigation
-  ) {
-    const ready = import("astro:transitions/client").then(({ navigate }) => navigate);
-    ready.catch(() => {});
-    window.__blogArticleClientNavigation = ready;
-    window.dispatchEvent(new Event("blog:article-client-navigation-ready"));
-  }
 </script>

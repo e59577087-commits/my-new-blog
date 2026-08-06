@@ -52,50 +52,45 @@ test("connects article cards and article details with named shared elements", ()
   assert.match(css, /data-article-transition-pending="true"/, "clicked cards do not expose immediate loading feedback");
 });
 
-test("uses same-document article navigation only when cross-document transitions are unavailable", () => {
+test("uses a full-document return path when native cross-document transitions are unavailable", () => {
   const transitionComponent = readSource("src", "components", "ArticlePageTransition.astro");
-  const clientNavigation = transitionComponent.match(
-    /const navigateWithClientTransition[\s\S]*?(?=\n\n    const setFallbackOrigin)/,
-  )?.[0] ?? "";
 
   assert.match(transitionComponent, /name="astro-view-transitions-enabled"/, "the fallback router cannot swap Astro documents");
   assert.match(
     transitionComponent,
-    /supportsClientTransition\s*=\s*!supportsNativeTransition\s*&&\s*typeof document\.startViewTransition\s*===\s*"function"/,
-    "same-document navigation is not isolated from Chromium's native cross-document path",
+    /const supportsClientTransition\s*=\s*false;/,
+    "Firefox still enters Astro's client-side article navigation path",
   );
-  assert.match(transitionComponent, /import\("astro:transitions\/client"\)/, "the Firefox path does not use Astro's lifecycle-safe navigator");
+  assert.doesNotMatch(transitionComponent, /import\("astro:transitions\/client"\)/, "Firefox still loads Astro's same-document navigator");
   assert.match(
-    clientNavigation,
-    /navigate\(destination\.href,\s*\{[\s\S]*?sourceElement:\s*link/,
-    "unsupported browsers do not hand article clicks to the same-document navigator",
-  );
-  const navigateIndex = clientNavigation.indexOf("await navigate(destination.href");
-  const handoffCleanupIndex = clientNavigation.indexOf("removeStoredTransition(transitionId)");
-  const activeTransitionIndex = clientNavigation.indexOf("document.activeViewTransition");
-  assert.ok(
-    navigateIndex >= 0 && handoffCleanupIndex > navigateIndex && activeTransitionIndex > handoffCleanupIndex,
-    "the client-side hand-off survives after Astro has already swapped the destination",
+    transitionComponent,
+    /if \(mode !== "none"\) \{[\s\S]*?storeReturnTrip\(/,
+    "a full-page Firefox article visit no longer remembers that it came from the homepage",
   );
   assert.match(
     transitionComponent,
-    /mode\s*===\s*"client"[\s\S]*?event\.preventDefault\(\)[\s\S]*?navigateWithClientTransition\(destination,\s*link,\s*transitionId\)/,
-    "the browser's full-page navigation is not replaced on the client-only path",
+    /if \(backMode === "fallback"\) \{\s*window\.location\.assign\(returnTarget\.href\);\s*return;\s*\}/,
+    "Firefox still routes an article return through history.back instead of a full document load",
+  );
+});
+
+test("rehydrates the article back link and clears a completed return state", () => {
+  const transitionComponent = readSource("src", "components", "ArticlePageTransition.astro");
+
+  assert.match(
+    transitionComponent,
+    /document\.addEventListener\("astro:after-swap",\s*relabelBackLink/,
+    "the Firefox client-router swap never refreshes the article back-link label",
   );
   assert.match(
     transitionComponent,
-    /addEventListener\("astro:before-swap"[\s\S]*?newDocument\.documentElement\.dataset\.articleTransition\s*=\s*"active"/,
-    "the destination shared elements are not named before the new snapshot is captured",
+    /function clearReturnTrip\(\)[\s\S]*?sessionStorage\.removeItem\(returnStorageKey\)/,
+    "the completed client return does not have a dedicated return-state cleanup",
   );
   assert.match(
     transitionComponent,
-    /addEventListener\("astro:before-swap"[\s\S]*?pendingClientViewTransition\s*=\s*event\.viewTransition/,
-    "the Firefox path does not retain Astro's active transition through script execution",
-  );
-  assert.match(
-    clientNavigation,
-    /activeTransition\s*=\s*pendingClientViewTransition\s*\?\?\s*document\.activeViewTransition/,
-    "the Firefox path depends entirely on Document.activeViewTransition support",
+    /pendingReturnScroll\s*=\s*null;[\s\S]*?clearReturnTrip\(\);/,
+    "the completed client return leaves its return state behind",
   );
 });
 
