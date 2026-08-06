@@ -64,6 +64,16 @@ test("invalidates stale textures and discards captures from before an appearance
   );
 });
 
+test("stops retrying a texture capture when Firefox cannot access html2canvas's cloned iframe", () => {
+  assert.match(blackHole, /let textureCaptureSupported = true;/, "texture capture cannot be disabled after an unsupported-browser failure");
+  assert.match(capture, /if \(!textureCaptureSupported\) return;/, "unsupported browsers still attempt every expensive texture capture");
+  assert.match(
+    capture,
+    /Unable to find element in cloned iframe[\s\S]*?textureCaptureSupported = false;/,
+    "Firefox's cloned-iframe failure is not converted into a quiet texture fallback",
+  );
+});
+
 test("hides every sampled page color while the replacement texture is unavailable", () => {
   assert.match(blackHole, /term\[i\] = pageAt\(suv\)\[i\] \* uTextureReady;/);
   assert.match(blackHole, /bg \+= pageAt\(suv\) \* toward \* uTextureReady;/);

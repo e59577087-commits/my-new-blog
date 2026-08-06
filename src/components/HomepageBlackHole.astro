@@ -482,6 +482,7 @@ float dil = mix(1.0, DILATION_MIN, I);
     let width = 0, height = 0, renderScale = 1, pageWidth = 0, pageHeight = 0, frame = 0, animId = 0, targets = [], textTargets = [], targetEntries = [], textEntries = [];
     let needsTargetRefresh = true;
     let textureReady = false, textureBusy = false, textureScheduled = false, lastTextureAt = 0;
+    let textureCaptureSupported = true;
     let textureGeneration = 0;
     let textureRect = { x: 0, y: 0, w: 1, h: 1 };
 
@@ -647,6 +648,7 @@ float dil = mix(1.0, DILATION_MIN, I);
     }
 
     async function captureWholePageTexture(force = false) {
+      if (!textureCaptureSupported) return;
       if (textureBusy || !pageWidth || !pageHeight || !isEnabled()) return;
       const now = performance.now();
       if (!force && now - lastTextureAt < CONFIG.textureRefreshMs) return;
@@ -728,7 +730,11 @@ float dil = mix(1.0, DILATION_MIN, I);
         lastTextureAt = now;
       } catch (error) {
         textureReady = false;
-        console.warn("Black hole page texture failed", error);
+        if (String(error?.message ?? error).includes("Unable to find element in cloned iframe")) {
+          textureCaptureSupported = false;
+        } else {
+          console.warn("Black hole page texture failed", error);
+        }
       } finally {
         textureBusy = false;
       }
