@@ -67,7 +67,7 @@ https://cdn.jsdelivr.net/gh/venera-app/venera-configs@main/index.json
 ## 使用
 直接去主页点击上方的搜索，建议使用聚合搜索，搜索所有漫源（比如说我搜JOJO。）
 
-![[VeneraX-5970926c.jpg|125]]![[VeneraX-dbc8013e.jpg|125]]
+![[VeneraX-9f89b864.jpg|125]]![[VeneraX-53dc6557.jpg|125]]
 
 
 ## 小tips
